@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the elephant (postscript: reader emails)</title>
+  <meta name="description" content="A whole bunch of interesting comments and pointers came in via email after I posted the &#39;Swallowing the Elephant&#39; series. Today, we&#39;ll dig into a few of them.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/08/03/moana-reader-mail.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the elephant (postscript: reader emails)</h1>
+    <p class="post-meta">
+      <time datetime="2018-08-03T00:00:00-05:00" itemprop="datePublished">
+        
+        Aug 3, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>It was due to a mixture of intention and laziness that I didn’t add the
+ability for people to comment on blog posts here.  In general, I’m a
+believer in the adage “never read the comments section”, though I’d like to
+believe that the sort of folks that end up here would have plenty of
+insightful things to say.  However, I’m finding myself increasingly
+old-school in how I want the Internet to be: static pages with no ads and
+no JavaScript like it’s 1997, so I liked the idea of doing my part here.</p>
+
+<p>Thus, “writing an email” is the activation energy required to comment on
+things posted here.  Even with that friction, a number of people sent me
+insightful emails after I posted the “<a href="/matt/blog/2018/07/16/moana-island-pbrt-all.html">Swallowing the
+Elephant</a>” series on
+rendering the Moana island scene with pbrt; many thanks to everyone who
+took the time to write.  Today, we’ll dig into a few of those emails, enjoy
+another parsing speedup, and learn a few things along the way.</p>
+
+<h2 id="parsing-floats-revisited">Parsing floats, revisited</h2>
+
+<p>When <a href="/matt/blog/2018/07/13/moana-island-pbrt-3.html#conclusion-wrt-pbrt-v3">we ended
+before</a>,
+roughly 20% of scene parsing time was spent turning floats-as-text into
+floats-in-memory.  That felt like a lot, but it wasn’t clear to me what do
+to about it.</p>
+
+<p>Fortunately, both Jon Harper and Алексей Аверченко pointed me at a nice
+little library,
+<a href="https://github.com/google/double-conversion/">double-conversion</a>, that
+Google has released.  Both of them told me that it was state-of-the-art for
+efficiently and accurately printing floats and both suggested that it would
+also likely be good at parsing them.  I did a few benchmarks and found that
+they were right: it was between 1.5x and 2x faster than <code class="highlighter-rouge">strtof()</code> on the
+system I was using.  Nice!</p>
+
+<p>It was easy enough to use that for the float parsing code in pbrt-next, the
+branch I use for hacking on new ideas.  With fingers crossed, I ran some
+benchmarks. Previously, pbrt-next spent 11m 24s parsing the Moana island
+scene. When using double-conversion, parsing time dropped to 9m 18s, a 1.2x
+speedup.</p>
+
+<p>That’s delightful, though it doesn’t quite fit with the earlier measurements,
+which had 20% of startup time spent in <code class="highlighter-rouge">strtof()</code>.  If 20% of time is spent
+parsing floats, doubling the performance of float parsing should give
+roughly a 1.1x speedup, so something’s off somewhere.  Forgive me, but I’m
+going to be lazy here and not chase down exactly what happened; when you
+get a greater than expected speedup, it can be hard to muster the
+motivation to chase down where your earlier measurements were off.  tl;dr,
+double-conversion is fast.</p>
+
+<p>Allow me to distract you from my lack of benchmarking rigor with another
+rendering:</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-moana-all2.jpg" />
+<i>Moana island, closer in, rendered with pbrt at 2048x858 resolution with
+256 samples per pixel.  Rendering time with a 96 vCPU Google Compute
+Engine instance at 2 GHz was just 34m 32s.</i></p>
+
+<h2 id="printing-floats-revisited">Printing floats, revisited</h2>
+
+<p>Ever since I read <a href="https://randomascii.wordpress.com/2013/02/07/float-precision-revisited-nine-digit-float-portability/">Bruce Dawson’s nice blog post about accurately printing
+floats</a>,
+I’ve been nuts about using <code class="highlighter-rouge">%.9g</code> with <code class="highlighter-rouge">printf</code> when printing
+floating-point values.  The idea of printing out a truncated number that
+doesn’t capture the full precision of a floating-point value drives me
+bananas; in what world does it make sense for default behavior for <code class="highlighter-rouge">%f</code> to
+be to throw away precision?</p>
+
+<p>Anyway, <code class="highlighter-rouge">%.9g</code> works well enough, but it has one shortcoming: it gives a
+sufficiently precise value to be able to accurately reconstruct the
+original floating-point value, but not necessarily the shortest value that
+will do that.  Consider the real number 0.2: it can’t be exactly
+represented in base-2 floating-point.  With 32-bit floats, the closest
+representable value to 0.2 is <code class="highlighter-rouge">0.20000000298023223876953125</code>.  In
+turn, if you print that using <code class="highlighter-rouge">%.9g</code>, you get <code class="highlighter-rouge">0.200000003</code>.  That is
+indeed enough precision so that parsing it gets you back to the exact
+value as before, but it’s a little messy—all those zeros and then a bit
+of schmutz, more characters than you started out with.</p>
+
+<p>I thought that discrepancy might cause some trouble when <a href="/matt/blog/2018/07/08/moana-island-pbrt-1.html#from-text-to-ply">converting the
+Moana island scene to use PLY
+meshes</a>.
+When pbrt is run with the <code class="highlighter-rouge">--toply</code> option, it parses the scene
+description, writes out PLY files for big meshes, and then prints the
+remainder of the scene description to standard output.  I made sure to use
+<code class="highlighter-rouge">%.9g</code> for all of that printing in order to be sure that the new scene
+description was completely unchanged by the conversion process (every bit
+is sacred and all that).</p>
+
+<p>Aesthetic issues of numbers like <code class="highlighter-rouge">0.200000003</code> in the output aside, I
+wondered whether the files were significantly larger than they needed to be
+due to carrying along more digits than were actually needed.  I didn’t know
+what to do about that until I checked out
+<a href="https://github.com/google/double-conversion/">double-conversion</a>’s
+routines for printing floats and doubles; they include
+<a href="https://github.com/google/double-conversion/blob/9a8e518bedcf171d99eb1c00eef4beb1ecc20a4b/double-conversion/double-conversion.h#L134"><code class="highlighter-rouge">ToShortestSingle()</code></a>,
+which prints a <code class="highlighter-rouge">float</code> with just enough precision to reconstruct its
+floating point value.  In turn, that prints the rounded <code class="highlighter-rouge">float</code> value of
+0.2 as <code class="highlighter-rouge">0.2</code>.</p>
+
+<p>I changed pbrt to use <code class="highlighter-rouge">ToShortestSingle()</code> rather than <code class="highlighter-rouge">%.9g</code> and
+re-converted the scene to PLY format, with high hopes that the residual
+pbrt files would be significantly smaller and that in turn, parsing time
+would be further reduced thanks to having less stuff to get through.
+Unfortunately, the scene files were only 2.5% smaller; a nice little
+something, but not enough to materially affect startup time.</p>
+
+<h2 id="tagged-pointers-and-friends">Tagged pointers and friends</h2>
+
+<p>Last time, when discussing additional ways to further reduce memory use, I
+suggested <a href="/matt/blog/2018/07/16/moana-island-pbrt-5.html#vtable-hacks">using unused bits in pointers for type
+identification</a>
+and then manually performing virtual function calls using those type
+indexes as a way to save all the storage of vtable pointers.  Many people
+wrote with information about prior applications of this idea; it’s
+definitely a thing, especially in modern dynamically-typed languages.</p>
+
+<p>Juho Snellman pointed me to a <a href="https://www.snellman.net/blog/archive/2017-09-04-lisp-numbers/">blog post he wrote about the history of the
+representation of numbers in
+Lisp</a>,
+which is full of great history on this topic.  He also noted:</p>
+
+<blockquote>
+  <p>Alternatively, since you’re already considering arena allocation for
+these objects, it seems like some form of range-based pointer tagging
+(e.g. BIBOP) could work well for. The core idea is that you reserve each
+X byte block (e.g. 1MB) in the arena for just one datatype. The
+block-&gt;(vtable for all objects in the block) mapping is kept on the
+side. With properly aligned blocks, going from a pointer to an index in
+the vtable vector can be just a couple of bit operations.</p>
+</blockquote>
+
+<p>Steele’s <a href="https://dspace.mit.edu/bitstream/handle/1721.1/6278/AIM-420.pdf?sequence=2">Data Representations in PDP-10
+MacLISP</a>
+seems to be the origin of the range-based pointer tagging idea.  This idea
+seems particularly appealing in a world of massive 64-bit address spaces:
+map a single huge range of virtual memory for triangles, say, let the
+virtual memory system allocate physical pages only when needed, and then do
+a quick check to see if a given pointer is in that range to know if it’s a
+pointer to a triangle.</p>
+
+<p>Going back to the original idea, number of libraries make it easy to encode
+type information directly in pointers and even offer a measure of type
+safety when doing so.  Bart Schuurmans pointed me at LLVM’s
+<a href="https://github.com/llvm-mirror/llvm/blob/master/include/llvm/ADT/PointerSumType.h">PointerSumType</a>,
+which uses the low bits of a pointer for type identification.  The caller
+must provide sufficiently aligned pointers to leave enough bits for type
+identification, which is arguably a more portable approach than stealing
+currently-unused high bits from 64-bit pointers.  (Juho also noted that
+using the low bits is likely to lead to more efficient code on x86 than
+using the high bits.)  Bryan Catanzaro pointed me at
+<a href="https://github.com/facebook/folly/blob/master/folly/DiscriminatedPtr.h">DiscriminatedPtr</a>
+in Facebook’s <em>folly</em> library, which uses the high bits, which is
+preferable if the number of distinct types to be represented is more than a
+small handful.</p>
+
+<p>My earlier assumption had been that given a type index, the best way to
+dynamic dispatch would be to do an indirect function call through a table
+of function pointers.  <a href="https://www.sebastiansylvan.com/">Sebastian Sylvan</a>
+wrote a nice email arguing that using a <code class="highlighter-rouge">switch</code> statement or explicit
+<code class="highlighter-rouge">if</code>s based on the type could actually be a better approach, especially if
+there are not too many different types (as is the case here).</p>
+
+<p>Consider something like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>int type = /* extract the bits from the pointer */;
+if (type == TRIANGLE)
+    return RayTriangleIntersect(...);
+else if (type == CURVE)
+    return RayCurveIntersect(...);
+else
+    return shapeVTables[type]-&gt;Intersect(...);
+</code></pre>
+</div>
+
+<p>The common cases—triangles and curves—are checked first and those <code class="highlighter-rouge">if</code>
+tests would turn into direct branches that likely be very well-predicted
+(by which I mean “it’s probably a triangle”).  Further, the code for those
+cases could even be inlined if we wanted; that gives us now two things that
+might give better performance than a virtual function call.  For a
+situation like this, where there are a very small number of commonly-used
+cases and then a long-ish tail of more rare ones, this implementation
+approach is potentially appealing from a performance perspective—it’s not
+necessarily just about saving memory by getting rid of vtable pointers.</p>
+
+<p>Having two good reasons for adopting this approach (memory use and
+performance) now has me conflicted about how to proceed with respect to
+pbrt.  pbrt’s two main reasons for existence are to teach people how
+physically based rendering works through code and to show the
+implementation of a reasonably well-written ray tracer.</p>
+
+<p>Is this a technique that’s important enough for renderer implementation
+that we should include it in the book in the interests of pedagogical
+completeness, or is it too much added complexity for the student trying to
+get a handle on the basics of ray tracing in the first place? I can’t
+decide, but at least there’s some time to figure it out before a new
+version of the book is due.  Onward to hacking up an implementation and
+seeing how it feels.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

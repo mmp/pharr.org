@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</title>
+  <meta name="description" content="After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing perform...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</h1>
+    <p class="post-meta">
+      <time datetime="2021-07-29T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 29, 2021
+      </time>
+      </p>
+  </header>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.js"></script>
+<script src="/jeri.js"></script>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>We’re big fans of actually making pictures around here, so avoiding the
+topic of rendering performance and focusing on performance while getting
+ready for rendering may seem a little off.  A flimsy defense for that is
+“vegetables before dessert”; we must attend to our responsibilities before
+we go off and have fun.  A better justification is more or less Amdahl’s
+law: as rendering time decreases, overall performance is increasingly
+determined by the cost of rest of the work that happens before rendering.
+That motivation should be more clear by the end of this post.</p>
+
+<h2 id="preliminaries-textures-and-curves">Preliminaries: Textures and Curves</h2>
+
+<p>Making pbrt-v4’s GPU rendering path capable of rendering Disney’s <a href="https://www.disneyanimation.com/resources/moana-island-scene/">Moana
+Island
+scene</a>
+required attending to two details that I hadn’t gotten around to until
+recently: supporting both <a href="https://ptex.us/">Ptex textures</a> and pbrt’s
+curve shape on the GPU.  Both features were laggards that hadn’t yet been wired
+up on the GPU and both are used extensively in the Moana Island scene.</p>
+
+<p>Ptex is a texture representation from Walt Disney Animation Studios that
+works around the uv-mapping problem by splitting meshes into <em>faces</em> (that
+may themselves be collections of triangles or quads) and then applying a
+plain old [0,1]<sup>2</sup> parameterization to each face.  The Ptex library 
+handles the details of things like loading textures on demand, caching
+parts of them in memory, and texture filtering.</p>
+
+<p>To my knowledge, there isn’t a Ptex implementation that runs on the GPU.
+One way to work around this problem is to round-trip to the CPU and service
+Ptex requests there; that approach was taken by Chris Hellmuth when he
+<a href="https://www.render-blog.com/2020/10/03/gpu-motunui/">rendered the Moana Island scene on the
+GPU</a>.  That approach
+gives gold-standard results, but at the cost of synchronization and data
+transfer between the two processors as well as the risk of the CPU being
+the performance bottleneck.</p>
+
+<p>Ingo Wald <a href="https://ingowald.blog/2020/10/26/moana-on-rtx-first-light/">took a different
+approach</a> when
+he got the Moana Island rendering on the GPU; his implementation resampled
+each face’s texture at a low resolution and then packed the results into
+large flat 2D textures.  That keeps everything on the GPU, but risks
+blurred texture lookups due to insufficient resolution.</p>
+
+<p>And then there’s the approach I took: for each face, pbrt-v4 computes the
+face’s average texture value and stores it in an array.  A texture lookup[sic] is
+then a simple index into that array using the face index.  (Thus, it’s
+basically Ingo’s approach with “low resolution” taken all the way to a
+single pixel.)  The only thing defensible about my approach is that it’s
+just <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.cpp#L755">a few lines of
+code</a>
+to convert Ptex textures into this representation, and texture lookup is
+near-trivial <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.h#L989">indexing into that
+array</a>.</p>
+
+<p>I can’t say that I’m proud of that solution, but I can at least say that it
+works great for objects that are far away where all you need is the top MIP
+level anyway.  As we will see shortly, it is certainly not
+production-ready.  I hope to get around to replacing it with something
+better in the future, but for now it gets us up and rendering.</p>
+
+<p>The other thing to take care of was supporting curves on the GPU.
+pbrt-v4’s built-in curve shape uses a <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L606">recursive intersection
+algorithm</a>
+that is a poor fit for the GPU; I didn’t even try running it there.  OptiX
+does provide a curve primitive, highly optimized, though some plumbing
+would be necessary to wire up pbrt’s curve representation to use it.
+Impatient to get the scene up and rendering, I wrote a <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/gpu/aggregate.cpp#L504">simple function
+that dices curves into bilinear
+patches</a>.
+(This, too, is something to return to in the future.)</p>
+
+<p>To my delight, once those two additions were debugged, everything 
+just worked the first time I tried rendering the Moana Island on the GPU.</p>
+
+<h2 id="images-and-performance">Images and Performance</h2>
+
+<p>Here again is the main view of the island, rendered on both the CPU and the
+GPU with 256 samples per pixel at 1920x804 resolution.  The images are displayed using
+<a href="https://jeri.io/">Jeri</a>, which makes it possible to do all sorts of pixel
+peeping right in the browser.  (Click on the tabs to switch between CPU and
+GPU, or use the number keys after selecting the image. Hit ‘f’ to go
+full-screen. You can also pan and zoom using the mouse.)  If you’d prefer to examine the EXRs directly, here they are:
+<a href="/matt/blog/images/moana-main-cpu-256spp.exr">CPU</a>, <a href="/matt/blog/images/moana-main-gpu-256spp.exr">GPU</a>.</p>
+
+<div class="card-img-top" style="display:block; width: 100%; padding-top: 47%;  position:relative;">
+<div id="mainview" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div></div>
+<script>
+Jeri.renderViewer(document.getElementById('mainview'), {
+  title: 'mainview', children: [
+ { title: 'CPU', image: '/matt/blog/images/moana-main-cpu-256spp.exr' },
+ { title: 'GPU', image: '/matt/blog/images/moana-main-gpu-256spp.exr' }
+ ]});
+</script>
+
+<p><br /></p>
+
+<p>The differences between the image rendered on the CPU and the one rendered
+on the GPU are entirely due to the differences in how Ptex textures and
+curves are handled.  For Ptex, you can see the problems with the current
+approach on the far-away mountainside as well as on the trunks of the palm
+trees.  And then there’s a striking difference in the palm fronds; we’ll
+return to that shortly, but it’s the GPU that has the more accurate result
+there, not the CPU.</p>
+
+<p>Oh, and about rendering performance?  It’s 26.7 seconds on the
+GPU (an NVIDIA RTX A6000) versus 326.5 seconds on the CPU (a 32 core AMD
+3970X).  Work out the division and that’s 12.2x faster on the GPU.  If
+you’d prefer a clean 2048 sample per pixel rendering, the GPU gets through
+that in 215.6 seconds, once again over 12x faster than the CPU doing the same.</p>
+
+<p>And so it’s obvious why time to first pixel matters so much.  From start to
+finish, that 256 sample per pixel rendering takes about 90 seconds of
+wall-clock time.  Two thirds of it is spent getting things ready to render,
+30% is rendering, and the rest is a few seconds of shutting things down at
+the end.  With rendering being that fast, if you want to see that image
+sooner, optimizing startup time can be a better place to focus than
+optimizing rendering time.  Naturally, startup time matters less as the
+number of pixel samples increases, but that has to go well into the
+thousands of them before startup time starts to be insignificant.</p>
+
+<p>There is good news and bad news about memory: the scene needs “just” 29.0
+GB of GPU memory to render.  I’m happy with that in absolute terms, but
+unfortunately it limits how many GPUs can handle the scene.  It would be
+nice to find a way to fit it in 24 GB, in which case it could be rendered
+on an RTX 3090, but for now the full scene requires something along the
+lines of an RTX A6000.  (As a workaround, removing the “isIronwoodA1” and
+“isCoral” models gets it down under 24 GB with limited visual impact and,
+bonus, takes time to first pixel down to 51 seconds.)</p>
+
+<p>As far as where the time is spent, pbrt-v4 offers a <code class="highlighter-rouge">--stats</code> command-line
+option that prints out various statistics after rendering finishes.  When
+the GPU is used, it gives a summary of where the GPU spent its time during
+rendering.  Here, sorted and summarized, is what it has to say about
+rendering the main view of the Moana Island:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left"> </th>
+      <th style="text-align: right">  Total Time (ms)  </th>
+      <th style="text-align: right">  Percentage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Tracing closest hit rays</td>
+      <td style="text-align: right">11976.57</td>
+      <td style="text-align: right">45.4%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Tracing shadow rays</td>
+      <td style="text-align: right">8441.60</td>
+      <td style="text-align: right">32.0%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Material/BSDF evaluation and shading</td>
+      <td style="text-align: right">4294.59</td>
+      <td style="text-align: right">16.3%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Generating samples</td>
+      <td style="text-align: right">638.44</td>
+      <td style="text-align: right">2.4%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Generating camera rays</td>
+      <td style="text-align: right">443.17</td>
+      <td style="text-align: right">1.7%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Handling escaped rays</td>
+      <td style="text-align: right">267.56</td>
+      <td style="text-align: right">1.0%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Updating the film</td>
+      <td style="text-align: right">127.35</td>
+      <td style="text-align: right">0.5%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Handling emitters hit by indirect rays</td>
+      <td style="text-align: right">97.47</td>
+      <td style="text-align: right">0.4%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Other</td>
+      <td style="text-align: right">75.61</td>
+      <td style="text-align: right">0.3%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>That’s 77.4% of the total runtime spent on ray intersection tests and
+associated <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/wavefront/intersect.h#L49">enqueuing of subsequent
+work</a>.
+Most of the rest is in that 16.3% of material and BSDF work that is done at
+each intersection.  It includes evaluating textures, sampling light
+sources, and evaluating and sampling BSDFs.  For less complex scenes,
+that’s where most of the runtime is normally spent.</p>
+
+<p>With apologies to the artists who spent untold hours on the textures for
+this scene, here is another view of the island scene, this one the
+“rootsCam” camera. (Direct links to the EXRs: 
+<a href="/matt/blog/images/moana-roots-cpu-256spp.exr">CPU</a>, 
+<a href="/matt/blog/images/moana-roots-gpu-256spp.exr">GPU</a>.)</p>
+
+<div class="card-img-top" style="display:block; width: 100%; padding-top: 47%;  position:relative;">
+<div id="rootsview" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div></div>
+<script>
+Jeri.renderViewer(document.getElementById('rootsview'), {
+  title: 'rootsview', children: [
+ { title: 'CPU', image: '/matt/blog/images/moana-roots-cpu-256spp.exr' },
+ { title: 'GPU', image: '/matt/blog/images/moana-roots-gpu-256spp.exr' }
+ ]});
+</script>
+
+<p><br /></p>
+
+<p>Again rendered at 256 samples per pixel, this took 32.1 seconds to render
+on the GPU and 557.6 seconds on the CPU.  That’s 17.4x faster on the GPU,
+with a similar breakdown of where the time was spent.</p>
+
+<p>With this viewpoint the shortcomings of pbrt-v4’s current approach for
+Ptex on the GPU are even more obvious; not only do the sand dunes appear
+faceted from lack of texture detail, but we have lost all of the fine
+bump-mapping detail.  (Turns out, taking differences of a constant function
+to compute shading normals doesn’t work out so well.)</p>
+
+<p>However, it is clear from these images that it is the GPU that is giving
+the better result in those tufts of grass in the lower right.  The CPU’s
+rendering path isn’t getting the self-shadowing correct down there, while
+the GPU’s is.  (The same thing is happening in the palm fronds in the main
+view.)  This discrepancy was unexpected and is something to chase down in
+the future. I suspect the issue stems from the CPU curve implementation
+needing a <a href="https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L719">fairly large
+epsilon</a>
+at ray intersections; this is necessary to avoid self-intersections since
+the CPU’s curve shape orients itself to face the ray being traced.  On the
+GPU, a much smaller epsilon is possible because true geometry is used for
+curves.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The 12-17x speedups on the GPU are not based on a comparison of
+perfectly-matching implementations, though other than the ray intersection
+routines, curves, and Ptex, both otherwise run the same C++ code.  Each is
+better and worse than the other in different ways: while the diced curve
+representation used on the GPU turned out to be superior to the CPU’s curve
+shape, the lack of proper Ptex texturing on the GPU at the moment is a
+loss.</p>
+
+<p>One nice thing about the performance breakdown on the GPU is that there’s
+plenty of headroom to do more shading work.  With 77% of runtime spent on
+ray intersections and 16% on shading, even doubling the cost of shading
+with a more complete Ptex implementation wouldn’t increase the overall
+runtime very much.  I expect that the GPU’s speedup wouldn’t be too
+different with those two differences harmonized.</p>
+
+<p>Next time we’ll come back to to review where pbrt-v4 stands in the time to
+first pixel department and then end this series, at least for now, with
+some renderer-design retrospection.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Rendering in Camera Space(ish)</title>
+  <meta name="description" content="Wherein choosing the right coordinate system for ray intersection calculations is shown to be important and where the obvious fix has surprising performance ...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/03/02/rendering-in-camera-space.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Rendering in Camera Space(ish)</h1>
+    <p class="post-meta">
+      <time datetime="2018-03-02T00:00:00-06:00" itemprop="datePublished">
+        
+        Mar 2, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>In which coordinate system should we perform geometric and lighting
+calculations in our renderer?  Object space? World space? Camera space?  On
+the face of it, it seems that it doesn’t matter: it’s a simple matter of a
+transformation matrix to get from one coordinate system to another, so why
+not use whichever one is most convenient?</p>
+
+<p>In a ray tracer, “most convenient” generally means world space: with that
+approach, the camera generates world-space rays and shapes in the scene are
+either transformed to world space for intersection tests (the typical
+approach for triangle meshes), or rays are transformed to shapes’ object
+space and intersection points are transformed back to world space.</p>
+
+<p>There is a problem with transforming geometry to world space, however:
+floating-point numbers have less precision the farther one moves from the
+origin.  Around the value 1, the spacing between adjacent representable
+float32s is roughly \(6 \times 10^{-8}\).  Around 1,000,000, it’s about
+\(6 \times 10^{-2} = 0.06\).  Thus, if the scene is modeled in meters and
+the camera is 1,000km from the origin, no details smaller than 6cm can be
+represented. In general, we’d like more precision for things close to the
+camera since, well, the camera can see them better.</p>
+
+<p>A few images show the problem.  First, we have a sports car model from the
+<a href="https://pbrt.org/scenes-v3.html">pbrt-v3-scenes</a> distribution.  Both the
+camera and the scene are near the origin and everything looks good.</p>
+
+<p><img src="/matt/blog/images/sportscar.png" alt="" />
+<em>(Cool sports car model courtesy <a href="http://twitter.com/MirageYM">Yasutoshi Mori</a>.)</em></p>
+
+<p>Next,
+we’ve translated both the camera and the scene 200,000 units from the
+origin in \(x\), \(y\), and \(z\).  We can see that the car model is
+getting fairly chunky; this is entirely due to insufficient floating-point
+precision.</p>
+
+<p><img src="/matt/blog/images/sportscar-200k.png" alt="" />
+<em>(Thanks again to <a href="http://twitter.com/MirageYM">Yasutoshi Mori</a>.)</em></p>
+
+<p>If we move \(5 \times\) farther away, to 1 million units from the
+origin, things really fall apart; the car has become an extremely coarse
+voxelized approximation of itself—both cool and horrifying at the same
+time.  (Keanu wonders: is Minecraft chunky purely because everything’s
+rendered really far from the origin?)</p>
+
+<p><img src="/matt/blog/images/sportscar-1m.png" alt="" />
+<em>(Apologies to <a href="http://twitter.com/MirageYM">Yasutoshi Mori</a> for what has
+been done to his nice model.)</em></p>
+
+<p>As an aside, I’m happy that the shading is reasonable given the massive
+geometric imprecision: pbrt-v3 introduces some <a href="https://pbrt.org/fp-error-section.pdf">new techniques for bounding
+floating-point error in ray intersection
+calculations</a> that give robust
+offsets for shadow rays that ensure that they never incorrectly
+self-intersect geometry.  It seems to be working well even in this extreme
+case of having very little precision available.</p>
+
+<p>Rasterizers generally sidestep this problem completely: typical practice is
+to maintain a single model-view matrix that both encodes the object to
+world and world to camera transformations together.  Thus, if the camera is
+translated far from the origin, and the scene is also moved along with it,
+those two translations will cancel out right there in the matrix; in the
+end, vertices are transformed directly to camera space and then
+rasterization and shading proceed from there.</p>
+
+<p>Sounds great; it’s easy enough to do that in a ray tracer, so let’s fix
+this annoying little problem—a few lines of code to write, some testing,
+and then time to feel good about having cleaned up a little annoyance.</p>
+
+<p>I went ahead and hacked pbrt to do just this, passing the camera an
+identity transform for the world to camera transform and then prepending
+the world to camera transformation before object to world transformations.
+Thus, for example, triangle meshes transform their vertices all the way out
+to camera space and the camera views them from the origin.  With this
+change, we get essentially the same image regardless of how far away we
+move from the origin and the most floating point precision is available
+where we want it most.</p>
+
+<p>Success?  Not quite.  For this scene, rendering time increased by nearly
+20% with the switch to using camera space, all of it increased time in BVH
+traversal and ray-triangle intersection calculations; \(2.37 \times\)
+more ray-triangle intersection tests were performed.  What’s up with that?
+After a little digging and a little bit of thinking, the answer became
+clear. Here’s a hint:</p>
+
+<p><img src="/matt/blog/images/bbox.png" alt="" /></p>
+
+<p><em>Ceci n’est pas a tight bounding box.</em></p>
+
+<p>The full camera viewing transform for this scene also includes some
+rotation and it so happens that many of the triangles in the scene are
+perpendicular to a coordinate axis or close to it.  (So it goes with humans
+creating scenes in modeling systems.)  Thus, we get nice tight bounding
+boxes around those triangles in world space but fairly bad ones in camera
+space.  From there, it’s inevitable that the BVH we build will be sloppy
+and we’ll end up doing many more intersection tests than before.</p>
+
+<p>This is a general problem with acceleration structures like BVHs: rotating
+the scene can cause a significant reduction in their effectiveness.  The
+issue was first identified by Dammertz and Keller, <a href="http://ieeexplore.ieee.org/document/4634636">The edge volume
+heuristic—robust triangle subdivision for improved BVH
+performance</a>; see followup
+work by Stich et al., <a href="http://www.nvidia.com/object/nvidia_research_pub_012.html">Spatial splits in bounding volume
+hierarchies</a>,
+Popov et al., <a href="https://scidok.sulb.uni-saarland.de/bitstream/20.500.11880/26033/1/Popov_et_al._Object_Partitioning_Considered_Harmful.pdf">Object partitioning considered harmful: space subdivision
+for
+BVHs</a>,
+and Karras and Aila’s <a href="http://research.nvidia.com/publication/fast-parallel-construction-high-quality-bounding-volume-hierarchies">Fast parallel construction of high-quality bounding
+volume
+hierarchies</a>
+if you’re interested in the details.</p>
+
+<p>For this particular case, we can make an expedient choice to restore
+performance without needing to implement a more sophisticated BVH
+construction algorithm: decompose the world to camera transform into a
+translation and a rotation and leave the rotation in the camera’s
+transformation.</p>
+
+<p>We first transform the point \((0,0,0)\) from camera space to world space
+to find the position of the camera in the scene.  Then, when adding
+geometry to the scene, we prepend the translation that moves the camera to
+the origin to the geometry’s object to world transformation, giving us an
+object to camera-save-for-the-rotation transformation.  The camera, then,
+is only given the remaining rotation component for its
+not-actually-the-world to camera transformation: it happily sits at the
+origin and rotates to face the scene, which has been brought to it but not
+rotated further.</p>
+
+<p>With this adjustment, performance is back to where it was when we started
+but we’ve reaped the benefits of rendering in camera space: we have the
+most floating-point precision for things that are close to the camera,
+which is where it’s most useful.  It was all slightly more complicated than
+originally envisioned, but happily pretty straightforward in the end.
+While this adjustment doesn’t noticeably improve image quality for most
+scenes, which tend to be well behaved with respect to where the camera is
+located and what it’s looking at, it’s good to know that even for
+challenging viewing configurations, the renderer will still do well.</p>
+
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

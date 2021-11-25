@@ -1,0 +1,2006 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-08-07T08:12:43-05:00</updated><id>https://pharr.org/matt/blog/</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth</title><link href="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth" /><published>2021-08-07T00:00:00-05:00</published><updated>2021-08-07T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html">&lt;p&gt;At the ostensible &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html&quot;&gt;end of these
+updates&lt;/a&gt; about
+pbrt-v4’s performance when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana Island
+scene&lt;/a&gt;,
+there was an unresolved question about why CPU utilization wasn’t better at
+the very start when pbrt was parsing the scene description.  As a
+refresher, with 64 threads on a 32-core AMD 3970X CPU and pbrt’s GPU-based
+rendering path, it looked like this. (As before, the vertical dashed line
+indicates when rendering begins.)&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-64-truefin-rescaled.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;Starting at the 17 second mark, low CPU utilization isn’t necessarily bad
+since that’s when the GPU starts getting involved building acceleration
+structures, but before that it’s all on the CPU.  For the first twelve or so
+seconds, total CPU utilization is between 0.2 and 0.4, which corresponds to
+roughly 13–26 of those 64 threads actually making something of themselves;
+that’s not enough of them to be satisfying.&lt;/p&gt;
+
+&lt;p&gt;It started to nag at me whether limited disk bandwidth might have something
+to do with that—i.e., is the issue that threads are stalled waiting for
+I/O?  I made a few measurements to try to answer that question and learned
+enough along the way that here we go again.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-far-we-have-come&quot;&gt;How Far We Have Come&lt;/h2&gt;
+
+&lt;p&gt;Three years ago when I &lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html&quot;&gt;first looked at pbrt’s performance with Moana
+Island&lt;/a&gt; I was using a
+Google Compute Engine instance with a spinny disk for benchmarks.  Nowadays
+you might hope for around 100 MB/s of read bandwidth from such a disk.
+pbrt-v4 reads a total of 27,766 MB from disk when loading this
+scene and it takes a lot of 100 MBs to get through all of that.  Therefore,
+when I was doing benchmarks then I was careful to flush the OS’s buffer
+cache between runs so that the true cost of I/O was measured
+and everything didn’t come out of RAM after the first time at rates much
+better than 100 MB/s.&lt;/p&gt;
+
+&lt;p&gt;This time around, I didn’t mention the disk on the system I used for
+benchmarking and I didn’t worry about the buffer cache.  That wasn’t an
+oversight, but was more of a “I’m pretty sure this doesn’t matter”&lt;sup id=&quot;fnref:ps&quot;&gt;&lt;a href=&quot;#fn:ps&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; sort of
+thing, like which version of the Linux kernel was running or whether it was
+DDR4 3200 or DDR4 3600 RAM in the system.  (For the record, 5.8.0 and the
+former.)&lt;/p&gt;
+
+&lt;p&gt;The disk I’m using now is an NVMe disk; a quick benchmark showed that it
+delivers a peak of 2,022 MB/s of read bandwidth.  I didn’t think that could
+be a bottleneck, though if you distribute those 2,022 MB/s evenly to 64
+threads, it’s just 32 MB/s per thread.  Thinking about it in those terms
+made me worry that bandwidth might be tight, so I decided to make some
+direct measurements and see what they had to show.&lt;/p&gt;
+
+&lt;h2 id=&quot;starting-position&quot;&gt;Starting Position&lt;/h2&gt;
+
+&lt;p&gt;First, I measured pbrt’s disk bandwidth use over time to get a sense of
+whether it ever approached the peak and to see how disk reads were
+distributed over the course of loading the scene.  (This and following
+measurements were made with an empty buffer cache, just to be safe.)
+&lt;code class=&quot;highlighter-rouge&quot;&gt;iostat&lt;/code&gt; made that easy to do, though sadly it doesn’t seem to be able to
+report I/O with less than one second granularity, which is more coarse than
+one would like given 30 seconds time to first pixel.  In any case, here is
+a graph of what it had to say; the disk’s measured maximum I/O bandwidth is
+marked with a dashed horizontal line.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/moana-io.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;For the first 20 or seconds, pbrt is mostly parsing text *.pbrt scene
+description files; it starts out consuming plenty of bandwidth but then
+slows as there are fewer files left to get through.  The second wave
+of I/O starting at 20 seconds corresponds to reading all of the PLY files for the
+object instances in the scene.  The news in this graph is mostly good: pbrt
+doesn’t seem to ever top out at the maximum bandwidth, suggesting that
+it’s not I/O bound, though it’s close enough at 9 seconds there that it’s
+not possible to be sure from these measurements.&lt;/p&gt;
+
+&lt;p&gt;This data also makes it possible to compute an alternative speed of light
+measurement for time to first pixel.  If we divide the total size of data
+read, 27,766 MB, by the peak read bandwidth of 2,022 MB/s, we can see that we
+can’t hope to have a time to first pixel under 13.7 seconds.  That’s already an
+interesting result, as it shows that the &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html#speed-of-light&quot;&gt;earlier speed of light
+calculation&lt;/a&gt;
+that only considered the CPU didn’t tell the whole story: then, 
+neglecting I/O limits, we estimated 7.2 seconds as the best possible time
+to first pixel.&lt;/p&gt;
+
+&lt;p&gt;Another thing this graph shows is that pbrt is close enough to being I/O
+bound at the start that there isn’t a lot of reason to worry about the
+relatively low CPU utilization then.  We might improve
+it some by finding more things to start reading sooner, but the benefit
+would be limited since we would soon hit peak disk bandwidth and be limited
+by that.  Further performance improvements would then require a better
+balance of I/O requests over time.&lt;/p&gt;
+
+&lt;h2 id=&quot;turning-the-bandwidth-screw&quot;&gt;Turning The Bandwidth Screw&lt;/h2&gt;
+
+&lt;p&gt;The data already seemed fairly conclusive about not being I/O bound, but I
+was curious about how performance varied with disk read bandwidth—how
+crucial is that lovely abundant NVMe bandwidth to pbrt’s performance with
+this scene?  One way to find out is to start reducing the amount of disk
+read bandwidth available to pbrt and to see how that affects performance.&lt;/p&gt;
+
+&lt;p&gt;Once you find &lt;a href=&quot;https://unix.stackexchange.com/a/393798&quot;&gt;the right trick&lt;/a&gt;
+it’s surprisingly easy, at least on Linux, to use &lt;code class=&quot;highlighter-rouge&quot;&gt;systemd-run&lt;/code&gt; to launch a
+process that has a limited amount of disk read bandwidth available to it.
+I did a quick study, dialing the bandwidth down from the 2,000 MB/s that my
+NVMe drive offers to the sad 50 MB/s that a middling spinning disk today
+might provide.&lt;/p&gt;
+
+&lt;p&gt;Here is a graph of pbrt-v4’s time to first pixel with the Moana Island
+scene as a function of available disk bandwidth, running with both 8
+threads on 4 cores and 64 threads on 32 cores. Note that the y axis has a
+logarithmic scale, the better to fit the sadness that is a nearly 600
+second time to first pixel given 50 MB/s.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-vs-read-bandwidth.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;There are a number of things to see in this graph.  First, it offers
+further confirmation that pbrt-v4 is not bandwidth limited for this scene:
+the fact that performance doesn’t immediately decrease as bandwidth starts
+to decrease from 2,000 MB/s indicates that more bandwidth isn’t going to make things
+faster.  Both lines seem to have hit their asymptote, though the 64 thread
+one just barely so.&lt;/p&gt;
+
+&lt;p&gt;This graph also shows how much bandwidth can decrease before performance is
+meaningfully affected.  With 64 threads, you only have to go to 1400 MB/s
+to slow down time to first pixel by 10%, but with 8 threads you can go all
+the way to 800 MB/s before there’s a 10% drop.  This isn’t surprising—the
+more threads you’ve got, the more bandwidth you’re capable of
+consuming—but it’s nevertheless interesting to see how much farther one
+can go with fewer threads.&lt;/p&gt;
+
+&lt;p&gt;Finally, note that below 500 MB/s, the two curves are
+effectively the same.  Here, too, there’s no big surprise: if you’re trying
+to drink through a narrow straw, having more thirsty people waiting in line
+on the end of it isn’t going to get the water through more quickly, to grossly
+overstretch a metaphor.&lt;/p&gt;
+
+&lt;h2 id=&quot;deflate-deflate-deflate&quot;&gt;DEFLATE, DEFLATE, DEFLATE&lt;/h2&gt;
+
+&lt;p&gt;Compression algorithms make it possible to trade off bandwidth for
+computation, so my last experiment was to look at performance with the
+scene description compressed using &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;.  Thanks to a recent &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/6577a325a4cb934efac3b10f3b33847cf0d93ea4&quot;&gt;patch from
+Jim
+Price&lt;/a&gt;,
+pbrt-v4 now supports reading &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;-compressed scene description files, and
+&lt;a href=&quot;https://w3.impa.br/~diego/software/rply/&quot;&gt;RPly&lt;/a&gt;, the PLY file reader by Diego Nehab that
+pbrt uses, already supported &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;-compressed PLY files.
+All of that made it easy to run the same experiments with a compressed
+scene description.&lt;/p&gt;
+
+&lt;p&gt;With the *.pbrt and PLY files compressed using &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip -5&lt;/code&gt;, pbrt-v4 reads a
+total of just 5,570 MB from disk—nearly 5x less than with the
+uncompressed scene description.  Using &lt;a href=&quot;https://zlib.net/&quot;&gt;zlib&lt;/a&gt; for
+decompression with 64 threads and the full NVMe disk bandwidth, pbrt takes
+40 seconds to first pixel with a compressed scene—12 seconds slower than
+with everything uncompressed.  Given that it wasn’t bandwidth-limited
+before, that isn’t surprising—we have just increased the amount of CPU
+work that needs to be done to get the scene into memory.&lt;/p&gt;
+
+&lt;p&gt;Here is the graph of disk I/O consumption over those 40 seconds; it shows
+that now there is plenty of headroom with never more than 500 MB/s of
+bandwidth used.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/moana-io-gz.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;As we were going to press, I saw that Aras Pranckevičius just put up a nice
+series of &lt;a href=&quot;https://aras-p.info/blog/2021/08/04/EXR-Lossless-Compression/&quot;&gt;blog posts about compression in
+OpenEXR&lt;/a&gt;.
+Those led me down all sorts of ratholes, and one of them reminded me about
+&lt;a href=&quot;https://github.com/ebiggers/libdeflate&quot;&gt;libdeflate&lt;/a&gt;, a highly optimized
+library that can decompress gzip-encoded files (among others).  It wasn’t too
+much code to swap that in for zlib in pbrt and &lt;strong&gt;bam&lt;/strong&gt;: down to 34 seconds
+to first pixel with a compressed scene.  And that’s actually only using
+libdeflate for the *.pbrt files but still using zlib for the 1,152 MB worth
+of compressed PLY files, since using libdeflate with RPly would have
+required more complicated plumbing.&lt;/p&gt;
+
+&lt;p&gt;Anyway, here’s a graph that shows time to first pixel with all three
+options, again with 64 threads. libdeflate gets an asterisk, since it
+isn’t being used for PLY files (and there is thus presumably some
+performance being left on the floor.)&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-vs-read-gz.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;There’s lots of good stuff to see there.  As advertised, libdeflate is
+certainly faster than zlib. It starts being the fastest option overall at
+around 1,300 MB/s of bandwidth.  From there on down, the additional CPU
+work to do decompression is worth the disk bandwidth savings in return. (In
+contrast, zlib doesn’t make up for its computational overhead until
+around 1,000 MB/s.)&lt;/p&gt;
+
+&lt;p&gt;Both decompressors have more or less constant performance all the way down
+to roughly 300 MB/s from the disk.  Past there, their performance
+converges: at that point, data is coming in so slowly that how quickly it’s
+decompressed doesn’t make much difference.  We can also see that
+compression is especially helpful way down at 50 MB/s, where it’s leads to
+a spritely 127 seconds to first pixel—4.6x faster than the uncompressed
+scene is with that little bandwidth.&lt;/p&gt;
+
+&lt;h2 id=&quot;discussion&quot;&gt;Discussion&lt;/h2&gt;
+
+&lt;p&gt;For once we have gotten through these investigations without finding any
+surprising bottlenecks and so today has not brought any changes to pbrt’s
+implementation, though I suspect pbrt will switch from zlib to libdeflate
+fairly soon.&lt;/p&gt;
+
+&lt;p&gt;Perhaps the most useful result from today is a more accurate estimate of
+pbrt’s best possible performance when preparing to render this scene:
+13.7 seconds given the disk I/O limits of the system.  With that limit
+known, it’s easier to accept the 28 seconds to first pixel that the system
+delivers today—apparently only 2x off the maximum attainable
+performance—and to stop fiddling with the details.&lt;/p&gt;
+
+&lt;p&gt;And yet… I hope that the attentive reader might quibble with the logic
+behind that conclusion: with the compressed scene, we found ourselves with
+a mere 5,570 MB of disk I/O, and that’s something this computer can deliver
+in 2.75 seconds, which puts us once again 10x off the mark.  It seems that
+part of speed of light is in how you define it, but nevertheless I think
+it’s time to leave things where they lie for now.&lt;/p&gt;
+
+&lt;h2 id=&quot;note&quot;&gt;note&lt;/h2&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:ps&quot;&gt;
+      &lt;p&gt;The road to disastrous performance is paved with “pretty sure” assumptions about a system’s behavior, so that assumption was admittedly not wise. &lt;a href=&quot;#fnref:ps&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">A few concluding notes (this time for real) about the effect of disk bandwidth when preparing to render the Moana Island scene with pbrt-v4.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 11): Once More Unto The Beach</title><link href="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 11): Once More Unto The Beach" /><published>2021-08-01T00:00:00-05:00</published><updated>2021-08-01T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html">&lt;p&gt;There are two perspectives that one might take in assessing how far things
+have come with pbrt-v4’s performance with &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana Island
+scene&lt;/a&gt;: the
+optimist’s and the pessimist’s.  As far as rendering performance goes, I
+can’t find much to be pessimistic about.  The GPU especially has done well
+on that front, to the point that time spent parsing the scene description
+and preparing data structures for rendering—time to first pixel—is a
+significant contributor to overall performance when it is used.&lt;/p&gt;
+
+&lt;p&gt;About time to first pixel: here is the optimist’s view, which looks at
+progress measured with respect to where we started.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt; &lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Time&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Speedup&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v3 (&lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html&quot;&gt;July 2018&lt;/a&gt;)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;2098s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-next (&lt;a href=&quot;/matt/blog/2018/08/03/moana-reader-mail.html&quot;&gt;August 2018&lt;/a&gt;)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;558s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;3.76x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v4 (&lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;April 2021 start&lt;/a&gt;)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;410s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;5.12x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v4 (&lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;April 2021 end&lt;/a&gt;)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;97s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;21.6x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v4 GPU (&lt;a href=&quot;/matt/blog/2021/07/27/moana-gpu-instances.html&quot;&gt;July 2021&lt;/a&gt;)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;59.6s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;35.2x&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;From that perspective, it’s been a smashing success, bringing a heavy scene
+from something that is nearly intolerable to render to something that has a
+bit of a hitch getting started, no big deal for what you get in return.&lt;/p&gt;
+
+&lt;p&gt;For an alternative viewpoint, here is the graph of pbrt’s CPU utilization
+over those 59.6 seconds up until the start of rendering, with all of those
+improvements in there and measured with 64 threads on a 32-core AMD
+3970X CPU. As before, the x axis is measured in seconds, a value of 1 on
+the y axis represents all 64 threads running, and the time at which
+rendering starts is indicated with a vertical dashed line.  Unlike the last
+two posts, this graph starts from the very beginning, so parsing and
+related work is back in there again.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-fin-64.svg&quot; alt=&quot;CPU utilization (64 threads, starting point)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;After what seemed like good progress from addressing post-parsing
+bottlenecks, it’s disheartening to see how bad the complete graph
+is—there’s still an enormous amount of space above the line, all of it
+wasted potential.  Therefore, today it’ll be one more go at improving
+parallelism and reducing time to first pixel.&lt;/p&gt;
+
+&lt;p&gt;Before getting to work, let’s distract ourselves with an image.  Here’s the
+beach view, again at 256 samples per pixel, rendered on both the CPU and
+the GPU. My hacky &lt;a href=&quot;/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html#preliminaries-textures-and-curves&quot;&gt;GPU Ptex
+implementation&lt;/a&gt;
+fares better here than in the roots view, though there are still issues on
+the sand dunes and the tree trunks.&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;beachview&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('beachview'), {
+  title: 'beachview', children: [
+ { title: 'CPU', image: '/matt/blog/images/moana-beach-cpu-256spp.exr' },
+ { title: 'GPU', image: '/matt/blog/images/moana-beach-gpu-256spp.exr' }
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;With &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/b6a3f681108d5ebd414b0aa0a5d4ba4c99eca8e4&quot;&gt;the version of pbrt that is today’s starting
+point&lt;/a&gt;,
+the RTX A6000 GPU renders its image in 36.3 seconds, taking a total of 105
+seconds of wall-clock time including parsing the scene and setting up the
+data structures.  The 32 core AMD 3970X takes 928 seconds to render it, or
+1033 seconds including everything.  Rendering is slightly over 25x faster
+with the GPU.&lt;/p&gt;
+
+&lt;h2 id=&quot;speed-of-light&quot;&gt;Speed of Light?&lt;/h2&gt;
+
+&lt;p&gt;That graph made it clear that time to first pixel could be better. But how
+much better?  The area under the graph represents the amount of CPU work
+that is done over the course of getting started and summing it up gives us
+the total amount of CPU work required.&lt;/p&gt;
+
+&lt;p&gt;It’s easy enough to modify pbrt’s logging code to track the total CPU
+utilization, from which we can learn that it would be 463 seconds of
+single-threaded work to get everything up and running.  Thus, in fantasy
+perfect parallel scaling world, we would start rendering after 7.2 seconds
+on a 32-core/64-thread system as long as the GPU didn’t become the
+bottleneck.&lt;/p&gt;
+
+&lt;p&gt;Put another way, the 59 second time to first pixel with 64 threads is
+slightly more than 8x worse than speed of light performance.  Knowing that
+pbrt was still that far off was a painful realization, but it was enough to
+motivate giving the code more attention.  So what’s holding it back?&lt;/p&gt;
+
+&lt;h2 id=&quot;serialization-everywhere&quot;&gt;Serialization Everywhere&lt;/h2&gt;
+
+&lt;p&gt;A hindrance that comes from pbrt’s design is that we have thus far been
+trying to parallelize within distinct phases of computation but never
+across them.  It starts reading textures only after parsing is finished; it
+starts creating lights only after textures are done; the BVHs for
+non-instanced geometry are created before the BVHs for the object
+instances, and so forth.  This constraint means that available parallelism
+is often limited, making it harder to effectively scale up to use many CPU
+cores.&lt;/p&gt;
+
+&lt;p&gt;Concretely, within the first milliseconds of the start of parsing the Moana
+Island scene, we know that there’s an environment light with its emission
+specified by a PNG image; however, the slow (single threaded) reading and
+decompression of that PNG doesn’t get started until more than 30 seconds
+later when parsing has finished. Then, it’s pretty much the only work
+available and all the other threads are unable to do anything useful.  Why
+not start sooner and keep an otherwise-idle thread busy while other threads
+are processing those few last large scene files?&lt;/p&gt;
+
+&lt;p&gt;Honestly, pbrt’s startup phase had mostly been designed without parallelism
+in mind; the biggest goal was that it be easily understood by the reader
+and that it be simple enough to not use too many pages in the printed book.
+Thus, the idea of “first there is a parsing phase”, “now there is a light
+creation phase”, and so forth.  However, given the state of CPU utilization
+in that earlier graph, I spent a while mulling over whether that design
+should be revisited.  I was sure that there was performance to be had from
+doing so, but I worried about making the system harder to understand and
+debug.  At tension with the goal for pbrt to be understandable is an
+aspiration to show best practices and to illustrate more broadly-useful
+programming techniques; if that part of the system has really bad parallel
+scaling, then that isn’t really best practices, is it?&lt;/p&gt;
+
+&lt;p&gt;Something that helped tip the balance was the fact that C++17 has built-in
+support for
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Futures_and_promises&quot;&gt;futures&lt;/a&gt;&lt;sup id=&quot;fnref:goog&quot;&gt;&lt;a href=&quot;#fn:goog&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; and
+has reasonably clean support for asynchronous tasks.  With the building
+blocks in the core language, showing what the concepts are good for seemed
+like it might be worthwhile in exchange for any added complexity.  And the
+beauty of futures is that your thread will just stall if it tries to access
+something before it’s ready; there’s not a risk of tricky race conditions.&lt;/p&gt;
+
+&lt;p&gt;As I started exploring a redesign of that part of pbrt, I found that C++’s
+language built-ins weren’t quite right out of the box: I wanted to run
+asynchronous tasks using pbrt’s already-existing thread pool, which isn’t
+supported by &lt;code class=&quot;highlighter-rouge&quot;&gt;std::async&lt;/code&gt;.  Fortunately, it was under 30 lines of code to
+wrap up an asynchronous job into &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/2e6aace69d877295d33292dffa3239e04546d44b/src/pbrt/util/parallel.h#L315&quot;&gt;something that could run in pbrt’s task
+system&lt;/a&gt;.
+The other thing necessary was a small
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/2e6aace69d877295d33292dffa3239e04546d44b/src/pbrt/util/parallel.h#L291&quot;&gt;wrapper&lt;/a&gt;
+around &lt;code class=&quot;highlighter-rouge&quot;&gt;std::future&lt;/code&gt; that would call into the job system to do work in the
+current thread if a future that was waited on wasn’t ready; that avoided
+deadlock, as would have been a problem otherwise with a fixed number of
+threads in a thread pool.&lt;sup id=&quot;fnref:al&quot;&gt;&lt;a href=&quot;#fn:al&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;embracing-the-asynchronous-life&quot;&gt;Embracing The Asynchronous Life&lt;/h2&gt;
+
+&lt;p&gt;With infrastructure that made it easy to kick off asynchronous work, it was
+time to start putting it to use.  An easy first step was to
+asynchronously create the &lt;code class=&quot;highlighter-rouge&quot;&gt;Media&lt;/code&gt; objects that represent participating
+media; that doesn’t matter for the Moana Island scene, but it was the
+simplest first thing to port over.  &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/117b1c135136633c3701f8bdc5b0c00d02a25f8b&quot;&gt;It wasn’t much
+code&lt;/a&gt;
+and, auspiciously, it worked the first time.&lt;/p&gt;
+
+&lt;p&gt;Next up: lights, the known troublemaker.  Again, &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/3cdc3a9ef7af0ed61981add9da50909ec2746994&quot;&gt;not too much
+code&lt;/a&gt;,
+and more importantly, having written it, I don’t think there’s anything too
+complex going on there: as soon as the renderer hears about a light in the
+scene, it can kick off a call to &lt;code class=&quot;highlighter-rouge&quot;&gt;RunAsync()&lt;/code&gt; to create it.  It holds on to
+a vector of &lt;code class=&quot;highlighter-rouge&quot;&gt;Future&amp;lt;Light&amp;gt;&lt;/code&gt;s and then consumes the values returned in the
+futures much later—usually well after the time they were actually
+created.  That change alone improved time to first pixel with the Moana
+Island scene by 5 seconds, which was more than enough encouragement to keep
+going.&lt;/p&gt;
+
+&lt;p&gt;Textures were next and they weren’t too tricky either, mostly &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/8e1c779f2e1afebf6a630bbc31d038c6bcbe94e4&quot;&gt;rearranging
+preexisting texture creation
+code&lt;/a&gt;.
+They were good for another few seconds improvement, which brought pbrt to
+just over 50 seconds time to first pixel.  Building the top-level
+acceleration structures for non-instanced geometry asynchronously while
+BVHs for instances were being created was &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/71316edd4e2280c23fad24d71d96aac6846e1f68&quot;&gt;another easy
+one&lt;/a&gt;
+and gave another second or so’s improvement on top of that.&lt;/p&gt;
+
+&lt;p&gt;Here’s how things look with those changes.  Note that the
+“Lights/Textures/Materials” category has disappeared into nothing, with all
+of that work already done during parsing and ready by the time it is needed
+afterward.  (That work is charged to parsing in the CPU utilization
+reported in this graph.  For simplicity, we’ll report CPU utilization by
+phases even as we blur the lines between them.)&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-async-multi.svg&quot; alt=&quot;CPU utilization (64 threads, asynchronous light, texture, and BVH creation)&quot; /&gt; &lt;/p&gt;
+
+&lt;h2 id=&quot;mind-the-parser&quot;&gt;Mind The Parser&lt;/h2&gt;
+
+&lt;p&gt;Eyeballing that graph, we can see that we’re down to just over 10 seconds
+of post-parsing work; nearly 40 seconds of parsing time remain, and that’s
+where we ought to to look for further improvements.  I realized that I
+hadn’t ever profiled pbrt-v4’s parsing and initial scene processing code
+with the Moana Island scene; a quick run of
+&lt;a href=&quot;https://perf.wiki.kernel.org/index.php/Main_Page&quot;&gt;perf&lt;/a&gt; delivered: nearly
+20% of parsing time was spent in the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/2e6aace69d877295d33292dffa3239e04546d44b/src/pbrt/scene.cpp#L405&quot;&gt;method that is called to record each
+use of an object instance in the
+scene&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;There are 39 million instances in the scene so that method gets a workout,
+but near 20% of total parsing time there seemed high.  Half of that was in
+a single &lt;code class=&quot;highlighter-rouge&quot;&gt;std::vector::push_back()&lt;/code&gt; &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/2e6aace69d877295d33292dffa3239e04546d44b/src/pbrt/scene.cpp#L427&quot;&gt;method
+call&lt;/a&gt;,
+so I looked more closely at what was going on with it.&lt;/p&gt;
+
+&lt;p&gt;That &lt;code class=&quot;highlighter-rouge&quot;&gt;vector&lt;/code&gt; is used to record the uses of object instances—for each
+one, it needs to store both the name of the object instance being used as
+well as a transformation matrix.  Even with 39 million instances, that
+still seemed excessive.  I looked at the definition of the object that it
+stores, &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt;.  It was essentially:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;struct InstanceSceneEntity : public SceneEntity {
+    AnimatedTransform *renderFromInstanceAnim = nullptr;
+    Transform *renderFromInstance = nullptr;
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;So you’ve got your instance transformation in one of two flavors and then
+whatever we get from &lt;code class=&quot;highlighter-rouge&quot;&gt;SceneEntity&lt;/code&gt;.  What does it have?&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;struct SceneEntity {
+    std::string name;
+    FileLoc loc;
+    ParameterDictionary parameters;
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There’s &lt;code class=&quot;highlighter-rouge&quot;&gt;name&lt;/code&gt;, which here stores the name of the object instance, there’s
+&lt;code class=&quot;highlighter-rouge&quot;&gt;loc&lt;/code&gt;, which stores its location in a scene description file, handy if we
+need it for an error message, and then we’ve got ourselves a
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ParameterDictionary&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;What’s a &lt;code class=&quot;highlighter-rouge&quot;&gt;ParameterDictionary&lt;/code&gt;? Unnecessary is what it is.  It’s a fairly
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/2e6aace69d877295d33292dffa3239e04546d44b/src/pbrt/paramdict.h#L97&quot;&gt;heavy
+structure&lt;/a&gt;
+that stores user-specified parameters for entities in the scene description
+file—e.g., “this sphere has a float-valued parameter, radius, that has a
+value of 2.5.”  It isn’t needed at all for object instances—it’s just
+weight with lots of extra unused data.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/98cbfcd7993555993fa9d5ba12e8cfeddc792f5c&quot;&gt;The
+fix&lt;/a&gt;
+to stop inheriting from &lt;code class=&quot;highlighter-rouge&quot;&gt;SceneEntity&lt;/code&gt; and to store &lt;code class=&quot;highlighter-rouge&quot;&gt;name&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;loc&lt;/code&gt;
+directly in &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt; changed 6 lines of code.  Time to first
+pixel improved by 6 seconds, with the fix apparently contributing to
+performance improvements in other places that were copying
+&lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt; objects as well.  A bit more time was shaved off in a
+follow-on change that &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/2e6aace69d877295d33292dffa3239e04546d44b&quot;&gt;tuned up the hash table used in
+TransformCache&lt;/a&gt;.
+Together those fixes brought pbrt to 44 seconds to first pixel:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-parserwork.svg&quot; alt=&quot;CPU utilization (64 threads, with parser improvements)&quot; /&gt; &lt;/p&gt;
+
+&lt;h2 id=&quot;increasing-imports&quot;&gt;Increasing Imports&lt;/h2&gt;
+
+&lt;p&gt;That 18 second tail of low CPU utilization at the end of parsing had become
+untenable.  Looking at pbrt’s logs, it was easy to see that the “isBeach”
+and “isCoral” models were laggards there.  A few
+additional uses of the new-ish &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html#parsing-in-parallel&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;
+statement&lt;/a&gt;
+that allows parallel parsing were enough to put more threads working on
+those files, which was enough to bring us to 28.7 seconds to first pixel,
+now 73 times faster than pbrt-v3 was when &lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html&quot;&gt;all this
+began&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Put it all together, and here is where things stand with 64 threads:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-64-truefin.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;Here now, I’m happy to stop, even with some potential left above the line.
+For the last ten or so seconds the GPU is busy building acceleration
+structures, so non-full CPU utilization there is perfectly fine.  I am a
+little surprised that the CPU utilization isn’t better at the very start of
+parsing, though haven’t dug into that further.&lt;/p&gt;
+
+&lt;p&gt;With 4 cores and 8 threads, the news is even better: CPU spends much
+of its time at close to full utilization and it’s 53 seconds to first
+pixel—better than it was with 32 cores when we started today.  Here is
+the CPU utilization graph for that case:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-8-truefin.svg&quot; alt=&quot;CPU utilization (8 threads)&quot; /&gt; &lt;/p&gt;
+
+&lt;p&gt;(This graph uses the same x axis scale as the other graphs in this
+post but here the value 1 on the y axis corresponds to all 8 threads being
+busy.)&lt;/p&gt;
+
+&lt;p&gt;I was surprised to see pbrt spending a few seconds with low CPU utilization in
+“Lights/Textures/Materials” there; presumably that is waiting for the
+environment light source’s future, but I’m not sure why that work wouldn’t
+have been finished earlier along the way.  I’ll also leave answering that
+question for another time.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;As it usually goes with the Moana Island scene, it’s been quite a journey.
+Three years after its release, the complexity it offers continues to be the
+best kind of challenging, even after I think I’ve already learned all of my
+lessons from it.&lt;/p&gt;
+
+&lt;p&gt;Going back to that beach view from earlier in this post: at the start of
+this post, it took a total of 105 seconds of wall-clock time to render with
+the GPU at 256 samples per pixel from start to finish.  With &lt;a href=&quot;https://github.com/mmp/pbrt-v4/tree/2e6aace69d877295d33292dffa3239e04546d44b&quot;&gt;the version
+of pbrt-v4 at the
+end&lt;/a&gt;,
+that’s down to 67 seconds, roughly evenly split between processing the
+scene and doing actual rendering—a fine place for wrap up this go-round with
+the island scene.&lt;/p&gt;
+
+&lt;h2 id=&quot;notes&quot;&gt;notes&lt;/h2&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:goog&quot;&gt;
+      &lt;p&gt;&lt;a href=&quot;/matt/blog/images/google-wth.png&quot;&gt;What the heck, Google??!?&lt;/a&gt; &lt;a href=&quot;#fnref:goog&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:al&quot;&gt;
+      &lt;p&gt;As was learned during the initial implementation of this feature. &lt;a href=&quot;#fnref:al&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">More attention to pbrt's performance when getting ready to render Disney's Moana Island scene finally gets us somewhere.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</title><link href="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 10): Rendering on the GPU—Finally" /><published>2021-07-29T00:00:00-05:00</published><updated>2021-07-29T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html">&lt;p&gt;We’re big fans of actually making pictures around here, so avoiding the
+topic of rendering performance and focusing on performance while getting
+ready for rendering may seem a little off.  A flimsy defense for that is
+“vegetables before dessert”; we must attend to our responsibilities before
+we go off and have fun.  A better justification is more or less Amdahl’s
+law: as rendering time decreases, overall performance is increasingly
+determined by the cost of rest of the work that happens before rendering.
+That motivation should be more clear by the end of this post.&lt;/p&gt;
+
+&lt;h2 id=&quot;preliminaries-textures-and-curves&quot;&gt;Preliminaries: Textures and Curves&lt;/h2&gt;
+
+&lt;p&gt;Making pbrt-v4’s GPU rendering path capable of rendering Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Moana
+Island
+scene&lt;/a&gt;
+required attending to two details that I hadn’t gotten around to until
+recently: supporting both &lt;a href=&quot;https://ptex.us/&quot;&gt;Ptex textures&lt;/a&gt; and pbrt’s
+curve shape on the GPU.  Both features were laggards that hadn’t yet been wired
+up on the GPU and both are used extensively in the Moana Island scene.&lt;/p&gt;
+
+&lt;p&gt;Ptex is a texture representation from Walt Disney Animation Studios that
+works around the uv-mapping problem by splitting meshes into &lt;em&gt;faces&lt;/em&gt; (that
+may themselves be collections of triangles or quads) and then applying a
+plain old [0,1]&lt;sup&gt;2&lt;/sup&gt; parameterization to each face.  The Ptex library 
+handles the details of things like loading textures on demand, caching
+parts of them in memory, and texture filtering.&lt;/p&gt;
+
+&lt;p&gt;To my knowledge, there isn’t a Ptex implementation that runs on the GPU.
+One way to work around this problem is to round-trip to the CPU and service
+Ptex requests there; that approach was taken by Chris Hellmuth when he
+&lt;a href=&quot;https://www.render-blog.com/2020/10/03/gpu-motunui/&quot;&gt;rendered the Moana Island scene on the
+GPU&lt;/a&gt;.  That approach
+gives gold-standard results, but at the cost of synchronization and data
+transfer between the two processors as well as the risk of the CPU being
+the performance bottleneck.&lt;/p&gt;
+
+&lt;p&gt;Ingo Wald &lt;a href=&quot;https://ingowald.blog/2020/10/26/moana-on-rtx-first-light/&quot;&gt;took a different
+approach&lt;/a&gt; when
+he got the Moana Island rendering on the GPU; his implementation resampled
+each face’s texture at a low resolution and then packed the results into
+large flat 2D textures.  That keeps everything on the GPU, but risks
+blurred texture lookups due to insufficient resolution.&lt;/p&gt;
+
+&lt;p&gt;And then there’s the approach I took: for each face, pbrt-v4 computes the
+face’s average texture value and stores it in an array.  A texture lookup[sic] is
+then a simple index into that array using the face index.  (Thus, it’s
+basically Ingo’s approach with “low resolution” taken all the way to a
+single pixel.)  The only thing defensible about my approach is that it’s
+just &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.cpp#L755&quot;&gt;a few lines of
+code&lt;/a&gt;
+to convert Ptex textures into this representation, and texture lookup is
+near-trivial &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.h#L989&quot;&gt;indexing into that
+array&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I can’t say that I’m proud of that solution, but I can at least say that it
+works great for objects that are far away where all you need is the top MIP
+level anyway.  As we will see shortly, it is certainly not
+production-ready.  I hope to get around to replacing it with something
+better in the future, but for now it gets us up and rendering.&lt;/p&gt;
+
+&lt;p&gt;The other thing to take care of was supporting curves on the GPU.
+pbrt-v4’s built-in curve shape uses a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L606&quot;&gt;recursive intersection
+algorithm&lt;/a&gt;
+that is a poor fit for the GPU; I didn’t even try running it there.  OptiX
+does provide a curve primitive, highly optimized, though some plumbing
+would be necessary to wire up pbrt’s curve representation to use it.
+Impatient to get the scene up and rendering, I wrote a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/gpu/aggregate.cpp#L504&quot;&gt;simple function
+that dices curves into bilinear
+patches&lt;/a&gt;.
+(This, too, is something to return to in the future.)&lt;/p&gt;
+
+&lt;p&gt;To my delight, once those two additions were debugged, everything 
+just worked the first time I tried rendering the Moana Island on the GPU.&lt;/p&gt;
+
+&lt;h2 id=&quot;images-and-performance&quot;&gt;Images and Performance&lt;/h2&gt;
+
+&lt;p&gt;Here again is the main view of the island, rendered on both the CPU and the
+GPU with 256 samples per pixel at 1920x804 resolution.  The images are displayed using
+&lt;a href=&quot;https://jeri.io/&quot;&gt;Jeri&lt;/a&gt;, which makes it possible to do all sorts of pixel
+peeping right in the browser.  (Click on the tabs to switch between CPU and
+GPU, or use the number keys after selecting the image. Hit ‘f’ to go
+full-screen. You can also pan and zoom using the mouse.)  If you’d prefer to examine the EXRs directly, here they are:
+&lt;a href=&quot;/matt/blog/images/moana-main-cpu-256spp.exr&quot;&gt;CPU&lt;/a&gt;, &lt;a href=&quot;/matt/blog/images/moana-main-gpu-256spp.exr&quot;&gt;GPU&lt;/a&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;mainview&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('mainview'), {
+  title: 'mainview', children: [
+ { title: 'CPU', image: '/matt/blog/images/moana-main-cpu-256spp.exr' },
+ { title: 'GPU', image: '/matt/blog/images/moana-main-gpu-256spp.exr' }
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;The differences between the image rendered on the CPU and the one rendered
+on the GPU are entirely due to the differences in how Ptex textures and
+curves are handled.  For Ptex, you can see the problems with the current
+approach on the far-away mountainside as well as on the trunks of the palm
+trees.  And then there’s a striking difference in the palm fronds; we’ll
+return to that shortly, but it’s the GPU that has the more accurate result
+there, not the CPU.&lt;/p&gt;
+
+&lt;p&gt;Oh, and about rendering performance?  It’s 26.7 seconds on the
+GPU (an NVIDIA RTX A6000) versus 326.5 seconds on the CPU (a 32 core AMD
+3970X).  Work out the division and that’s 12.2x faster on the GPU.  If
+you’d prefer a clean 2048 sample per pixel rendering, the GPU gets through
+that in 215.6 seconds, once again over 12x faster than the CPU doing the same.&lt;/p&gt;
+
+&lt;p&gt;And so it’s obvious why time to first pixel matters so much.  From start to
+finish, that 256 sample per pixel rendering takes about 90 seconds of
+wall-clock time.  Two thirds of it is spent getting things ready to render,
+30% is rendering, and the rest is a few seconds of shutting things down at
+the end.  With rendering being that fast, if you want to see that image
+sooner, optimizing startup time can be a better place to focus than
+optimizing rendering time.  Naturally, startup time matters less as the
+number of pixel samples increases, but that has to go well into the
+thousands of them before startup time starts to be insignificant.&lt;/p&gt;
+
+&lt;p&gt;There is good news and bad news about memory: the scene needs “just” 29.0
+GB of GPU memory to render.  I’m happy with that in absolute terms, but
+unfortunately it limits how many GPUs can handle the scene.  It would be
+nice to find a way to fit it in 24 GB, in which case it could be rendered
+on an RTX 3090, but for now the full scene requires something along the
+lines of an RTX A6000.  (As a workaround, removing the “isIronwoodA1” and
+“isCoral” models gets it down under 24 GB with limited visual impact and,
+bonus, takes time to first pixel down to 51 seconds.)&lt;/p&gt;
+
+&lt;p&gt;As far as where the time is spent, pbrt-v4 offers a &lt;code class=&quot;highlighter-rouge&quot;&gt;--stats&lt;/code&gt; command-line
+option that prints out various statistics after rendering finishes.  When
+the GPU is used, it gives a summary of where the GPU spent its time during
+rendering.  Here, sorted and summarized, is what it has to say about
+rendering the main view of the Moana Island:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt; &lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;  Total Time (ms)  &lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;  Percentage&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Tracing closest hit rays&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;11976.57&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;45.4%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Tracing shadow rays&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;8441.60&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;32.0%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Material/BSDF evaluation and shading&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;4294.59&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;16.3%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Generating samples&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;638.44&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;2.4%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Generating camera rays&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;443.17&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1.7%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Handling escaped rays&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;267.56&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1.0%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Updating the film&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;127.35&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;0.5%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Handling emitters hit by indirect rays&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;97.47&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;0.4%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Other&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;75.61&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;0.3%&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;That’s 77.4% of the total runtime spent on ray intersection tests and
+associated &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/wavefront/intersect.h#L49&quot;&gt;enqueuing of subsequent
+work&lt;/a&gt;.
+Most of the rest is in that 16.3% of material and BSDF work that is done at
+each intersection.  It includes evaluating textures, sampling light
+sources, and evaluating and sampling BSDFs.  For less complex scenes,
+that’s where most of the runtime is normally spent.&lt;/p&gt;
+
+&lt;p&gt;With apologies to the artists who spent untold hours on the textures for
+this scene, here is another view of the island scene, this one the
+“rootsCam” camera. (Direct links to the EXRs: 
+&lt;a href=&quot;/matt/blog/images/moana-roots-cpu-256spp.exr&quot;&gt;CPU&lt;/a&gt;, 
+&lt;a href=&quot;/matt/blog/images/moana-roots-gpu-256spp.exr&quot;&gt;GPU&lt;/a&gt;.)&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;rootsview&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('rootsview'), {
+  title: 'rootsview', children: [
+ { title: 'CPU', image: '/matt/blog/images/moana-roots-cpu-256spp.exr' },
+ { title: 'GPU', image: '/matt/blog/images/moana-roots-gpu-256spp.exr' }
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Again rendered at 256 samples per pixel, this took 32.1 seconds to render
+on the GPU and 557.6 seconds on the CPU.  That’s 17.4x faster on the GPU,
+with a similar breakdown of where the time was spent.&lt;/p&gt;
+
+&lt;p&gt;With this viewpoint the shortcomings of pbrt-v4’s current approach for
+Ptex on the GPU are even more obvious; not only do the sand dunes appear
+faceted from lack of texture detail, but we have lost all of the fine
+bump-mapping detail.  (Turns out, taking differences of a constant function
+to compute shading normals doesn’t work out so well.)&lt;/p&gt;
+
+&lt;p&gt;However, it is clear from these images that it is the GPU that is giving
+the better result in those tufts of grass in the lower right.  The CPU’s
+rendering path isn’t getting the self-shadowing correct down there, while
+the GPU’s is.  (The same thing is happening in the palm fronds in the main
+view.)  This discrepancy was unexpected and is something to chase down in
+the future. I suspect the issue stems from the CPU curve implementation
+needing a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L719&quot;&gt;fairly large
+epsilon&lt;/a&gt;
+at ray intersections; this is necessary to avoid self-intersections since
+the CPU’s curve shape orients itself to face the ray being traced.  On the
+GPU, a much smaller epsilon is possible because true geometry is used for
+curves.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;The 12-17x speedups on the GPU are not based on a comparison of
+perfectly-matching implementations, though other than the ray intersection
+routines, curves, and Ptex, both otherwise run the same C++ code.  Each is
+better and worse than the other in different ways: while the diced curve
+representation used on the GPU turned out to be superior to the CPU’s curve
+shape, the lack of proper Ptex texturing on the GPU at the moment is a
+loss.&lt;/p&gt;
+
+&lt;p&gt;One nice thing about the performance breakdown on the GPU is that there’s
+plenty of headroom to do more shading work.  With 77% of runtime spent on
+ray intersections and 16% on shading, even doubling the cost of shading
+with a more complete Ptex implementation wouldn’t increase the overall
+runtime very much.  I expect that the GPU’s speedup wouldn’t be too
+different with those two differences harmonized.&lt;/p&gt;
+
+&lt;p&gt;Next time we’ll come back to to review where pbrt-v4 stands in the time to
+first pixel department and then end this series, at least for now, with
+some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 9): We Got Instances</title><link href="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 9): We Got Instances" /><published>2021-07-27T00:00:00-05:00</published><updated>2021-07-27T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html">&lt;p&gt;&lt;a href=&quot;/matt/blog/2021/07/25/moana-gpu-part-1.html&quot;&gt;Last time around&lt;/a&gt; we finally
+got started digging into &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
+performance with the Moana Island scene using its GPU rendering path.
+Then, as today, the focus was limited to all of the processing that goes on
+before rendering begins.  There was plenty left unresolved by the end,
+including 16 seconds spent building BVHs for the object instances that
+featured poor utilization on both CPU and GPU.&lt;/p&gt;
+
+&lt;p&gt;Before we get into trying to improve that, here is the far-away view of the
+Moana Island scene, again rendered on an NVIDIA RTX A6000.  As before,
+mum’s the word on performance until next time, but once again, this didn’t
+take too long.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-gpu.jpg&quot; alt=&quot;Moana Island main view rendered with pbrt-v4 using the GPU&quot; /&gt;
+&lt;i&gt;Moana Island main view rendered at 1920x804 resolution with pbrt-v4 on an NVIDIA RTX A6000 GPU with 2048 samples per pixel.&lt;/i&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Now back to work.  In the 16 seconds that pbrt-v4 spends in its &lt;em&gt;Build
+instance BVHs&lt;/em&gt; phase, it does the following three things for each geometric
+object that is instanced repeatedly in the scene:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Reads any geometry specified via PLY files from disk. (Any geometry not
+specified in PLY files has already been read during regular parsing
+of the scene description.)&lt;/li&gt;
+  &lt;li&gt;Converts the geometry into the in-memory geometric representation that
+OptiX takes as input to its BVH construction routines.&lt;/li&gt;
+  &lt;li&gt;Has OptiX build its BVH.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The first two steps run on the CPU and the third runs on the GPU.&lt;/p&gt;
+
+&lt;p&gt;There are a total of 312 such instance definitions and the work for one is
+independent of the work for all of the others; this is a friendly problem
+to parallelize.  Yet if we look at the CPU and GPU utilization graphs from
+where we left off last time, the results are unimpressive during the
+&lt;em&gt;Process instance BVHs&lt;/em&gt; phase:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;(As before, the x axis is seconds, y axis is processor utilization, and the
+dashed line indicates the start of rendering.)&lt;/p&gt;
+
+&lt;p&gt;It starts out looking promising with 40% of the CPU in use, but after less
+than two seconds of that, CPU utilization drops down to just a few cores
+until all the instances are finished.  The GPU is occasionally fully
+occupied, but it’s idle for much of the time.  Thus, we can’t blame all of
+that CPU idling on threads waiting for the GPU.&lt;/p&gt;
+
+&lt;h2 id=&quot;starting-with-the-obvious&quot;&gt;Starting With The Obvious&lt;/h2&gt;
+
+&lt;p&gt;The natural place to start is to parallelize the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1385&quot;&gt;outermost
+loop&lt;/a&gt;
+that does the three things outlined above; honestly, there’s no excuse for
+it not having been parallel from the start.  The change is &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/2842083e37fd30d566091f0420d751628e492b80&quot;&gt;barely any work
+at
+all&lt;/a&gt;,
+and in a world where the performance gods were feeling generous, that would
+be the end of it.  The only thing that one might worry about in the
+parallelization is contention on the mutex used to serialize updates to the
+hash table, bit with just 312 instances, it seems
+unlikely that will be a big problem.&lt;/p&gt;
+
+&lt;p&gt;The good news is that this change did reduce time to first pixel; the bad
+news is that it was only down to 68.5 seconds—an improvement of just 3.7
+seconds.  I’m always happy to take a 5% improvement in overall performance,
+but one has to feel a little mixed about that when it might have been much
+more.  Here are the performance graphs—as before they start after parsing
+has finished and the lights, materials, and textures have been created:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-ias-1.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-ias-1.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;We can see that 3.7 second improvement; we can see that CPU utilization is
+better throughout instance processing; and we can see that the GPU spends
+less time idle. Yet, there’s nothing thrilling in the graphs: the CPU is
+still sitting around not making much of itself and the GPU isn’t being
+pushed very hard.&lt;/p&gt;
+
+&lt;h2 id=&quot;no-luck-from-the-next-three-obvious-things&quot;&gt;No Luck From The Next Three Obvious Things&lt;/h2&gt;
+
+&lt;p&gt;Parallelizing the outermost loop isn’t enough if there’s something that serializes
+work in the middle of it.  I soon remembered such a thing in the
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L104&quot;&gt;function that launches the OptiX kernels to build
+BVHs&lt;/a&gt;.
+BVH construction there is serialized; not only is all work submitted to the
+main CUDA command stream, but the CPU synchronizes with the GPU twice along
+the way.  As a result, the GPU can only work on one BVH at a time, and
+if another thread shows up wanting to build its own independent BVH, its work
+is held up until the GPU finishes whatever it is already in the middle of.&lt;/p&gt;
+
+&lt;p&gt;I decided that leaving the synchronization in wouldn’t be too terrible if
+pbrt &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/4b74e6b6156d05c53a54df63da1bd3b121e4b2c9&quot;&gt;allowed each thread to independently submit work to the
+GPU&lt;/a&gt;.
+That was mostly a matter of taking a &lt;code class=&quot;highlighter-rouge&quot;&gt;cudaStream_t&lt;/code&gt; in that function’s
+arguments and passing a different stream for each thread.  Thus, each
+thread will wait for its own BVH to be built but it won’t be prevented
+from starting its own work by other threads.  In turn, the GPU can work
+on multiple BVHs in parallel, which is helpful when there are instances that
+aren’t very complex.&lt;/p&gt;
+
+&lt;p&gt;Sadly, and to my surprise, the performance benefit from that change was nil.&lt;/p&gt;
+
+&lt;p&gt;I flailed a bit at that point, parallelizing two more inner loops in
+instance BVH construction
+(&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/a881617a1a9a49561022de53c2cf863cac0e0394&quot;&gt;1&lt;/a&gt;)
+(&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/ad9a5ebe300d40e59c6c2c42b2651cc2169a026a&quot;&gt;2&lt;/a&gt;),
+hoping that giving the CPU more available work would help.  From that, too,
+there was no meaningful change in performance.  Time to get scientific again.&lt;/p&gt;
+
+&lt;h2 id=&quot;too-much-performance-to-handle&quot;&gt;Too Much Performance To Handle&lt;/h2&gt;
+
+&lt;p&gt;Giving up on an easy win from semi-informed guesses, I returned to my tried
+and true performance bottleneck finder: running pbrt under the debugger,
+interrupting execution when CPU utilization was low, and seeing what was
+actually going on.  A quick scan of all of the threads’ backtraces at one
+of these points showed that all 64 were in the the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cf042ca90b398b36677cbd7f83fda43bb0078b58/src/pbrt/util/mesh.cpp#L23&quot;&gt;TriangleMesh
+constructor&lt;/a&gt;.
+(“That’s funny—we shouldn’t be spending much time there at all” was my
+first reaction; that reaction is almost always good news when one is looking for
+ways to improve performance.)&lt;/p&gt;
+
+&lt;p&gt;Not only were all the threads in that constructor, but all but one was held
+up waiting for the same mutex, which was held by the remaining one.  And
+yet, there’s nary a mutex to be seen in that code…&lt;/p&gt;
+
+&lt;p&gt;A closer look at the stack traces and it became clear that the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/a881617a1a9a49561022de53c2cf863cac0e0394/src/pbrt/gpu/memory.cpp#L31&quot;&gt;mutex in
+pbrt’s GPU memory
+allocator&lt;/a&gt;
+was the point of contention; if 64 threads are trying to allocate of meshes
+all at once, things will understandably go bad there.&lt;/p&gt;
+
+&lt;p&gt;I &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/20dd25e41cb61f3560e49193d1388e4058c425d3&quot;&gt;updated the allocator to use per-thread
+slabs&lt;/a&gt;,
+where each thread periodically goes out to the main allocator for a 1MB
+chunk of memory but otherwise allocates memory from its own chunk
+directly, no mutex required.  I assumed that this would be enough to
+make that allocation much less of a bottleneck, but there’s no way to know
+until you actually run the code.&lt;/p&gt;
+
+&lt;p&gt;I could tell that I was getting somewhere when my computer locked up and
+shut down when I ran pbrt with that fix.  I restarted it and tried again,
+and was thrilled when my computer died once again.  Progress!&lt;/p&gt;
+
+&lt;p&gt;To explain: I’ve been using a slightly under-powered power supply with this
+computer for a while.  It’s enough to power the CPU at full utilization and
+is enough to power the GPU at full utilization.  Both at the same time?  A
+bit too much to ask for.  It hadn’t been much of a problem; I just got used
+to not running big compilation jobs at the same time that the GPU was busy.
+In most of my day-to-day work, it’s one processor or the other at work at a
+time.  Those crashes were a good hint that I had gotten both processors to
+be busy at once, which seemed promising.&lt;/p&gt;
+
+&lt;p&gt;Unwilling to wait for a new power supply to be delivered in the mail, I
+braved a trip to Best Buy for quick gratification and 1000 W of
+future-proof power.  I could reliably measure performance after swapping
+out the old power supply; time to first pixel was down to 64.9
+seconds—another 3.6 seconds improvement—and graphs that were looking
+better:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-cuda-mem-slabs.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-cuda-mem-slabs.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The extra good news in those graphs is that the first phase, &lt;em&gt;Process
+non-instanced geometry&lt;/em&gt;, unexpectedly got one second faster—look at that
+spike in CPU utilization there now! Apparently instance BVH construction
+wasn’t the only thing bottlenecked on that mutex.&lt;/p&gt;
+
+&lt;p&gt;And yet even with that fixed, CPU utilization there was still middling.&lt;/p&gt;
+
+&lt;h2 id=&quot;its-always-a-mutex&quot;&gt;It’s Always a Mutex&lt;/h2&gt;
+
+&lt;p&gt;Another round with the debugger as profiler and there was still lots of mutex
+contention under the &lt;code class=&quot;highlighter-rouge&quot;&gt;TriangleMesh&lt;/code&gt; constructor.  A little more digging and
+it became clear that the
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/util/buffercache.h#L34&quot;&gt;BufferCache::LookupOrAdd()&lt;/a&gt;
+method was the culprit.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;BufferCache&lt;/code&gt; is something I added to pbrt after my first go-round with the
+Moana Island; it uses a hash table to detect redundant vertex and index buffers in the scene
+and only stores each one once.  It makes a difference—even though the
+Moana Island comes in highly-instanced, &lt;code class=&quot;highlighter-rouge&quot;&gt;BufferCache&lt;/code&gt; saves 4.9 GB of
+memory when used with it.&lt;/p&gt;
+
+&lt;p&gt;What was its problem?  It’s bad enough that it’s worth copying a few lines
+of code here:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    std::lock_guard&amp;lt;std::mutex&amp;gt; lock(mutex);
+    Buffer lookupBuffer(buf.data(), buf.size());
+    if (auto iter = cache.find(lookupBuffer); iter != cache.end()) {
+       ...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Not only do we have have our single contended mutex, but if you trace through the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Buffer&lt;/code&gt; class and the hashing flow, it turns out that hash of the buffer
+data is computed with the mutex held—totally unnecessary and awfully
+rude, especially if one’s buffer covers many megabytes of memory.&lt;/p&gt;
+
+&lt;p&gt;The
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/cf042ca90b398b36677cbd7f83fda43bb0078b58&quot;&gt;fix&lt;/a&gt;
+makes three improvements: the hash is computed before the lock is acquired,
+a reader-writer lock is used so that multiple threads can check for their
+buffer in the cache concurrently, and the hash table is broken up into 64
+shards, each protected by its own mutex.  In short, an attempt to atone for
+the initial failure with plenty of parallelism prophylaxis.&lt;/p&gt;
+
+&lt;p&gt;Survey says? 5.3 seconds faster, which brings us down to &lt;strong&gt;59.6 seconds&lt;/strong&gt; for
+the time to first pixel.  An extra bonus is that the first phase, &lt;em&gt;Process
+non-instanced geometry&lt;/em&gt;, sped up by another 0.8 seconds, bringing it down
+to 3.0 seconds (versus the 4.9 seconds it was at the start of today’s
+work).  The performance graphs are starting to go somewhere:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-shard-buffercache.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-shard-buffercache.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;There’s still plenty of CPU idle time in &lt;em&gt;Build instance BVHs&lt;/em&gt;, though one
+might make the observation that CPU utilization and GPU utilization are
+roughly inversely correlated there.  That fits with the fact that CPU threads
+go idle while waiting for the GPU to build their BVHs, which is a
+shortcoming that I think we will stick with for now in the interests of
+implementation simplicity.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;With the one-minute mark broken, my motivation started to wane.  The most
+obvious remaining problems are low CPU utilization at the start of &lt;em&gt;Process
+non-instanced geometry&lt;/em&gt; and at the end of &lt;em&gt;Build instance BVHs&lt;/em&gt;.  I believe
+that those both correspond to the CPU working its way through a large PLY file in a
+single thread; splitting those files multiple smaller ones files that could
+be read in parallel would likely shave a few more seconds off.&lt;/p&gt;
+
+&lt;p&gt;Next time, we’ll turn to rendering, covering some of the details related to
+getting this scene to render on the GPU in the first place and finally
+looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 8): Meet The GPU</title><link href="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 8): Meet The GPU" /><published>2021-07-25T00:00:00-05:00</published><updated>2021-07-25T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html">&lt;p&gt;It’s been over three months since my &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;last
+post&lt;/a&gt; about rendering Disney’s
+&lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Moana Island
+scene&lt;/a&gt; with
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;.  Back then, I promised a
+further update that would discuss performance when rendering the scene on
+the GPU, but here we are with months gone by and no further news.  Today,
+finally, I’ll start to rectify that.&lt;/p&gt;
+
+&lt;p&gt;Most of the delay was due to lack of motivation: for once, performance was
+surprisingly good out of the box. Where we left off last time, pbrt-v4’s
+CPU rendering path was down to 96.8 seconds of wall-clock time between the
+start of parsing the scene description and the start of actual rendering
+work.  With the GPU path selected and with no further attention to performance tuning,
+rendering started after 83.3 seconds—1.16x faster.&lt;/p&gt;
+
+&lt;p&gt;Of course, faster is to be expected, as roughly half of the pre-rendering
+time on the CPU is spent building BVHs.  pbrt’s BVH construction code is
+written for clarity rather than performance, is only sort-of parallelized,
+and runs entirely on the CPU.  When rendering on the GPU, all of the BVH
+construction is handled by highly-optimized code in OptiX, most
+of it running on the GPU.  If using &lt;em&gt;that&lt;/em&gt; had been slower than pbrt’s CPU path,
+then there surely would have been “interesting” things to discover.
+However, faster was the expectation, and faster was what we got.&lt;/p&gt;
+
+&lt;p&gt;Further sapping motivation for blogging, not only was system startup fast,
+but rendering the scene itself on the GPU pretty much just worked the first
+time.  Here’s the beach view, rendered using an NVIDIA RTX A6000 GPU.  I’m
+going to save the topic of GPU rendering performance for a later post, but,
+well… It’s most definitely &lt;em&gt;fast&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-beach-gpu.jpg&quot; alt=&quot;Moana Island beach view rendered with pbrt-v4 using the GPU&quot; /&gt;
+&lt;i&gt;Moana Island beach view rendered with pbrt-v4 on an NVIDIA RTX A6000 GPU with 1024 samples per pixel.&lt;/i&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Good performance is always nice, but this series of blog posts has mostly
+been about chasing down and fixing performance problems due to poor scaling
+in the face of complexity; everything running well doesn’t leave
+much to write about. With what I saw at first, I assumed that I would end
+up with a short post without much technical content that instead declared
+victory and showed a few pretty pictures.  Happily (in a way), once I
+started actually looking at the data, there were all sorts of good surprises.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-value-of-logging-for-finding-stinky-things&quot;&gt;The Value of Logging For Finding Stinky Things&lt;/h2&gt;
+
+&lt;p&gt;I’m all for a good debugger and a good profiler, but it’s surprising
+how far one can go with basic instrumentation and logging.  For example,
+if you give pbrt &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-level verbose&lt;/code&gt; in its command-line arguments, it
+prints all sorts of chatty information as it does its work, announcing that
+it’s starting up the thread pool, telling you what it has found as far as
+GPUs in the system, and giving updates about what it’s currently working
+on.&lt;/p&gt;
+
+&lt;p&gt;Here are a few lines of what it prints early on when rendering
+the Moana island scene:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @     0.103s parser.cpp:745 ] Started parsing materials.pbrt
+[ tid 000 @     0.103s parser.cpp:620 ] Finished parsing materials.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainA/isMountainA.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainB/isMountainB.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isGardeniaA/isGardeniaA.pbrt
+[ tid 000 @     0.103s parser.cpp:745 ] Started parsing isMountainA/objects.pbrt
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;In each line we get the id of the thread that issued the log message (here,
+always the main thread), the elapsed time since pbrt started running, the
+location in the source where the logging call was made, and then whatever
+it has to tell us.  Here we can immediately see that the entirety of
+&lt;code class=&quot;highlighter-rouge&quot;&gt;materials.pbrt&lt;/code&gt; was parsed nearly instantaneously.  We can
+also see that multiple additional files are being parsed in parallel, each
+getting started without pbrt waiting for the one before it to finish.  This all
+is to be expected, so no surprises so far.&lt;/p&gt;
+
+&lt;p&gt;As I was gearing up to start writing this post, I noticed the following when doing
+a run with &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-level verbose&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @    43.820s wavefront/integrator.cpp:140 ] Starting to create lights
+[ tid 000 @    53.465s wavefront/integrator.cpp:229 ] Done creating lights
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;That’s ten seconds to create the light sources in the scene.  Those ten seconds
+were especially evident when seen live—there’s “Starting to create
+lights”, then no logging whatsoever for ten long seconds before pbrt comes
+back, bright eyed and proud that it’s gotten all the lights taken care of.
+That long pause was enough for me to realize something was off; I knew that
+it had been no more than 5 or so seconds to create the lights for this
+scene before, so there was surely something amiss.&lt;/p&gt;
+
+&lt;p&gt;While a profiler could have cleared up what was happening in those ten
+seconds, a simple sampling-based approach was enough: I re-ran pbrt (still
+using an optimized build) with the debugger, waited for that long ten
+second pause, then stopped execution and printed out the current stack
+trace before letting it resume.&lt;sup id=&quot;fnref:sampling-profiling&quot;&gt;&lt;a href=&quot;#fn:sampling-profiling&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; A few quick iterations of
+that was all it took to discover that much of that time was spent in two
+functions that checked whether an image had any pixels with floating-point
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L199&quot;&gt;infinity&lt;/a&gt;
+or
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L208&quot;&gt;not-a-number&lt;/a&gt;
+values.&lt;/p&gt;
+
+&lt;p&gt;I had added those checks after spending way too much time debugging an
+unexpected infinity that turned out to be from an environment map light
+source that had an infinite-valued pixel.  Now, the Moana island scene
+includes an environment map that is 8k pixels square, otherwise known as 64
+million pixels.  Oh, and those pixels are stored as 8-bit values, so
+there’s no risk of funny floating-point values in any of them.  Perhaps looping over all of them, lovingly converting them from 8-bit sRGB to float, and then seeing if they were perhaps infinite was not the best use of cycles.&lt;/p&gt;
+
+&lt;p&gt;It took two &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/f5668154f298ecef5a6fc5a1d62a9ec11e6abecf&quot;&gt;one-line
+fixes&lt;/a&gt;
+to early out in that case, and light creation time went back to the 5
+seconds or so that it used to be.  The total time to first pixel went down
+to 77.9 seconds—19 seconds faster than when rendering with the
+CPU.&lt;/p&gt;
+
+&lt;h2 id=&quot;basic-profiling-in-the-renderer&quot;&gt;Basic Profiling in the Renderer&lt;/h2&gt;
+
+&lt;p&gt;Fixing that self-inflicted wound gave me some momentum; it was a small
+taste of the satisfaction of making something slow run faster and that was
+enough to give me motivation to dig in further.  However, the task is
+trickier than it was before since pbrt is now doing work on both the CPU
+and the GPU. It’s important to understand what each is up to; for example,
+maybe it’s fine if the CPU is mostly idle at some point if the GPU is
+working full-tilt.  However, if both are lounging around not doing much,
+then perhaps we should see where the slacking lies.&lt;/p&gt;
+
+&lt;p&gt;Sticking with my log-based methodology, I &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/6e48cc048a393af74124b01f6bae6b8871d454ed&quot;&gt;added a &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-utilization&lt;/code&gt;
+command-line
+option&lt;/a&gt;
+to pbrt.  It causes an extra thread to be launched that measures current
+system activity every 100ms and reports it to pbrt’s verbose log.  Thus,
+when it’s running, you get updates ten times as a second about what’s going
+on interspersed with pbrt’s regular logging output, which makes it easy to
+connect to what pbrt is doing.  Here’s what it reports at the start of
+light creation:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @    43.213s pbrt/wavefront/integrator.cpp:140 ] Starting to create lights
+[ tid 000 @    43.267s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
+[ tid 000 @    43.267s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+[ tid 000 @    43.367s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0140 user 0.0000 nice 0.0016 system 0.9845 idle
+[ tid 000 @    43.368s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+[ tid 000 @    43.468s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
+[ tid 000 @    43.469s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Both CPU and GPU activity are reported where a value of 1 represents full
+utilization.  The system I’m using has a 32 core/64 thread CPU, so all 64 of those
+threads would need to be active and doing work to achieve a 1.
+Here, we can see that we’ve got one thread keeping busy (1/64=0.0156), with
+everything else sitting idle.  That’s not impressive, but it’s not
+unexpected: there’s little parallelism in that part of
+the system.&lt;/p&gt;
+
+&lt;p&gt;Just as with the regular text logging, I often find it productive to
+eyeball that output.  Though it’s not as fancy as a graphical profiler,
+there’s nearly zero overhead to using it; sometimes, low friction is more
+important than comprehensive data.  Reading such logs is actually
+how I did all of the work described in this and the two following posts,
+though it’s also easy enough to make graphs using that output as well.&lt;/p&gt;
+
+&lt;h2 id=&quot;first-performance-graphs-and-setting-a-baseline&quot;&gt;First Performance Graphs and Setting a Baseline&lt;/h2&gt;
+
+&lt;p&gt;As a baseline, here is where things stood with the light creation fix in
+there, shown using separate graphs for the CPU and the GPU.&lt;sup id=&quot;fnref:gpu-lag&quot;&gt;&lt;a href=&quot;#fn:gpu-lag&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;
+These
+graphs start after the scene description has been parsed and materials,
+textures, and lights have been created. For these investigations we’ll
+focus on the geometric work that happens after all that finishes, starting
+47 seconds in.  Up until then both the CPU and GPU path run the same code,
+which has probably received &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;enough
+attention&lt;/a&gt; for now.&lt;/p&gt;
+
+&lt;p&gt;Here, x axis is time in seconds and the y axis is processor utilization.
+The start of rendering is indicated by a vertical dashed line.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-fiximage.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-fiximage.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Four phases of work that are shown in these graphs:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;Process non-instanced geometry&lt;/em&gt;: all of the non-instanced geometry (e.g., the mountains and the ocean surface) is converted to objects like pbrt’s &lt;code class=&quot;highlighter-rouge&quot;&gt;TriangleMesh&lt;/code&gt;, including reading geometry that stored in PLY files from disk. Once this geometry is in memory, pbrt has OptiX build BVHs for it.  (Triangles and non-triangles go into separate BVHs.)&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Build instance BVHs&lt;/em&gt;: For each geometric object that is instanced (e.g., each type of shrub and flower), the geometry is read from disk and an individual BVH is built.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Process instance uses&lt;/em&gt;: For each use of a geometric instance, a structure is initialized that bundles up the handle to the instance’s BVH and the transformation matrix that places it in the scene.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Build top-level BVH&lt;/em&gt;: The final scene-wide BVH is built including both the non-instanced geometry and all of the instance uses.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Going back to the graphs, the only thing to be happy about is the final
+stage of building the final top-level BVH: there’s not much left for the
+CPU to do at that point and the GPU is nicely occupied during that phase.
+For worse and for better, there’s plenty of unused computing capacity left
+sitting idle in the rest of the graph.&lt;/p&gt;
+
+&lt;h2 id=&quot;a-first-small-victory&quot;&gt;A First Small Victory&lt;/h2&gt;
+
+&lt;p&gt;The nearly 6 seconds spent on &lt;em&gt;Process instance uses&lt;/em&gt; was one of the first
+things that caught my eye, even though it’s not where most of the time is
+spent.  If you look at &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1427&quot;&gt;the corresponding
+loop&lt;/a&gt;,
+there’s not much to it; there’s a hash table lookup using the name of the instance
+(e.g. “xgCabbage_archivecoral_cabbage0003_geo”).  That leads to the handle to
+its BVH and then there’s just a bit of data movement, initializing an
+&lt;code class=&quot;highlighter-rouge&quot;&gt;OptixInstance&lt;/code&gt; structure with the transformation matrix and a few other
+things so that the instance use is part of the final scene BVH.&lt;/p&gt;
+
+&lt;p&gt;Since that loop is not doing much that is computationally intensive, it
+didn’t seem worth parallelizing when I first wrote it.  However, when you
+have over 39 million instances, a little bit of data movement for each one adds up.
+It’s easy enough to parallelize that loop:
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/757f00567cc11d2b9202daca21793eebaeb18a45&quot;&gt;(1)&lt;/a&gt;
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/1820fa7d618da0b51179261091b02279a2dd3dba&quot;&gt;(2)&lt;/a&gt;, 
+and doing so brings &lt;em&gt;Process instance uses&lt;/em&gt; down from 5.9 seconds to 1.1 seconds of
+wall-clock time, which brings us to 72.2 seconds for time to first pixel.  These
+graphs show the improvement:&lt;/p&gt;
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
+&lt;br /&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
+&lt;/p&gt;
+&lt;p&gt;(As in earlier posts, the scale of the x axis is the same as the baseline graph
+in order to make it easier to compare successive graphs with each other.)&lt;/p&gt;
+
+&lt;p&gt;CPU utilization during that phase is still a little spiky, but that phase
+now achieves the best CPU utilization of all of them. With its total
+time down to one second, it’s hard to worry too much more about it.&lt;/p&gt;
+
+&lt;h2 id=&quot;looking-ahead&quot;&gt;Looking Ahead&lt;/h2&gt;
+
+&lt;p&gt;It was a slow start, but we’ve gone from lack of motivation to two easy
+fixes that shaved roughly ten seconds off of startup time.  Furthermore,
+those have brought us to being “just” twelve seconds away from a
+sub-one-minute time to first pixel.  &lt;em&gt;That&lt;/em&gt; would be exciting, and there’s
+still got plenty of idle processor time in the graphs and plenty of code
+still unexamined under the lens of Moana.  To that end, we’ll dig into the
+instance BVH phase next time around.&lt;/p&gt;
+
+&lt;h2 id=&quot;notes&quot;&gt;notes&lt;/h2&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:sampling-profiling&quot;&gt;
+      &lt;p&gt;I’m not sure where I first learned about this trick.  I’m almost certain that I read a blog post extolling the idea somewhere years ago but am unable to find it again now. &lt;a href=&quot;#fnref:sampling-profiling&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:gpu-lag&quot;&gt;
+      &lt;p&gt;The GPU’s performance monitoring API reports its results averaged over an unspecified but up-to-one-second amount of previous time whereas the CPU numbers are calculated strictly based on activity in the last 100ms. This leads to some lag in the GPU results that manifests itself in activity sometimes being charged to the wrong stage; an example is “Process instance uses”, which doesn’t actually use the GPU at all. (I also believe that the spike in GPU activity at the start of “Build instance BVHs” should be charged to “Process non-instanced geometry.”) However, rather than futzing with the data, I have reported it as measured. &lt;a href=&quot;#fnref:gpu-lag&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry><entry><title type="html">Swallowing the Elephant (Part 7): Time To First Pixel</title><link href="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 7): Time To First Pixel" /><published>2021-04-11T00:00:00-05:00</published><updated>2021-04-11T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html">&lt;p&gt;With &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html&quot;&gt;memory use under
+control&lt;/a&gt;,
+today’s topic will be “time to first pixel” when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana
+Island
+scene&lt;/a&gt; with
+pbrt—that is, how much time goes by between launching the renderer and
+the start of actual rendering.  This measure covers all of the costs of
+system startup, including parsing the scene, creating lights, shapes, and
+textures, and building acceleration structures.&lt;/p&gt;
+
+&lt;p&gt;Time to first pixel is a useful metric in that it is often the main
+constraint on iteration time: have a bug in a ray intersection routine and
+want to see if your fix took care of it?  Moved a light and want to see how
+the image looks?  Time to first pixel is a big part of how quickly you get
+those answers.&lt;/p&gt;
+
+&lt;p&gt;Before we dig into the numbers, here is another view of the Moana Island
+scene rendered with pbrt-v4:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-beach.jpg&quot; alt=&quot;Moana Island beach view rendered with pbrt-v4&quot; /&gt;
+&lt;i&gt;Moana Island beach view rendered with pbrt-v4. Rendering time at 1920x804 resolution with 1,024 samples per pixel was 63m58s on a 64 core AMD 3970X CPU.&lt;/i&gt;
+&lt;/p&gt;
+
+&lt;h3 id=&quot;foundations&quot;&gt;Foundations&lt;/h3&gt;
+
+&lt;p&gt;The starting point was pretty ugly when I was first given access to the
+Moana Island scene 2.5 years ago: &lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html#first-renderings&quot;&gt;pbrt-v3’s time to first pixel was
+34m58s&lt;/a&gt;,
+which is nothing short of horrific.  By the end of my efforts then, it was
+&lt;a href=&quot;/matt/blog/2018/08/03/moana-reader-mail.html#parsing-floats-revisited&quot;&gt;down to
+9m18s&lt;/a&gt;,
+a 3.76x improvement.  At the time, that felt pretty good.  This is, after
+all, a scene that exhibits the complexity of what is present in film
+production today (or at least, what was present 5 or so years ago when
+&lt;em&gt;Moana&lt;/em&gt; was made), and so it is to be expected that there will be some work
+to be done before it’s ready to render.&lt;/p&gt;
+
+&lt;p&gt;To get started, I measured time to first pixel with the latest version of
+pbrt-v4 using a single thread–it was 6m50s.  Good news at the start for
+once!  Here is a table that summarizes these timings and the respective
+speedups:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt; &lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Time&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Speedup&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v3 (original)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;2098s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-next (2.5 years ago)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;558s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;3.76x&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pbrt-v4 (starting point today)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;410s&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;5.12x&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Where did that unexpected performance improvement come from?  Part of it is
+that I ran the pbrt-v4 test on a modern CPU, while the earlier
+measurements were on a Google Compute Engine instance with what is now a 5
+or so year old CPU.  Thus, the latest measurement benefited from a higher
+CPU clock rate and a few years of microarchitectural improvements.&lt;/p&gt;
+
+&lt;p&gt;Another factor is an improvement to the surface area heuristic cost
+computation in pbrt’s BVH construction algorithm.  In pbrt-v3 it used an
+&lt;a href=&quot;https://github.com/mmp/pbrt-v3/blob/aaa552a4b9cbf9dccb71450f47b268e0ed6370e2/src/accelerators/bvh.cpp#L336&quot;&gt;O(n^2)
+algorithm&lt;/a&gt;,
+while it’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L296&quot;&gt;an O(n) algorithm&lt;/a&gt;  in
+pbrt-v4.
+In my defense, n in this case is fixed at 12, which saves me from the
+full infamy of
+&lt;a href=&quot;https://randomascii.wordpress.com/2019/12/08/on2-again-now-in-wmi/&quot;&gt;Dawson’s&lt;/a&gt;
+&lt;a href=&quot;https://randomascii.wordpress.com/2021/02/16/arranging-invisible-icons-in-quadratic-time/&quot;&gt;law&lt;/a&gt;,
+though it’s still pretty indefensible.  Anyway, if I remember correctly,
+improving that in pbrt-v4 roughly doubled the performance of BVH
+construction, so that was surely part of it.&lt;/p&gt;
+
+&lt;p&gt;For a starting point, here is a plot of CPU utilization over time with
+single-threaded pbrt-v4 with the Moana island scene.  The horizontal axis
+is time in seconds and the vertical is CPU utilization, measured with
+respect to the 64 threads offered by an AMD 3970X CPU.  There’s not a lot
+to see vertically, but the graph gives us a baseline and also shows where
+the time is going: mostly parsing and BVH construction, both for instances
+and for the top-level BVH.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-1thread.svg&quot; alt=&quot;CPU utilization with one thread&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;(For this and following graphs, I’ve put light and texture creation into a
+single category, since it’s about 8 seconds for both of them, most of those
+spent reading the PNG for the environment light source.)&lt;/p&gt;
+
+&lt;h3 id=&quot;about-all-those-idle-threads&quot;&gt;About all those idle threads…&lt;/h3&gt;
+
+&lt;p&gt;Over the past year, I had already spent some time working on reducing
+pbrt-v4’s time to first pixel.  That work was largely motivated by pbrt’s
+GPU rendering path: it wasn’t unusual to spend more time loading the scene
+description than rendering it with the GPU.  Optimizing startup was thence
+the most effective way to speed up rendering—Amdahl’s law strikes again.&lt;/p&gt;
+
+&lt;p&gt;That work was easier to do with pbrt-v4’s &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html#a-reorganization-of-the-parsing-code&quot;&gt;redesign of the scene parsing
+code&lt;/a&gt;:
+once the high-level &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; object is initialized, various
+opportunities for parallelism are easily harvested.  With pbrt-v3, parsing
+the scene description was intermingled with creating the scene data
+structures, so there was less opportunity for extracting parallelism and
+all of the work until the start of rendering was single-threaded.&lt;/p&gt;
+
+&lt;p&gt;With pbrt-v4, it’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/parsedscene.cpp#L907&quot;&gt;easy to parallelize loading
+textures&lt;/a&gt;
+when parameters for all of the ones to be loaded are at hand in a single
+&lt;code class=&quot;highlighter-rouge&quot;&gt;vector&lt;/code&gt;.  Shapes are &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L125&quot;&gt;created in parallel as
+well&lt;/a&gt;.
+In practice, this means that if meshes are provided in PLY format files,
+those can be loaded in parallel.  Finally, the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L276&quot;&gt;BVHs for object
+instances&lt;/a&gt;
+are created in parallel, since they’re all independent.  This is all
+opportunistic parallelism—&lt;i&gt;for&lt;/i&gt; loops over independent items that can be
+processed concurrently.  It doesn’t scale well if there are only a few
+items to loop over and it’s susceptible to load imbalance, but it’s
+something, and something’s worth taking if it’s easy to do so.&lt;/p&gt;
+
+&lt;p&gt;The BVH construction code has also been &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L366&quot;&gt;(slightly)
+parallelized&lt;/a&gt;:
+sub-trees are built in parallel when there are many primitives.  This isn’t
+the state of the art in parallel BVH construction, but it, too, is
+something.&lt;/p&gt;
+
+&lt;p&gt;Given those improvements and 64 threads, pbrt-v4 does better; here is a
+graph of CPU usage over time until rendering begins.  Note that this graph
+has the same scale as the earlier one, so we can directly see how much time
+to first pixel has been reduced—it’s about 115 seconds less.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-64threads.svg&quot; alt=&quot;CPU utilization with 64 threads&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The big wins come from instance BVH construction and creating the final
+top-level scene-wide BVH, which are sped up by factors of 4.2x and 2.4x,
+respectively.  Neither is an exemplar of ideal parallel speedup, but again,
+it’s not bad for not much work.&lt;/p&gt;
+
+&lt;h3 id=&quot;parsing-in-parallel&quot;&gt;Parsing in parallel&lt;/h3&gt;
+
+&lt;p&gt;It is evident from that graph that parsing performance must be improved in
+order to make a meaningful further reduction in time to first pixel—with
+BVH construction performance improved, parsing is about 5/6 of the total
+time.  After a bit of thought, I realized that pbrt-v4’s new approach to
+parsing and scene construction also offered the opportunity to parse the
+scene description in parallel.&lt;/p&gt;
+
+&lt;p&gt;For context, pbrt has always offered an &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; directive in its scene
+description files; it corresponds to &lt;code class=&quot;highlighter-rouge&quot;&gt;#include&lt;/code&gt; in C/C++ and is
+semantically the same as expanding the text of the file inline at the point
+where it is included.  This is a handy capability to have, but it
+effectively requires serial processing of included files.  For example, if
+one first &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;s a file that has&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Material &quot;conductor&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;and then &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;s a file that has&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Shape &quot;trianglemesh&quot; ...
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;then the triangle mesh will have the “conductor” material applied to it.&lt;/p&gt;
+
+&lt;p&gt;While one could perhaps imagine a more sophisticated implementation of
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; that allowed parsing files in parallel and then patching things
+up afterward, I decided to add a new directive, &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.  It’s the same
+idea as &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;—parse the given file and then add the stuff described in
+it to the scene description—but its semantics are different.  While it
+inherits the current graphics state—the current material, transformation
+matrix, and so forth—at the start of its parsing, changes to the graphics
+state do not persist afterward.  However, the shapes, lights, object
+instances, and participating media that are specified in the file are added
+to the scene.  In practice, most uses of &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; can be replaced with an
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Thanks to the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; representation, we can &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L749&quot;&gt;kick off a new thread
+to
+parse&lt;/a&gt;
+each &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;ed file , have it &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L448&quot;&gt;initialize a separate
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt;&lt;/a&gt;,
+and then &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L461&quot;&gt;merge that one
+in&lt;/a&gt;
+with the main &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L981&quot;&gt;when the thread has finished
+parsing&lt;/a&gt;.
+It’s a hundred or so lines of code in the end.&lt;/p&gt;
+
+&lt;p&gt;Turning to the Moana scene, Disney’s original pbrt conversion of it has a
+top-level file, &lt;code class=&quot;highlighter-rouge&quot;&gt;island.pbrt&lt;/code&gt;, that then has 20 &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; statements
+for the main parts of the scene: the geometry of the mountains, the ocean
+surface, the beach dunes, the various hero trees, and so forth.  All of
+those can safely be brought in using &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;With that simple change, parsing is 3.5x faster and time to first pixel is
+down to 123 seconds. Progress!&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-import-top.svg&quot; alt=&quot;CPU utilization with top-level Import statements&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Parsing time has greatly improved, though for most of that phase only four
+threads are running, trailing down to a single thread for the last few
+seconds.  We have a good old load imbalance, where most of the imported
+files are parsed quickly but then getting through the four heaviest ones is
+the bottleneck.&lt;/p&gt;
+
+&lt;p&gt;Each of those four has a ~5GB pbrt file to be parsed along the way.  I went
+ahead and manually split each of those into 10 or so smaller files that are
+themselves loaded via &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.  With that, parsing has sped up by a total
+of 6.1x and we’re down to 97 seconds of time to first pixel.  If 64 threads
+are giving a 6.1x speedup, one might think that fewer cores might do well.
+It is so: with 16 cores, it’s 124 seconds to first pixel, and with 8, it’s
+149.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/ttfp-import-deep.svg&quot; alt=&quot;CPU utilization with multiple levels of Import statements&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The second half of the parsing phase is still just a few CPU cores chugging
+along, but I ran out of motivation to keep manually splitting up the big
+files; that’s the sort of thing that would ideally be done automatically by
+an exporter anyway.&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;As we wrap up now, pbrt-v4 is 21.6x faster in time to first pixel for the
+Moana Island scene than pbrt-v3 was originally and 4.2x faster than it was
+where things stood at the start of this write-up, all of that additional
+improvement due to parallelism.  That’s satisfying progress, and I have to
+admit that seeing 30 threads all simultaneously working on parsing the
+scene description is a thrill; I wouldn’t have expected any parallelism in
+that phase a few weeks ago.&lt;/p&gt;
+
+&lt;p&gt;That said, even in the final graph there’s a lot more area above the curve
+where CPUs are idle than there is below where they’re getting things done.
+Eyeballing it, I’d guess that if the 64 CPU threads were used to their full
+capabilities, it might be possible to have a 20 second time to first pixel.&lt;/p&gt;
+
+&lt;p&gt;Getting to that point would require much more complexity in pbrt’s
+implementation, however: it would likely end up kicking off work as soon as
+it was available (“start creating this light in a separate thread”, etc.).
+Having all of the object creation happening concurrently with parsing would
+also introduce the risks of ugly bugs due to race conditions, which I’m not
+sure is worth it, especially for a system with pbrt’s goals.  Therefore,
+we’ll stop there for time to first pixel, at least for the moment.&lt;/p&gt;
+
+&lt;p&gt;To wrap up these updates, next time we’ll look at pbrt-v4’s performance
+rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry><entry><title type="html">Swallowing the Elephant (part 6): Fool me once…</title><link href="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html" rel="alternate" type="text/html" title="Swallowing the Elephant (part 6): Fool me once..." /><published>2021-04-02T00:00:00-05:00</published><updated>2021-04-02T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">&lt;p&gt;I’ve been long overdue to update the pbrt version of Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;amazing
+Moana island
+scene&lt;/a&gt; to
+account for the changes in &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
+scene description format; I finally got around to it over the past few
+days.  Surprise, surprise, getting it rendering again wasn’t all smooth
+sailing, but Things Were Learned and here we are with another few blog
+posts about the experience. (For context, it might be worthwhile to read
+the &lt;a href=&quot;/matt/blog/2018/07/16/moana-island-pbrt-all.html&quot;&gt;earlier posts&lt;/a&gt; on
+rendering the Moana island in pbrt if you have not already.)&lt;/p&gt;
+
+&lt;h3 id=&quot;converting-to-pbrt-v4&quot;&gt;Converting to pbrt-v4&lt;/h3&gt;
+
+&lt;p&gt;The latest version of pbrt provides an &lt;code class=&quot;highlighter-rouge&quot;&gt;--upgrade&lt;/code&gt; flag that does a
+reasonably good job of automatically updating scene description files from
+the previous version of pbrt to work with pbrt-v4.  For most scenes,
+&lt;code class=&quot;highlighter-rouge&quot;&gt;--upgrade&lt;/code&gt; does all that is needed.  For others, a few manual fixes may be
+necessary, though pbrt tries to give guidance—this was ambiguous, so over
+to you, and the like.  For this monster of a scene, a few additional hours
+of manual work with &lt;em&gt;sed&lt;/em&gt; and &lt;em&gt;emacs&lt;/em&gt; macros were necessary to finish the
+job.&lt;/p&gt;
+
+&lt;p&gt;The first renderings of the converted scene weren’t exactly &lt;em&gt;awesome&lt;/em&gt;…&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-bad.jpg&quot; /&gt;
+&lt;i&gt;Disney's Moana island scene rendered with pbrt-v4, a disastrous
+conversion of the materials, and some issues with incorrect transformations
+(note that those neon yellow leaves not aligned with the tree trunk and
+branches to their left).&lt;/i&gt;&lt;/p&gt;
+
+&lt;p&gt;All of that manual work was due to self-inflicted wounds:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;In pbrt-v3, one could specify a material and then subsequently override
+its parameters with the parameters that are provided with a shape that
+uses that material. We removed this functionality to simplify processing
+the scene description thinking that it was rarely used.  It turns out
+that this capability was used extensively in Disney’s conversion of the
+scene to pbrt’s format.&lt;/li&gt;
+  &lt;li&gt;One could redefine named textures in pbrt-v3, while pbrt-v4 prohibits
+this; again, we didn’t think this was widely used and again, guess what,
+it was used extensively in the pbrt-v3 version of the Moana island scene.&lt;/li&gt;
+  &lt;li&gt;pbrt-v4 no longer supports the Disney BSDF, which was used for all of the
+objects in this scene, it was necessary to manually map all of the uses of
+it to the most similar BSDFs that are provided in pbrt-v4.&lt;sup id=&quot;fnref:bsdf&quot;&gt;&lt;a href=&quot;#fn:bsdf&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;a-reorganization-of-the-parsing-code&quot;&gt;A reorganization of the parsing code&lt;/h3&gt;
+
+&lt;p&gt;Before looking at pbrt’s performance and memory use, it’s worth discussing
+an important change to pbrt’s implementation since my earlier posts: the
+parts of the system responsible for parsing scene description files and
+converting them into objects suitable for rendering have changed
+substantially in pbrt-v4.  In earlier versions of the system, parsing and
+scene object creation were intermingled.  For example, if the parser saw an
+image texture definition, it would stop to read the texture from disk and
+build MIP maps before it continued.  If an object instance was defined,
+then all of the constituent primitives would be created and a BVH built for
+it before parsing resumed. And so forth…&lt;/p&gt;
+
+&lt;p&gt;In pbrt-v4, the parser’s job is more that of deserializing the scene
+description to a
+generic intermediate representation.  For example, it will record the fact
+that some texture of type “imagemap” has been defined and that it has a
+string-valued parameter “filename” with some value associated with it, but
+that’s it—on to snarfing up more tokens from the scene description.  The
+parser is responsible for initializing an instance of the
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L276&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt;&lt;/a&gt;
+class; only when parsing is complete is the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; converted to the
+optimized scene representation that is used for rendering.  The form of
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; is more or less&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class ParsedScene {
+  public:
+    std::vector&amp;lt;ShapeEntity&amp;gt; shapes;
+    std::vector&amp;lt;LightEntity&amp;gt; lights;
+    std::map&amp;lt;std::string, SceneEntity&amp;gt; namedMaterials;
+    // ...
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;where, for example,
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L78&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ShapeEntity&lt;/code&gt;&lt;/a&gt;
+records things like the name of the shape (“trianglemesh”, “plymesh”,
+“sphere”, or whatever), its transformation, the material
+associated with it, as well as the parameters that were provided with it
+(e.g., “there’s a &lt;code class=&quot;highlighter-rouge&quot;&gt;float&lt;/code&gt; named ‘radius’ with value 10.”)&lt;/p&gt;
+
+&lt;p&gt;The initial motivation for this restructuring was the addition of GPU
+rendering in pbrt-v4; while things like lights, materials, and most
+textures are represented by the same objects for both CPU and GPU, the
+respective geometric representations of the scene differ substantially.
+Thus, it worked well to structure the system so that the parsing code
+generates an intermediate representation that can then be transformed into
+a specific representation used for rendering.&lt;/p&gt;
+
+&lt;p&gt;As we will see shortly, this rewrite caused some trouble, though by the
+end, it redeems itself.&lt;/p&gt;
+
+&lt;h3 id=&quot;fail-fast&quot;&gt;Fail fast&lt;/h3&gt;
+
+&lt;p&gt;With the scene converted, all was not well.  Where we &lt;a href=&quot;/matt/blog/2018/07/15/moana-island-pbrt-4.html&quot;&gt;left
+off&lt;/a&gt;,
+pbrt-next, the in-progress version of pbrt-v4 from 2.5 years ago, used 41
+GB of RAM when rendering the scene, with an additional spike of about 10 GB
+while the top-level BVH was built.  One might hope that on my current
+system with 64 GB of RAM it would render nicely out of the box.&lt;/p&gt;
+
+&lt;p&gt;One might hope…&lt;/p&gt;
+
+&lt;p&gt;Rather, pbrt-v4 filled up available RAM and the puny 2 GB of swap before it
+was killed when memory ran out.  I bumped up the size of the swap file to
+64 GB just to see if that would do it, but still had no luck.  Time to turn
+to my old friend &lt;a href=&quot;https://valgrind.org/docs/manual/ms-manual.html&quot;&gt;massif&lt;/a&gt;,
+which tracks memory allocations over the course of a program’s execution.
+I tried rendering a pared down version of the scene with &lt;em&gt;massif&lt;/em&gt; to see
+where all of the memory was going.&lt;/p&gt;
+
+&lt;p&gt;There wasn’t much nuance in what &lt;em&gt;massif&lt;/em&gt; had to report; by far the
+greatest memory consumer was instances of the &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt;
+structure.  The parser creates one for each object instance in the
+scene; it basically wraps up a transformation matrix and the name of the
+object being instantiated.  The transformation may be fixed or it may be
+specified by a pair of transformations that are interpolated.  Therefore,
+it stores both a &lt;code class=&quot;highlighter-rouge&quot;&gt;Transform *&lt;/code&gt; and an &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Here are the important parts of &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L197&quot;&gt;its
+definition&lt;/a&gt;:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;struct InstanceSceneEntity : public SceneEntity {
+    // ...
+    AnimatedTransform renderFromInstanceAnim;
+    const Transform *renderFromInstance;
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The reader with a good memory may now remember that &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; was
+a troublemaker the first time I dug into pbrt-v3’s use of memory with the
+Moana island scene.  (If one has forgotten, &lt;a href=&quot;/matt/blog/2018/07/09/moana-island-pbrt-2.html#transformedprimitives-95-wasted-space-really-hurts&quot;&gt;see
+here&lt;/a&gt;.)
+&lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; is not a small structure; in pbrt-v4, each one is 696
+bytes.  In this case, &lt;em&gt;nothing is animated&lt;/em&gt; and the &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; is
+unused.&lt;/p&gt;
+
+&lt;p&gt;Clearly I had forgotten this pitfall, since there I go again making the
+very same mistake, here now with &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt;.  For the full Moana
+island scene, a total of 39,270,497 of them are allocated.  At 696 bytes
+for each &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt;, that works out to 25.4 GB of unused identity
+matrices and associated baggage.&lt;/p&gt;
+
+&lt;p&gt;That was &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/ab3d89541f9fdb7b6bb22fefd9e7b45ad2d4505c&quot;&gt;an easy
+fix&lt;/a&gt;
+and with it, the scene successfully rendered on my system here.  Here’s
+an image for sustenance:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-good.jpg&quot; /&gt;&lt;i&gt;Moana
+island rendered more successfully with pbrt-v4.  This image rendered in
+46m37s at 1920x804 resolution with 2048 samples per pixel on a 32-core AMD
+3970X CPU.&lt;/i&gt;&lt;/p&gt;
+
+&lt;p&gt;However, pbrt still used about 66 GB of memory during rendering, with a
+peak of 82 GB.  Plenty more stinkiness remained.&lt;/p&gt;
+
+&lt;h3 id=&quot;department-of-redundant-scene-descriptions-department&quot;&gt;Department of redundant scene descriptions department&lt;/h3&gt;
+
+&lt;p&gt;Another run of &lt;em&gt;massif&lt;/em&gt; with the full scene was just as unambiguous about
+where the problem was as the first one was; 27 GB of &lt;code class=&quot;highlighter-rouge&quot;&gt;vector&amp;lt;double&amp;gt;&lt;/code&gt;s
+had been allocated as part of the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; class.
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; is another part of the new parsing system; it is
+responsible for recording all of the parameter values provided for things
+in the scene description file.  For example, if you specify &lt;code class=&quot;highlighter-rouge&quot;&gt;&quot;integer
+indices&quot; [ 0 1 2 ]&lt;/code&gt; with a triangle mesh, a &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; instance
+records that there was this thing with “integer” type, it has the name
+“indices”, and those three values were specified.  This is again part of
+the parser just recording what it sees, but not judging or interpreting.&lt;/p&gt;
+
+&lt;p&gt;Here are the relevant parts of its &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/bbf513a2a691eaf1846ec1499e37c4776bfbbd85/src/pbrt/parser.h#L38&quot;&gt;definition&lt;/a&gt;:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class ParsedParameter {
+  public:
+    std::string type, name;
+    std::vector&amp;lt;double&amp;gt; numbers;
+    std::vector&amp;lt;std::string&amp;gt; strings;
+    std::vector&amp;lt;uint8_t&amp;gt; bools;
+    // ...
+};
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Momentarily leaving aside the use of double precision for &lt;code class=&quot;highlighter-rouge&quot;&gt;numbers&lt;/code&gt;, it
+only took a few minutes thinking to realize that while pbrt-v4 was creating
+the scene representation to use for rendering, it wasn’t freeing up parts
+of the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; when it was done with them.  Indeed, all of it was
+still using up memory the whole time rendering proceeded, so there were
+those 27 GB and then more.&lt;/p&gt;
+
+&lt;p&gt;With a few changes to free &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; memory when possible
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/7ca86f2d880f3749af157466ae314f1e068d2cf2&quot;&gt;(1)&lt;/a&gt;
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/7bcf5832014662cf22cdc6a353d6cd9e48f77477&quot;&gt;(2)&lt;/a&gt;
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/e5881cbc115ea8c3bf7cb757faa55c95d068d4ae&quot;&gt;(3)&lt;/a&gt;,
+peak memory use drops by 32 GB to 50 GB, with 32 GB in use at the start of
+rendering.&lt;/p&gt;
+
+&lt;h3 id=&quot;too-much-precision-because-you-never-know&quot;&gt;Too much precision, because you never know&lt;/h3&gt;
+
+&lt;p&gt;Returning to the topic of the use of double precision in
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter::numbers&lt;/code&gt;: I used &lt;code class=&quot;highlighter-rouge&quot;&gt;double&lt;/code&gt;s out of of laziness. Although
+pbrt generally uses 32-bit floating point, &lt;code class=&quot;highlighter-rouge&quot;&gt;double&lt;/code&gt; has the nice property
+that it can exactly represent all 32-bit integers. Thus, the parser could
+just be simpleminded and store arrays of numbers, without worrying about
+whether or not they were floats or integers.&lt;/p&gt;
+
+&lt;p&gt;I told myself that those &lt;code class=&quot;highlighter-rouge&quot;&gt;vector&lt;/code&gt;s would never get very big.  I figured
+that big triangle meshes would usually come in via PLY files, in which case
+the only use of &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; is to store a single filename.  Thus, I
+assumed that those arrays would never use an objectionable amount of
+memory.  That assumption was mostly true, but not true enough: some of the
+trees in the Moana scene are represented by many small independent
+triangle meshes of a few tens or a hundred or so triangles each.
+Individually, these don’t make sense to store as PLY files; there would be
+tens of thousands of them for a single tree.  Thus, they are left as text
+in the scene description. From them, those parameter vectors become large.&lt;/p&gt;
+
+&lt;p&gt;With another &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/c84d8a6a1644bb4ef0314bc9490dbd4bc0565583&quot;&gt;simple once you get around to doing it
+change&lt;/a&gt;,
+we’re down another 4.5 GB to 45.5 GB peak memory use and now 31 GB in use at
+the start of rendering—10 GB less than before. Victory!&lt;/p&gt;
+
+&lt;h3 id=&quot;wrap-up&quot;&gt;Wrap-up&lt;/h3&gt;
+
+&lt;p&gt;It took a few days of digging into regressions, but pbrt-v4 is now even
+better than where it had been 2.5 years ago, memory-wise.  I can’t
+precisely account for that last 10 GB improvement, but would assume that
+most of it is due to switching to tagged pointers to eliminate the virtual
+function pointers in the shape and primitive classes (as &lt;a href=&quot;/matt/blog/2018/07/16/moana-island-pbrt-5.html#vtable-hacks&quot;&gt;considered
+earlier&lt;/a&gt;).
+The size of those classes has seen some further attention in pbrt-v4, and
+it seems to have added up in this case.&lt;/p&gt;
+
+&lt;p&gt;Here is an accounting of how memory is used now when rendering begins:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Type&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Memory&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;BVH&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;13.5 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Transformations&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;5.5 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Transformation hash table&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Primitives&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;2.5 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Triangles&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;1.2 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Triangle vertex buffers (P, N, uv, indices)&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;5.25 GB&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Curves&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;0.6 GB&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Next time we’ll dig into runtime performance while parsing the scene, where
+things start in a better place and go fun places from there.&lt;/p&gt;
+
+&lt;h3 id=&quot;note&quot;&gt;note&lt;/h3&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:bsdf&quot;&gt;
+      &lt;p&gt;About dropping the Disney BSDF: while folks at Disney were working on converting the scene to pbrt’s format a few years ago, I added the Disney BSDF (and support for &lt;a href=&quot;https://ptex.us/&quot;&gt;Ptex&lt;/a&gt; textures) to pbrt-v3 in order to make pbrt-v3 a more hospitable target.  Normally new functionality isn’t added after the book comes out, since the whole idea of the book is to describe the implementation of the renderer, but it was well worth it for this prize of a scene.&lt;/p&gt;
+
+      &lt;p&gt;For the fourth edition of the book, we have redesigned the set of materials and BSDFs from scratch and have tried to be more physically principled than
+before.  (Among other things, pbrt’s old kitchen sink &lt;code class=&quot;highlighter-rouge&quot;&gt;UberMaterial&lt;/code&gt; is gone.)  In this context, an artist-friendly BSDF like the Disney one doesn’t fit with the book’s current focus, so we have cut it in the interests of simplifying the system.  (Ptex support remains, at least!) &lt;a href=&quot;#fnref:bsdf&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry><entry><title type="html">About That Scene For the Cover…</title><link href="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html" rel="alternate" type="text/html" title="About That Scene For the Cover..." /><published>2021-02-26T00:00:00-06:00</published><updated>2021-02-26T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html">&lt;p&gt;After our recent &lt;a href=&quot;/matt/blog/2021/02/22/pbr-4ed-cover-image.html&quot;&gt;call for scenes for a cover image for the book&lt;/a&gt;,
+Wenzel, Greg, and I received an email that said, paraphrased, “You’re
+selling a $100 book and asking artists to work for free to model a scene
+for the cover? All of the artists at my studio are talking about what
+terrible people you all are for trying to exploit us while you get rich
+from your expensive book.”&lt;/p&gt;
+
+&lt;p&gt;This is a fair topic to bring up, and so I figured that a broader response
+would be worthwhile.&lt;/p&gt;
+
+&lt;p&gt;First, I get the sentiment and I understand that artists are often asked to
+work for free “for the exposure” or whatever.  (Ask me sometime about
+acquaintances who have killer app ideas and just need someone to code it up
+for free.)  If you’re working in 3D modeling and see no particular value to
+this particular book, that’s fine, though I might ask you to see what the
+folks who write your renderer think of it.&lt;/p&gt;
+
+&lt;p&gt;There is not much money to be made in academic publishing.  After the
+distributor takes their cut and then the publisher, there’s around 15% of
+the cover price left for the authors.  We have three of them, and then
+there are a variety of expenses (e.g., hosting the &lt;a href=&quot;http://pbr-book.org&quot;&gt;free online version of
+the book&lt;/a&gt; runs about $1,500 a year, since we use
+Google Cloud to serve it, ensuring low latency and high bandwidth for
+people all around the world.)  When it’s all said and done, it’s net a few
+thousand dollars a year left for each of us.  Dollars per hour, serving
+fast food would be more profitable.&lt;/p&gt;
+
+&lt;p&gt;We have always been happy to pay for the efforts of professionals in the
+production of the book—layout, copyediting, proofreading, indexing, and
+the line art figures are all done by professionals, and that is money very
+well spent as far as the quality of the final result, which matters more to
+us much more than those costs.  Our time spent on the book is in the
+service of education, disseminating knowledge, and doing our part to try to
+improve the state of the art in rendering.  Having fewer of those few
+thousand dollars to do that more effectively? It’s a no brainer.&lt;/p&gt;
+
+&lt;p&gt;In the past, some excellent 3D artists have been happy to offer scenes for
+the book cover in exchange for the distinction of being known for having
+created those scenes.  We would nevertheless happily pay an artist for
+their efforts in creating a scene for the cover of the 4th edition.  The
+value of an excellent scene would be more than worth it.&lt;/p&gt;
+
+&lt;p&gt;If you think you could model something amazing for us and would do so for
+payment, please do get in touch with a proposal: it’s &lt;em&gt;authors@pbrt.org&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;The trade-off for payment would be in credit, and in this case we would
+require a license that allowed us to use and redistribute the scene without
+acknowledging its source.&lt;/p&gt;
+
+&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry><entry><title type="html">Looking For A Scene For the Cover of Physically Based Rendering, 4ed</title><link href="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html" rel="alternate" type="text/html" title="Looking For A Scene For the Cover of Physically Based Rendering, 4ed" /><published>2021-02-22T00:00:00-06:00</published><updated>2021-02-22T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html">&lt;p&gt;&lt;em&gt;(Please see also a &lt;a href=&quot;/matt/blog/2021/02/26/pbrt-cover-image-redux.html&quot;&gt;followup to this post&lt;/a&gt;.)&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Work on the text of 4th edition of Physically Based Rendering: From Theory
+To Implementation is moving along well.  One important detail to attend to
+is to find a scene to use on the cover of the book.&lt;/p&gt;
+
+&lt;p&gt;The cover image is an important part of the book.  It has always been
+rendered with pbrt, the renderer that the book describes, and so it sums up
+the value proposition of reading the book: if you study the book’s text,
+you will understand all of the theory and implementation behind rendering
+images like this one.&lt;/p&gt;
+
+&lt;p&gt;For the second edition, we were very fortunate to have Guillermo M. Leal
+Llaguno create the now-classic “San Miguel” scene, and for the third, Timm
+Dapper and Jan-Walter Schliep at Laubwerk made a beautifully complex
+outdoor landscape scene.  These scenes have become computer graphics
+classics, appearing in many subsequent research papers.&lt;/p&gt;
+
+&lt;p&gt;In short:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;We are looking for a new scene, or one that has not been widely seen
+before.&lt;/li&gt;
+  &lt;li&gt;It must be rendered by pbrt, though if you have a nice scene in FBX
+format, we can help convert it to pbrt’s scene format.&lt;/li&gt;
+  &lt;li&gt;You must be willing to allow the scene description to be freely shared
+once the book has been released so that anyone using pbrt can render it
+themselves (e.g., by offering it under a CC-BY license).&lt;/li&gt;
+  &lt;li&gt;We would prefer an interior scene this time (the last three have all been
+outdoors), ideally with multiple interesting viewpoints, a variety of
+objects and materials, and complex lighting.&lt;/li&gt;
+  &lt;li&gt;The more complex the better :-)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We can offer a few things in return:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Credit (in the book and on the book’s website, etc.) and our own deepest
+thanks.&lt;/li&gt;
+  &lt;li&gt;A few signed copies of the book.&lt;/li&gt;
+  &lt;li&gt;The knowledge that most likely, your scene will help advance the state of
+the art of rendering; pbrt is widely used by researchers to develop new
+algorithms, and putting interesting and challenging scenes in researchers’
+hands has turned out to be an effective way to spur innovation.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;If you think you may be able to help or have any questions, please email
+Wenzel, Greg, and I at authors@pbrt.org.&lt;/p&gt;
+
+&lt;p&gt;Thanks!&lt;/p&gt;</content><author><name></name></author><summary type="html">In search of something amazing...</summary></entry><entry><title type="html">A Few Words from W. H. Auden</title><link href="https://pharr.org/matt/blog/2021/01/06/auden.html" rel="alternate" type="text/html" title="A Few Words from W. H. Auden" /><published>2021-01-06T00:00:00-06:00</published><updated>2021-01-06T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/01/06/auden</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/01/06/auden.html">&lt;p&gt;I keep a book of Auden’s poems on the table next to my bed.  Now and again I
+settle in with a few minutes of stop all the clocks and the like before I
+go to sleep.&lt;/p&gt;
+
+&lt;p&gt;I have had the book for decades.  It’s a small hardback with “Auden”
+embossed in gold on the front and a woven cloth bookmark that comes fully
+integrated.&lt;/p&gt;
+
+&lt;p&gt;For a few years, I have kept the bookmark fixed at the same place. Even
+though I have it memorized, I have always started with this one, words
+written in 1939:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Epitaph on a Tyrant&lt;/p&gt;
+
+  &lt;p&gt;Perfection, of a kind, was what he was after,&lt;br /&gt;
+And the poetry he invented was easy to understand;&lt;br /&gt;
+He knew human folly like the back of his hand,&lt;br /&gt;
+And was greatly interested in armies and fleets;&lt;br /&gt;
+When he laughed, respectable senators burst with laughter,&lt;br /&gt;
+And when he cried the little children died in the streets.&lt;/p&gt;
+&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Auden delivers, 82 years early.</summary></entry></feed>

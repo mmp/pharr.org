@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the Elephant (Part 9): We Got Instances</title>
+  <meta name="description" content="More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the Elephant (Part 9): We Got Instances</h1>
+    <p class="post-meta">
+      <time datetime="2021-07-27T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 27, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p><a href="/matt/blog/2021/07/25/moana-gpu-part-1.html">Last time around</a> we finally
+got started digging into <a href="https://github.com/mmp/pbrt-v4">pbrt-v4</a>’s
+performance with the Moana Island scene using its GPU rendering path.
+Then, as today, the focus was limited to all of the processing that goes on
+before rendering begins.  There was plenty left unresolved by the end,
+including 16 seconds spent building BVHs for the object instances that
+featured poor utilization on both CPU and GPU.</p>
+
+<p>Before we get into trying to improve that, here is the far-away view of the
+Moana Island scene, again rendered on an NVIDIA RTX A6000.  As before,
+mum’s the word on performance until next time, but once again, this didn’t
+take too long.</p>
+
+<p align="center">
+<img src="/matt/blog/images/pbrt-v4-moana-gpu.jpg" alt="Moana Island main view rendered with pbrt-v4 using the GPU" />
+<i>Moana Island main view rendered at 1920x804 resolution with pbrt-v4 on an NVIDIA RTX A6000 GPU with 2048 samples per pixel.</i>
+</p>
+
+<p>Now back to work.  In the 16 seconds that pbrt-v4 spends in its <em>Build
+instance BVHs</em> phase, it does the following three things for each geometric
+object that is instanced repeatedly in the scene:</p>
+
+<ul>
+  <li>Reads any geometry specified via PLY files from disk. (Any geometry not
+specified in PLY files has already been read during regular parsing
+of the scene description.)</li>
+  <li>Converts the geometry into the in-memory geometric representation that
+OptiX takes as input to its BVH construction routines.</li>
+  <li>Has OptiX build its BVH.</li>
+</ul>
+
+<p>The first two steps run on the CPU and the third runs on the GPU.</p>
+
+<p>There are a total of 312 such instance definitions and the work for one is
+independent of the work for all of the others; this is a friendly problem
+to parallelize.  Yet if we look at the CPU and GPU utilization graphs from
+where we left off last time, the results are unimpressive during the
+<em>Process instance BVHs</em> phase:</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg" alt="GPU utilization" />
+</p>
+
+<p>(As before, the x axis is seconds, y axis is processor utilization, and the
+dashed line indicates the start of rendering.)</p>
+
+<p>It starts out looking promising with 40% of the CPU in use, but after less
+than two seconds of that, CPU utilization drops down to just a few cores
+until all the instances are finished.  The GPU is occasionally fully
+occupied, but it’s idle for much of the time.  Thus, we can’t blame all of
+that CPU idling on threads waiting for the GPU.</p>
+
+<h2 id="starting-with-the-obvious">Starting With The Obvious</h2>
+
+<p>The natural place to start is to parallelize the <a href="https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1385">outermost
+loop</a>
+that does the three things outlined above; honestly, there’s no excuse for
+it not having been parallel from the start.  The change is <a href="https://github.com/mmp/pbrt-v4/commit/2842083e37fd30d566091f0420d751628e492b80">barely any work
+at
+all</a>,
+and in a world where the performance gods were feeling generous, that would
+be the end of it.  The only thing that one might worry about in the
+parallelization is contention on the mutex used to serialize updates to the
+hash table, bit with just 312 instances, it seems
+unlikely that will be a big problem.</p>
+
+<p>The good news is that this change did reduce time to first pixel; the bad
+news is that it was only down to 68.5 seconds—an improvement of just 3.7
+seconds.  I’m always happy to take a 5% improvement in overall performance,
+but one has to feel a little mixed about that when it might have been much
+more.  Here are the performance graphs—as before they start after parsing
+has finished and the lights, materials, and textures have been created:</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-ias-1.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-ias-1.svg" alt="GPU utilization" />
+</p>
+
+<p>We can see that 3.7 second improvement; we can see that CPU utilization is
+better throughout instance processing; and we can see that the GPU spends
+less time idle. Yet, there’s nothing thrilling in the graphs: the CPU is
+still sitting around not making much of itself and the GPU isn’t being
+pushed very hard.</p>
+
+<h2 id="no-luck-from-the-next-three-obvious-things">No Luck From The Next Three Obvious Things</h2>
+
+<p>Parallelizing the outermost loop isn’t enough if there’s something that serializes
+work in the middle of it.  I soon remembered such a thing in the
+<a href="https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L104">function that launches the OptiX kernels to build
+BVHs</a>.
+BVH construction there is serialized; not only is all work submitted to the
+main CUDA command stream, but the CPU synchronizes with the GPU twice along
+the way.  As a result, the GPU can only work on one BVH at a time, and
+if another thread shows up wanting to build its own independent BVH, its work
+is held up until the GPU finishes whatever it is already in the middle of.</p>
+
+<p>I decided that leaving the synchronization in wouldn’t be too terrible if
+pbrt <a href="https://github.com/mmp/pbrt-v4/commit/4b74e6b6156d05c53a54df63da1bd3b121e4b2c9">allowed each thread to independently submit work to the
+GPU</a>.
+That was mostly a matter of taking a <code class="highlighter-rouge">cudaStream_t</code> in that function’s
+arguments and passing a different stream for each thread.  Thus, each
+thread will wait for its own BVH to be built but it won’t be prevented
+from starting its own work by other threads.  In turn, the GPU can work
+on multiple BVHs in parallel, which is helpful when there are instances that
+aren’t very complex.</p>
+
+<p>Sadly, and to my surprise, the performance benefit from that change was nil.</p>
+
+<p>I flailed a bit at that point, parallelizing two more inner loops in
+instance BVH construction
+(<a href="https://github.com/mmp/pbrt-v4/commit/a881617a1a9a49561022de53c2cf863cac0e0394">1</a>)
+(<a href="https://github.com/mmp/pbrt-v4/commit/ad9a5ebe300d40e59c6c2c42b2651cc2169a026a">2</a>),
+hoping that giving the CPU more available work would help.  From that, too,
+there was no meaningful change in performance.  Time to get scientific again.</p>
+
+<h2 id="too-much-performance-to-handle">Too Much Performance To Handle</h2>
+
+<p>Giving up on an easy win from semi-informed guesses, I returned to my tried
+and true performance bottleneck finder: running pbrt under the debugger,
+interrupting execution when CPU utilization was low, and seeing what was
+actually going on.  A quick scan of all of the threads’ backtraces at one
+of these points showed that all 64 were in the the <a href="https://github.com/mmp/pbrt-v4/blob/cf042ca90b398b36677cbd7f83fda43bb0078b58/src/pbrt/util/mesh.cpp#L23">TriangleMesh
+constructor</a>.
+(“That’s funny—we shouldn’t be spending much time there at all” was my
+first reaction; that reaction is almost always good news when one is looking for
+ways to improve performance.)</p>
+
+<p>Not only were all the threads in that constructor, but all but one was held
+up waiting for the same mutex, which was held by the remaining one.  And
+yet, there’s nary a mutex to be seen in that code…</p>
+
+<p>A closer look at the stack traces and it became clear that the <a href="https://github.com/mmp/pbrt-v4/blob/a881617a1a9a49561022de53c2cf863cac0e0394/src/pbrt/gpu/memory.cpp#L31">mutex in
+pbrt’s GPU memory
+allocator</a>
+was the point of contention; if 64 threads are trying to allocate of meshes
+all at once, things will understandably go bad there.</p>
+
+<p>I <a href="https://github.com/mmp/pbrt-v4/commit/20dd25e41cb61f3560e49193d1388e4058c425d3">updated the allocator to use per-thread
+slabs</a>,
+where each thread periodically goes out to the main allocator for a 1MB
+chunk of memory but otherwise allocates memory from its own chunk
+directly, no mutex required.  I assumed that this would be enough to
+make that allocation much less of a bottleneck, but there’s no way to know
+until you actually run the code.</p>
+
+<p>I could tell that I was getting somewhere when my computer locked up and
+shut down when I ran pbrt with that fix.  I restarted it and tried again,
+and was thrilled when my computer died once again.  Progress!</p>
+
+<p>To explain: I’ve been using a slightly under-powered power supply with this
+computer for a while.  It’s enough to power the CPU at full utilization and
+is enough to power the GPU at full utilization.  Both at the same time?  A
+bit too much to ask for.  It hadn’t been much of a problem; I just got used
+to not running big compilation jobs at the same time that the GPU was busy.
+In most of my day-to-day work, it’s one processor or the other at work at a
+time.  Those crashes were a good hint that I had gotten both processors to
+be busy at once, which seemed promising.</p>
+
+<p>Unwilling to wait for a new power supply to be delivered in the mail, I
+braved a trip to Best Buy for quick gratification and 1000 W of
+future-proof power.  I could reliably measure performance after swapping
+out the old power supply; time to first pixel was down to 64.9
+seconds—another 3.6 seconds improvement—and graphs that were looking
+better:</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-cuda-mem-slabs.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-cuda-mem-slabs.svg" alt="GPU utilization" />
+</p>
+
+<p>The extra good news in those graphs is that the first phase, <em>Process
+non-instanced geometry</em>, unexpectedly got one second faster—look at that
+spike in CPU utilization there now! Apparently instance BVH construction
+wasn’t the only thing bottlenecked on that mutex.</p>
+
+<p>And yet even with that fixed, CPU utilization there was still middling.</p>
+
+<h2 id="its-always-a-mutex">It’s Always a Mutex</h2>
+
+<p>Another round with the debugger as profiler and there was still lots of mutex
+contention under the <code class="highlighter-rouge">TriangleMesh</code> constructor.  A little more digging and
+it became clear that the
+<a href="https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/util/buffercache.h#L34">BufferCache::LookupOrAdd()</a>
+method was the culprit.</p>
+
+<p><code class="highlighter-rouge">BufferCache</code> is something I added to pbrt after my first go-round with the
+Moana Island; it uses a hash table to detect redundant vertex and index buffers in the scene
+and only stores each one once.  It makes a difference—even though the
+Moana Island comes in highly-instanced, <code class="highlighter-rouge">BufferCache</code> saves 4.9 GB of
+memory when used with it.</p>
+
+<p>What was its problem?  It’s bad enough that it’s worth copying a few lines
+of code here:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>    std::lock_guard&lt;std::mutex&gt; lock(mutex);
+    Buffer lookupBuffer(buf.data(), buf.size());
+    if (auto iter = cache.find(lookupBuffer); iter != cache.end()) {
+       ...
+</code></pre>
+</div>
+<p>Not only do we have have our single contended mutex, but if you trace through the
+<code class="highlighter-rouge">Buffer</code> class and the hashing flow, it turns out that hash of the buffer
+data is computed with the mutex held—totally unnecessary and awfully
+rude, especially if one’s buffer covers many megabytes of memory.</p>
+
+<p>The
+<a href="https://github.com/mmp/pbrt-v4/commit/cf042ca90b398b36677cbd7f83fda43bb0078b58">fix</a>
+makes three improvements: the hash is computed before the lock is acquired,
+a reader-writer lock is used so that multiple threads can check for their
+buffer in the cache concurrently, and the hash table is broken up into 64
+shards, each protected by its own mutex.  In short, an attempt to atone for
+the initial failure with plenty of parallelism prophylaxis.</p>
+
+<p>Survey says? 5.3 seconds faster, which brings us down to <strong>59.6 seconds</strong> for
+the time to first pixel.  An extra bonus is that the first phase, <em>Process
+non-instanced geometry</em>, sped up by another 0.8 seconds, bringing it down
+to 3.0 seconds (versus the 4.9 seconds it was at the start of today’s
+work).  The performance graphs are starting to go somewhere:</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-shard-buffercache.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-shard-buffercache.svg" alt="GPU utilization" />
+</p>
+
+<p>There’s still plenty of CPU idle time in <em>Build instance BVHs</em>, though one
+might make the observation that CPU utilization and GPU utilization are
+roughly inversely correlated there.  That fits with the fact that CPU threads
+go idle while waiting for the GPU to build their BVHs, which is a
+shortcoming that I think we will stick with for now in the interests of
+implementation simplicity.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>With the one-minute mark broken, my motivation started to wane.  The most
+obvious remaining problems are low CPU utilization at the start of <em>Process
+non-instanced geometry</em> and at the end of <em>Build instance BVHs</em>.  I believe
+that those both correspond to the CPU working its way through a large PLY file in a
+single thread; splitting those files multiple smaller ones files that could
+be read in parallel would likely shave a few more seconds off.</p>
+
+<p>Next time, we’ll turn to rendering, covering some of the details related to
+getting this scene to render on the GPU in the first place and finally
+looking at rendering performance.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

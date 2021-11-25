@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: spreading the world and leaving Intel (part 10)</title>
+  <meta name="description" content="Life as an open source project, going out and talking with academics, and an abrupt realization that it was time to go.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/28/ispc-talks-and-departure.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: spreading the world and leaving Intel (part 10)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-28T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 28, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>After the first push to github, there were bug fixes (thankfully none too
+embarrassing) and pull requests; it all seemed to be going well.  The start
+of support for AVX2 landed in ispc in December 2011; it looks like it was
+enabled in January 2012, but support for AVX2’s gather and FMA didn’t land
+until that summer.  (I think that may have been waiting for LLVM support
+for those, but am not sure.)</p>
+
+<p>In the summer of 2012, Jean-Luc Duprat started work on ispc support for
+Knight’s Corner (KNC), a HPC-focused architecture based on Larrabee that
+was the first product in the Xeon Phi series.  Jean-Luc, a former graphics
+person who well understood SPMD, had become a KNC architect and wanted to
+have the ispc functionality there.  Lacking an LLVM backend for KNC, he
+implemented a clever approach based on using LLVM’s C++ backend to emit C++
+intrinsics code.  Given the right <a href="https://github.com/ispc/ispc/blob/master/examples/intrinsics/knc.h">header
+file</a>,
+that could be compiled the rest of the way to assembly.  A hack, but in the
+best kind of way.<sup id="fnref:ingo"><a href="#fn:ingo" class="footnote">1</a></sup></p>
+
+<h2 id="c-and-writing-it-up">C++ and writing it up</h2>
+
+<p>Bill Mark got interested in working through the details of what it would
+take to propose an addition to the C++ standard for SPMD computation; he’s
+an incredible system designer and was great at thinking deeply about the
+details.  Over many months, we had many long conversations about the
+language design and its relation to C++; in the end, he came up with a
+fairly comprehensive design for C++ extensions which he called “Sierra”.
+Figuring out the right design for pointers in ispc came out of those
+discussions; it turned out to be a <a href="http://ispc.github.io/ispc.html#pointer-types">bit
+subtle</a>.</p>
+
+<p>An intern implemented a <a href="http://www.cdl.uni-saarland.de/papers/lhwmp_sierra.pdf">prototype of those ideas in
+clang</a>, with good
+initial results; clang’s clean design made that relatively straightforward.
+It was really neat to see things like lambdas and templates just working
+with SPMD on SIMD code.  Many of the ideas from Bill’s design later
+appeared in <a href="http://compilers.cs.uni-saarland.de/papers/lhh14.pdf">this
+paper</a>.</p>
+
+<p>Bill and I wrote a <a href="/matt/papers/ispc_inpar_2012.pdf">paper</a> about ispc
+in 2012.  I think it well captures the system’s design and implementation
+considerations and it has thorough discussion of previous SPMD languages
+that turned out to have a lot in common with ispc.  We published it at
+InPar, a new conference on parallel computation that year.</p>
+
+<p>InPar was co-located with NVIDIA’s GTC, which in turn meant there was a
+heavy GPU focus.  And by “heavy GPU focus”, I mean our paper was the only
+one about CPUs.  Yet, with strong audience support, we won the best paper
+award.  Our prize was a top of the line NVIDIA GPU.</p>
+
+<h2 id="talking-to-the-academics">Talking to the academics</h2>
+
+<p>Among the ways Geoff Lowney was a great help was in getting me set up to
+give a few external talks on ispc to academic researchers.  One of these
+led to a two-day visit to Illinois to give a talk at UIUC.</p>
+
+<p>I spent the morning of the first day with a bunch of people in Intel’s
+Champaign-Urbana office, which was fantastic—smart, open-minded and
+interesting folks.  I then got to go have lunch with <a href="https://en.wikipedia.org/wiki/David_Kuck">David
+Kuck</a>, which was great, too.  It
+turns out that he knows a thing or two about parallel programming.</p>
+
+<p>There was one slight hitch: apparently there was an issue with the chicken
+in the chicken salad at lunch; food poisoning ensued, and I spent the rest
+of the afternoon and evening in my hotel room, not in a good state, and
+overall freaking out about how things would go at the university the next
+day.  Successfully making it through hour plus standing in front of an
+audience while also speaking cogently seemed quite iffy.</p>
+
+<p>Even when not ill, I always worried about talking to compiler researchers
+about ispc; compilers is not my area and I worried about my incomplete
+knowledge of the previous work.  I imagined my explaining the idea to a
+professor and then their saying “Oh, that’s the Hazenburger transformation,
+first described in 1975.  My undergrad compiler class implemented it for an
+assignment last week. Is there anything else to what you’ve done?”</p>
+
+<p>Um, no—that’s it.  (By now I’ve gotten pretty comfortable that there
+isn’t a Hazenburger transformation after all.)</p>
+
+<p>I’d been a little extra nervous about the UIUC talk because <a href="http://vikram.cs.illinois.edu/">Vikram
+Adve</a> was on the faculty there and would be
+in attendance.  Not only was he a renowned compiler researcher, he’d been
+Chris Lattner’s Ph.D. adviser; LLVM got off the ground at UIUC.  So there
+was even more potential for public embarrassment in my imagined worst case,
+now with the added worry about whether I’d be fully recovered from the food
+poisoning.  Right before the talk, I scouted out the nearest bathroom, just
+so I’d know where to run in an emergency.</p>
+
+<p>To my relief, the talk went well.  Vikram was really nice, and we had a
+nice chat afterward; he seemed to find the ideas intriguing.  The talk was
+recorded, but link seems to be broken.  It’s probably just as well; I can
+avoid the awkwardness of watching myself on video.  The
+<a href="http://i2pc.cs.illinois.edu/public_archive/uiuc-ispc-2012.pdf">slides</a> are
+still online; they give a flavor of where things stood at that point and
+what the general message was.</p>
+
+<p>A few weeks later, giving the talk at a parallel computing lab at another
+university didn’t go as well.  It was a bad omen when the faculty member
+who was supposed to introduce me didn’t show up until 20 minutes after the
+talk was support to start.  After standing around awkwardly for 10 minutes
+waiting for someone to kick this thing off, I finally just introduced
+myself and started the talk.</p>
+
+<p>During the Q&amp;A after the talk, one of the grad students was insistent that
+a 180x speedup on a 40 core machine that I reported in my results was
+purely due to multi-threading and how could I be <em>sure</em> that SIMD had
+anything to do with it?  Also, it turns out that there’s not a single
+interesting workload that isn’t massively-parallel and runs well on GPUs,
+and therefore there wasn’t anything interesting about making things run
+fast on CPUs.</p>
+
+<p>It was a bit of a relief when the faculty member who had invited me to give
+the talk told me that he hadn’t gotten around to setting up any meetings
+with the researchers in the lab after the talk, as had been part of the
+original invitation.</p>
+
+<h2 id="leaving-intel">Leaving Intel</h2>
+
+<p>It’s funny how it all ended.</p>
+
+<p>For a long time, I’d strenuously avoided building a group to work on ispc;
+plenty of other people engaged, pitched in, and made critical contributions
+along the way—Tim Foley, Bill Mark, Jean-Luc, and many others.  They were
+all in different organizations, contributing on their own volition, to the
+extent of the time they could and wanted to make available.</p>
+
+<p>Not trying to formalize things beyond that was a defensive maneuver. An
+organized group of people working on ispc would have presented a better
+target for attack: if I got headcount and hired people to build up a group
+devoted to ispc, we might work productively for a while.  In time, though,
+the jerks would likely apply their well-honed maneuver of persuading
+management that those people could be better used working on something else
+that was more important.  If successful, then poof, everyone’s sent away to
+join another group and the project disintegrates—their actual goal.</p>
+
+<p>With it being just me, there wasn’t much of a target.</p>
+
+<p>In the Fall of 2012, I went ahead and asked Geoff Lowney for just one
+person’s headcount to help me with ispc.  Not too much bigger a target, and
+it was a good time to start work on serious support for AVX-512; there was
+plenty to do on that front.  He readily went off to make it happen.  A
+few days later, as he told me it was no problem, I felt… terror.</p>
+
+<p>Especially after ispc was open sourced, I’d been able to be fairly
+carefree: the compiler was out there in the world, it was working well, and
+people liked it.  I could keep on working on it basically on a day by day
+basis.  If things got weird at Intel—politics, some bad reorg,
+whatever—I knew I could just leave without leaving behind much unfinished
+business.  I’d never planned to stay at Intel for the rest of my career, so
+I figured I’d stick around as long as it was more fun than not, and leave
+when the right time came.</p>
+
+<p>But bringing someone on to join the project?  Then I’d be responsible for
+them, having to do my part to shield them from the politics.  Worse, I’d no
+longer have the option to leave Intel anytime soon—it wouldn’t have been
+fair to that person, especially since most likely they’d be reorged away
+into something else if I left.  I realized that adding someone to the
+effort was effectively signing myself on to stay for at least another year
+or two.</p>
+
+<p>Given all of the previous ups and downs, I wasn’t ready to commit to that.
+Thinking about it more, it seemed like it was probably a good time to move
+on; ispc was in good shape and nothing major was missing.  Continuing to
+turn the crank didn’t have a lot of appeal.</p>
+
+<p>So I quit, for real that time.  Geoff was a bit surprised when I explained
+why—that his giving me the headcount I had asked for in the first place
+was what led me to see it was the right time to leave—but he was
+impressively cool about it.  My last commit with an Intel email address was
+September 14, 2012.</p>
+
+<p><em>Next up, some big systems written in ispc, design retrospectives, and a
+ splash of ARM-based excitement.</em></p>
+
+<p><a href="/matt/blog/2018/04/29/ispc-retrospective.html">Next: Retrospective</a></p>
+
+<h2 id="note">note</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:ingo">
+      <p>Related, Ingo Wald wrote a SPMD on SIMD language prototype, IVL, which converted directly from the AST to C++ intrinsics code. <a href="#fnref:ingo" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

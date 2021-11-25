@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: C&#39;s influence and implementing SPMD on SIMD (part 4)</title>
+  <meta name="description" content="Lessons learned from C and how they relate to SPMD on SIMD. Also, the difference between a compiler optimization and a program transformation.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/21/ispc-volta-c-and-spmd.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: C&#39;s influence and implementing SPMD on SIMD (part 4)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-21T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 21, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p><em>Note: in these posts, I’m not going to go into comprehensive detail about
+how ispc/volta works on a technical level, what the precursors were, or
+what all of the key design goals were.  I’ll touch on some of that as is
+relevant to the narrative, but see the <a href="/matt/papers/ispc_inpar_2012.pdf">paper I wrote about ispc with Bill
+Mark</a> for comprehensive
+discussion of all that.  It’s worth a read (IMHO), if you’re taking the
+time to read this.  (Bill will appear later in this story.)</em></p>
+
+<p>With the defensive perimeter established, I was off. There was a long way
+to go to turn volta into something generally useful.  Plenty of basic
+language functionality wasn’t implemented yet—for example, I’m pretty
+sure things like structs weren’t even working at that point.</p>
+
+<p>Throughout the design and implementation of volta, I thought a lot about
+C. I re-read K&amp;R for inspiration for the n’th time along the way.</p>
+
+<p align="center"><img src="/matt/blog/images/k-and-r.jpg" width="300" /></p>
+
+<p>It wasn’t just the availability of a C grammar that made me start psl with
+C: I like C a lot; it’s a wonderfully crisp language.  It was obvious to me
+that I’d continue using C as a basis for volta, deviating from it as little
+as possible.  Not only had Kernighan and Ritchie obviously gotten so many
+things right, but the language is well-known, and if volta was ever
+finished, it would be more easily adopted by people if the syntax was
+familiar.</p>
+
+<p>I took much more than syntax from C—its design principles were much more
+important.  C had a close mapping to the hardware of the day, and a good
+programmer can look at C code and pretty accurately guess which
+instructions a compiler will generate for that code.  No mystery, no
+compiler magic, no innocuous looking statements that may explode into a slew of
+instructions (I’m looking at you, C++).  I wanted volta to maintain that.</p>
+
+<p>I imagined Kernighan and Ritchie designing C in today’s world.  How would C
+be different if it was designed for today’s CPUs?  Two big things had
+changed in CPU architecture: multi-core processing and SIMD vector
+units.<sup id="fnref:micro"><a href="#fn:micro" class="footnote">1</a></sup></p>
+
+<p>For multi-core, there were plenty of good ideas to draw from.  Andrew
+Lauritzen, who knew about all of them and had thought a lot about this
+stuff, was a big fan of Cilk’s approach to multi-threading—functions
+could call other functions asynchronously, those could run in separate
+threads, and the compiler waited for them to all finish before the original
+function could return.  This nicely enabled parallel composition.</p>
+
+<p>So I added a <code class="highlighter-rouge">launch</code> keyword to volta; it used Cilk’s semantics.  Put it
+before a function call and the function goes off to a thread pool:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>launch foo(a, 6.3);
+</code></pre>
+</div>
+
+<p>Even though that’s not <em>that</em> much syntactically cleaner than calling out
+to TBB or the like (especially now, with C++11 lambdas), it felt nice to
+have that as a first-class thing in the language.  It was basically zero
+friction multi-threading, which seemed right for this era.</p>
+
+<p>For SIMD, one obvious option would be to expose that capability of the CPU
+using explicit vector data types—this is basically what lots of people
+have done by hand, wrapping intrinsics around <code class="highlighter-rouge">vec4f</code> classes and the like.
+That would certainly be useful to have as a first-class feature of the
+language, and for some types of computation, explicit vectors end up being
+a cleaner way of expressing them.</p>
+
+<p>As should already be clear by now, I really wanted to write programs with
+complex control flow that still ran on SIMD hardware; for that, explicit
+vectors aren’t very convenient, and so SPMD on SIMD it was.  I think that
+is a good fit for the philosophy of C as well: straightforward and
+predictable, no deep compiler magic behind it.</p>
+
+<p>Maybe K&amp;R would have decided to made both options available, and having
+both often would have been nice; then, for example, one could write a
+program that targeted 16-wide AVX-512, with 4 SPMD program instances, each
+of which could do a 4-wide vector operation with each instruction.  We’ll
+come back to that topic later, in the retrospective.</p>
+
+<h2 id="making-spmd-on-simd-happen">Making SPMD on SIMD happen</h2>
+
+<p>As I experienced in Sweden, vectorizing straight-line code is
+easy—there’s nothing to it if you’re not trying to prove that
+vectorization is safe first.  The trickier part is implementing general
+control flow for SPMD programs.  We’d like different SPMD program instances
+to take different paths through the program, and still compute correct
+results.</p>
+
+<p>Intrinsics programmers know how this is done: when conditionally processing
+a values in a vector, you maintain an additional mask variable that records
+which of them should be modified.  If you have something that’s logically
+like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>if (a &lt; b)
+  c = 0;
+</code></pre>
+</div>
+
+<p>operating on vector-valued <code class="highlighter-rouge">a</code>, <code class="highlighter-rouge">b</code>, and <code class="highlighter-rouge">c</code>, then you store a mask that
+records the vector result of <code class="highlighter-rouge">a &lt; b</code> and then use that to conditionally
+assign zero to the <code class="highlighter-rouge">c</code> vector.  If there’s an <code class="highlighter-rouge">else</code> statement, then you
+negate the mask and then execute its code, minding the mask.  Kayvon
+Fatahalian has a <a href="http://www.cs.cmu.edu/afs/cs/academic/class/15869-f11/www/lectures/07_gpucore.pdf">great set of
+slides</a>
+that talks about this and how it’s handled on GPUs; it’s all surprisingly
+similar, with a little more help from the hardware.</p>
+
+<p>More generally, loops, <code class="highlighter-rouge">break</code> and <code class="highlighter-rouge">continue</code> statements, even indirect
+function calls through pointers—all of that can be executed in vector
+form by using the same idea:</p>
+
+<ul>
+  <li>Maintain an execution mask that records which program instances
+(SIMD lanes) are active.</li>
+  <li>Execute vector instructions according to a conservative control
+flow path through the program.  In other words, execute an instruction if
+any of the lanes needs to.</li>
+  <li>Make sure that no side effects are visible from inactive program
+instances—unintended memory writes or the like.</li>
+</ul>
+
+<p>Each of these can be a bit fiddly to get right, but they’re conceptually
+straightforward principles.</p>
+
+<p>The rules to maintain the execution mask for loops are only slightly more
+complicated than for an <code class="highlighter-rouge">if</code> statement.  The value of the loop test gives
+the execution mask for the loop body and you run the loop until that’s
+false for all of the active program instances.  A <code class="highlighter-rouge">break</code> in a loop just
+disables the active mask for any elements where the mask is active when the
+<code class="highlighter-rouge">break</code> statement executes; the active mask for them is restored after the
+loop finishes.  A <code class="highlighter-rouge">continue</code> disables the mask for an instance until the
+end of the current iteration, at which point it’s restored.  And so forth.</p>
+
+<p>It took a while to get this mask maintenance stuff implemented properly in
+volta.  It was thrilling once it was all really solid, especially since
+LLVM continued to be reliable, giving me good x86 assembly as long as I
+gave it good vectorized IR.</p>
+
+<p>Here’s a small example with a volta/ispc program that raises a float to an
+integer power with an inefficient algorithm. (Note that this program is
+also valid C.)</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>float powi(float a, int b) {
+    float r = 1;
+    while (b--)
+        r *= a;
+    return r;
+}
+</code></pre>
+</div>
+
+<p>And here’s the assembly code that comes out of the compiler today. (Note: AT+T
+syntax, with the destination as the last argument.)  Here I’ve used AVX2,
+since it’s cleaner than SSE4, though SSE4 was the only ISA that volta
+initially supported.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>LBB0_3:
+	vpaddd    %ymm5, %ymm1, %ymm8
+	vblendvps %ymm7, %ymm8, %ymm1, %ymm1
+	vmulps    %ymm0, %ymm3, %ymm7
+	vblendvps %ymm6, %ymm7, %ymm3, %ymm3
+	vpcmpeqd  %ymm4, %ymm1, %ymm8
+	vmovaps   %ymm6, %ymm7
+	vpandn    %ymm6, %ymm8, %ymm6
+	vpand     %ymm2, %ymm6, %ymm8
+	vmovmskps %ymm8, %eax
+	testl     %eax, %eax
+	jne       LBB0_3
+</code></pre>
+</div>
+
+<p>The first two instructions decrement <code class="highlighter-rouge">b</code>, using the active active vector
+mask to perform the assignment only for the active lanes.  The next two
+multiply <code class="highlighter-rouge">r</code> by <code class="highlighter-rouge">a</code>, again using the mask.  Then <code class="highlighter-rouge">b</code> is compared for
+equality with zero and the result is used to update the execution
+mask. (Updating the mask takes an extra instruction due the fact that
+<code class="highlighter-rouge">powi()</code> may have been called with a not-all-on execution mask, so we have
+to AND the mask at <code class="highlighter-rouge">powi()</code>’s entry.  In this case, it’d be fine if we
+skipped that and computed bogus results for the disabled lanes, but in general
+we need an accurate mask in case there’s something like a memory write that
+needs to be squashed for inactive lanes.)  Finally, a quick check with
+<code class="highlighter-rouge">movmsk</code> to see if any lanes are still active before jumping to the start
+of the loop again.</p>
+
+<p>And that’s it.  I think it’s optimal, save for the unneeded precision in
+the maintenance of the execution mask.<sup id="fnref:1"><a href="#fn:1" class="footnote">2</a></sup>  I’ll happily take the occasional
+stray extra instruction over having to write intrinsics by hand, especially
+for programs that are non-trivial.</p>
+
+<h2 id="compiler-optimizations-versus-transformations">Compiler optimizations versus transformations</h2>
+
+<p>Having seen this example, it’s easier to understand another super insightful
+point from Tim Foley: compiling a SPMD program for SIMD hardware is a
+compiler transformation, which is an entirely different thing than a
+compiler optimization.<sup id="fnref:2"><a href="#fn:2" class="footnote">3</a></sup></p>
+
+<p>His insight gets back to the problem with auto-vectorization: it’s a
+complex optimization, full of heuristics, and you can’t be sure where it’s
+going to end up.  The compiler is trying to reason about the safety of
+vectorizing a loop—are there any loop-carried dependencies?  One can only
+go so far with reasoning about arbitrary programs with a computer program
+(remember that pesky halting problem), so auto-vectorizers are doomed to be
+brittle and unpredictable to the user.</p>
+
+<p>SPMD on SIMD? That’s a <em>transformation</em>.  We just saw how to do it.  It’s
+mechanical.  If you’ve automated it, there’s no reason it won’t always
+work.</p>
+
+<p>The nice thing about this is that it fits with the C philosophy: any
+programmer who understands the idea can accurately predict what code the
+compiler will generate, and it’s pretty much the code they would have
+written by hand; for performance-aware programmers, the first property is
+just as important as the second.<sup id="fnref:3"><a href="#fn:3" class="footnote">4</a></sup></p>
+
+<p>In the end, volta’s kind of a dumb compiler; there’s not really anything
+deeply clever in its implementation.  Other than a lot of engineering work,
+the key was approaching the problem in the right way in the first place.</p>
+
+<p><em>Next time, we’ll finally get to sharing first results with the compiler
+ team.</em></p>
+
+<p><a href="/matt/blog/2018/04/22/ispc-volta-first-results.html">Next: First benchmark results</a></p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:micro">
+      <p>Of course, plenty had changed in CPU <em>micro</em>architecture—out of order execution, branch prediction, caches, all that good stuff. But none of that really affects what the programming model should look like. <a href="#fnref:micro" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:1">
+      <p>It’s been a few years since I’ve read x86 assembly with an eagle eye, so I look forward to emails that tell me that I missed something and am wrong about that statement. :-) <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>Tim should also be credited with inventing the phrase “SPMD on SIMD”. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:3">
+      <p>At least, the ones who’ve learned the lesson from being burned by “sufficiently smart compilers” once or twice. <a href="#fnref:3" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

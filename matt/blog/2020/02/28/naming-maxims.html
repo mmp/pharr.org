@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Naming Maxims</title>
+  <meta name="description" content="Surely the most important thing to be worrying about at the moment.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2020/02/28/naming-maxims.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Naming Maxims</h1>
+    <p class="post-meta">
+      <time datetime="2020-02-28T00:00:00-06:00" itemprop="datePublished">
+        
+        Feb 28, 2020
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>A variable should never have “data” as part of its name; <em>everything</em> stored in a computer is data.</p>
+
+<p>A variable named “data” alone is in especially urgent need of renaming.</p>
+
+<p>Corollary: a struct or class name that ends with “Data” should lose the
+“Data” for the same reasons. And “info” is another word for “data,” so the
+same applies to it as well.</p>
+
+<p><a href="https://github.com/search?l=&amp;q=DataInfo&amp;type=Code">365,585 hits for
+“DataInfo”</a> on github
+sadden me.</p>
+
+<p>Functions do things, so their names should include a verb that describes
+their action. Order verb and target as in English, so it’s “CreateContext”,
+not “ContextCreate”.</p>
+
+<p>However, if the best you can come up with is “compute” as your choice for
+that verb, go ahead and lose it; computing is what all functions do (see
+“data”).</p>
+
+<h2 id="notes">notes</h2>
+
+<p>I know that I learned the function verb thing from Kurt Akeley, back when
+he at NVIDIA for a bit in the early 2000s, but am not sure where I picked
+up the “data” allergy.</p>
+
+<p>Surprisingly, the Google C++ style guide, which is chock-full of pedantry,
+is only worried about capitalization and underscores in its <a href="https://google.github.io/styleguide/cppguide.html#Naming">section on
+naming things</a>.
+<em>Code Complete</em> has a great chapter on naming variables, but my copy (1993,
+first edition, represent) doesn’t seem to have anything about “data”.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

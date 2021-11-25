@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Re-reading An Introduction to Ray Tracing</title>
+  <meta name="description" content="Another go-round with an old companion.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2019/01/26/an-introduction-to-ray-tracing.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Re-reading An Introduction to Ray Tracing</h1>
+    <p class="post-meta">
+      <time datetime="2019-01-26T00:00:00-06:00" itemprop="datePublished">
+        
+        Jan 26, 2019
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>I recently re-read <em>An Introduction to Ray Tracing</em> on the occasion of its
+recent release in a <a href="http://www.realtimerendering.com/blog/an-introduction-to-ray-tracing-is-now-free-for-download/">free
+online</a>
+edition.  And to be clear, I read my physical copy, a first printing from
+1989, since I’m OG like that.</p>
+
+<p align="center"><img src="/matt/blog/images/intro-rt.jpg" height="400" /></p>
+
+<p>I don’t remember what I paid for my copy, but it was a college-student
+purchase.  Whatever it cost, it could have been a lot of pizza and beer
+instead.  No regrets, even then.</p>
+
+<p>It’s hard to over-state the importance of this book to my own computer
+graphics education.  I can’t guess how many times I read it; it’s the
+sort of book I read and re-read, absorbing a little more each time.</p>
+
+<p>It’s remarkably cohesive for a book that is a collection of chapters by
+different authors.  Books like that sometimes turn out to be mishmashes where
+at each chapter break you can tell that someone new is taking over, not
+having paid too much attention to what came before and not worried too
+much about what’s coming after. <em>An Introduction to Ray Tracing</em> doesn’t
+suffer any of that.</p>
+
+<p>I don’t know if it’s that Andrew Glassner, the book’s editor, wielded a
+strong pen, or if the authors all knew this stuff so well that they
+naturally self-organized to present the right ideas to get the reader going
+down the path.  Maybe it was some of both.</p>
+
+<p>It’s worth a read today—all of it.  The basics are presented more clearly
+than one might expect for an idea that was, for graphics, just eight years
+old at the time.  I’ve found that reading the work from the early days can
+be the most illuminating, as it hasn’t become all fouled up with jargon and
+gratuitous complexity.  There’s also a pioneering aspect, the “we’re still
+working out the details so please bear with us,” that ends up making it
+more approachable.  You can play along at home, knowing more now about how
+it all turned out.</p>
+
+<p>A lot of the content is still familiar—for example, the basics of
+ray–object intersection remain the same today.  It’s fun to see how much
+has changed, though: for example, of 88 pages over two chapters on
+ray–object intersection algorithms by Eric Haines and Pat Hanrahan, there
+are only nine pages on ray–polygon intersection, and the special case of
+ray–triangle gets less than a page in total.  All the rest of those pages
+are about things like intersecting the good old quadrics, CSG, surfaces of
+revolution, implicit surfaces, and other things that don’t seem so
+important today.</p>
+
+<p align="center"><img src="/matt/blog/images/superellipsoids.jpg" height="300" /></p>
+<p align="center"><i>A few objects that are of somewhat less interest to be intersected
+than they once were.</i></p>
+
+<p>The chapter on acceleration structures by Jim Arvo and David Kirk is also
+chock-full with choice.  It gives the reader a sense of how active an area of
+research that was and how little of it was settled then.  Arvo and Kirk
+present all sorts of spatial and primitive subdivisions, augmented with
+variations that also account for ray direction in the hierarchies, some
+approaches based on making use of ray coherence, and discussion of the
+possibilities from tracing beams and cones instead of just rays.</p>
+
+<p>In spite of the uncertainties of what was the best data structure, how to
+build it was already clear: not only is the surface area heuristic there,
+but there’s a discussion of its assumptions and limitations
+that is still insightful today.</p>
+
+<p>Rob Cook’s chapter on stochastic sampling and distribution ray tracing is
+probably my favorite, for two reasons.  The first is that he gives a
+remarkably clear discussion of jittering, why it has the filtering
+characteristics it has, and how it turns aliasing into noise, that via the
+simple example of considering the effect of jittered sampling of sine waves
+of various frequencies.</p>
+
+<p>The second reason relates to rendering depth of field.  Starting on page
+178, Cook starts to explain how to transform polygons in screen space given
+a sample point on a thin lens in order to account for depth of field.  By
+the time you get to page 186, he’s explained how to bound polygons in
+screen space given a particular thin lens aperture size.</p>
+
+<p>You might be wondering, what does that have to do with ray tracing?  To be
+honest, I have no idea.  Then and now, to render depth of field in a ray
+tracer you just adjust your camera ray origin based on lens position and
+take it from there.  Screen space has nothing to do it—that only matters if
+you’re rasterizing.  However, as far as I know, those pages are the only
+place that information is written down and explained clearly.  In addition
+to valuing the content, I like the subversion of sneaking some
+rasterization heresy into a ray tracing book.</p>
+
+<p>The book wraps up with <em>Writing a Ray Tracer</em>, by Paul Heckbert.  It
+includes an extended outline of ray tracer features.  Structured using a
+clear taxonomy, it captures all sorts of features one might want to
+implement.  It starts slow, with things like “special case shadow rays so
+that shading calculations aren’t performed for them” and then warms up to
+“add support for motion blur,” “use spectra rather than RGB,” all the way
+up to “add support for distributed computing across multiple machines.”
+It’s comprehensive in terms of 1989 ray tracer features, and was a source
+of inspiration when I wrote my own early ray tracers.</p>
+
+<p>Today, the most striking thing to me is that both the rendering equation
+and path tracing are only mentioned in passing, and then only a few times.
+There’s never any suggestion that you’d actually use that stuff to make
+images.  At most, you might do distribution ray tracing with a little
+jitter at the lens, a little jitter in time, and a little jitter for
+reflections—that’s about as much of sampling the full path space as could
+be imagined to be practical.  Path tracing only appears once in the index,
+and there with the indignity of an unfortunate typo:</p>
+
+<p align="center"><img src="/matt/blog/images/path-racing.jpg" height="80" /></p>
+
+<p>The section on parallel and vector architectures for ray tracing at the end
+of Arvo and Kirk’s chapter helps illuminate why path tracing saw so little
+attention.</p>
+
+<p>A representative architecture that they describe is a parallel ray tracing
+system that used Intel 8087 floating-point units.  For grounding, those ran
+at 4 MHz and offered 50,000 FLOPS.  For the reader who is unfamiliar with
+“FLOPS” without a “G” or a “T” at the start, they are just plain old
+floating-point operations, counted one at a time but still measured per
+second.  A good GPU today offers about 50,000,000 times more of them.  Put
+another way, a computation you can do today in 1/1000 of a second you could
+do on an 8087 in about 14 hours.</p>
+
+<p>With that kind of performance available from CPUs, specialized hardware was
+of interest.  In that same section of the book, there’s also discussion of
+a hardware architecture for ray tracing introduced by Ullner in his 1983
+Ph. D. dissertation:</p>
+
+<blockquote>
+  <p>The performance […] was quite impressive (for 1983), being able to
+compute a new ray–polygon intersection every 1/3 microsecond once the
+pipe was full. […] It would thus be able to exhaustively ray trace an
+anti-aliased 512x512 image containing 1000 polygons in approximately 10
+minutes.</p>
+</blockquote>
+
+<p>Perhaps the best thing of all from a re-reading is the understanding of how
+far we’ve come.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

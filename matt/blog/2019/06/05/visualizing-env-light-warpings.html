@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Visualizing Warping Strategies for Sampling Environment Map Lights</title>
+  <meta name="description" content="A visual exploration of the differences between how two sample warping algorithms distort uniform samples when sampling environment map light sources.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2019/06/05/visualizing-env-light-warpings.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Visualizing Warping Strategies for Sampling Environment Map Lights</h1>
+    <p class="post-meta">
+      <time datetime="2019-06-05T00:00:00-05:00" itemprop="datePublished">
+        
+        Jun 5, 2019
+      </time>
+      </p>
+  </header>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.js"></script>
+<script src="/jeri.js"></script>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>(I know, there’s supposedly another post on sampling triangular light
+sources coming.  Soon, maybe!)</p>
+
+<p>Recent papers on importance sampling have increasingly often started to
+include visualizations of how various sampling techniques warp the
+canonical \([0,1)^n\) domain of samples that are used to drive them.
+Eric Heitz’s <a href="http://jcgt.org/published/0007/04/01/">recent paper on sampling the GGX
+distribution</a> is one example; see
+his Figure 7.</p>
+
+<p>Understanding the way that sample warping algorithms distort the uniform
+samples that they start out with is important: in general, we’d like to
+provide them with well-distributed sample points (e.g. from a
+low-discrepancy point set) and we’d like the warping algorithm to not mess
+up that distribution—ideally, it should smoothly distort from
+\([0,1)^n\) to the target domain without discontinuities and without
+stretching much more in one direction than the other.  (This is why Pete
+Shirley’s “square to disk” mapping generally gives lower integration error
+than the standard polar mapping of samples to the disk. <a href="http://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations.html#SamplingaUnitDisk">More
+details</a>.)</p>
+
+<p>Inspired by recent papers, I decided it would be interesting to make some
+visualizations to better understand the differences between algorithms used
+for sampling environment map light sources.  Environment maps are generally
+used to define a light “at infinity”—in other words, an emissive object
+that is infinitely far away, such that the radiance \(L\) arriving at a
+point is purely a function of direction \(\omega\).  In general, a good
+importance sampling approach for these lights is to warp samples from
+\([0,1)^2\) to directions \(\omega\) with probability density
+proportional to the luminance of each pixel scaled by the solid angle it
+covers.</p>
+
+<h2 id="two-warping-algorithms">Two Warping Algorithms</h2>
+
+<p>There are two widely-used approaches for sampling directions according to an
+environment map light source’s distribution:</p>
+
+<ul>
+  <li>A two-step algorithm based on first sampling a marginal PDF to select a
+scanline of the environment map and then sampling a conditional PDF along
+the chosen scanline to select a pixel.</li>
+  <li>A hierarchical warping algorithm that uses a MIP-map over the environment
+map to progressively warp 2D samples until they match the desired
+distribution.</li>
+</ul>
+
+<p>The first approach is described in <a href="http://www.pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources.html#InfiniteAreaLights">Physically Based
+Rendering</a>;
+see the linked section for details.  Most of the implementation is in
+pbrt’s <a href="https://github.com/mmp/pbrt-v3/blob/3e9dfd72c6a669848616a18c22f347c0810a0b51/src/core/sampling.h#L123">Distribution2D
+class</a>.</p>
+
+<p>The second approach is described in the paper <a href="https://cs.dartmouth.edu/~wjarosz/publications/clarberg05wavelet.html">Wavelet Importance Sampling:
+Efficiently Evaluating Products of Complex
+Functions</a>,
+by Clarberg et al.  (While that paper is mostly about a technique for
+sampling according to the product of BSDF and the environment map, their
+sample warping algorithm can be applied to the environment map alone.)
+They apply a series of linear warps of the form \(f(x) = a(x-b)\) to the
+\([0,1)^2\) domain, alternating between the two dimensions.  They take
+advantage of the fact that because MIP map texels store averages of the
+texels in a region of the image, looking at relative averages shows how to
+progressively warp the \([0,1)^2\) domain to match the image.</p>
+
+<p>This figure from their paper gives a flavor of the idea:</p>
+
+<p align="center"><img src="/matt/blog/images/hierarchical-warp.png" /><i>
+The first step of the hierarchical sample warping algorithm: the four pixel
+values from the first MIP level below the root give the relative fraction
+of samples that should be allocated to the corresponding quarters of the
+image.  In turn, the sampling domain is warped accordingly,
+here first in y and then in x. Further linear warpings are applied at each
+successive MIP level.  </i></p>
+
+<p>Here’s my implementation of the hierarchical warping algorithm (<a href="/matt/blog/images/hierwarp.h">.h</a>,
+<a href="/matt/blog/images/hierwarp.cpp">.cpp</a>.)  It comes from the next version of pbrt, so it doesn’t compile
+as is, but I don’t think it’d be too hard to get it working,
+especially as part of the current version of pbrt.</p>
+
+<h2 id="visual-comparison-of-distortion">Visual Comparison of Distortion</h2>
+
+<p>In order to better understand how the two warps work in practice, I created
+some visualizations of how they distort strata from the \([0,1)^2\) sample domain.
+I split the domain into \(16 \times 16\) strata and assigned a different color to each
+one, which has us starting out with this:</p>
+
+<p align="center"><img src="/matt/blog/images/original-strata.png" /></p>
+
+<p>Then for both mappings, I computed the inverse mapping: for each pixel in
+the environment map, I determined which sample value in \([0,1)^2\)
+mapped to that pixel, and in turn colored the environment map pixel
+according to the strata colors above.  The resulting images give a sense of
+how the original strata are distorted by the warping.</p>
+
+<p>I chose three environment maps from <a href="https://hdrihaven.com/">HDRI Haven</a>
+for evaluation: <a href="https://hdrihaven.com/hdri/?h=snowy_park_01">Snowy Park
+01</a>,
+<a href="https://hdrihaven.com/hdri/?h=surgery">Surgery</a>, and
+<a href="https://hdrihaven.com/hdri/?h=qwantani">Qwantani</a>.  They range from having
+relatively uniform illumination (<em>Snowy park</em>) to localized extremely
+bright illumination (<em>Qwantani</em>).  <em>Surgery</em> is somewhere in the middle.</p>
+
+<p>Here are the results, via <a href="https://jeri.io">jeri</a>.  They’re best viewed on
+a laptop or desktop computer.  Click on the tabs to switch between the
+environment maps and the visualizations.  After selecting the image below,
+I encourage you to hit ‘f’ to go full screen in order to be able to see the
+details well.  Hit ‘?’ to see a list of all of the keyboard shortcuts.</p>
+
+<p>The thing to look for in these visualizations is “how are the strata
+distorted?” (and in turn, “how do I feel about that?”)</p>
+
+<div class="card-img-top" style="display:block; width: 100%; padding-top: 77.083%;  position:relative;">
+<div id="envmaps" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div></div>
+<script>
+Jeri.renderViewer(document.getElementById('envmaps'), {
+  title: 'envmaps', children: [
+  { title: 'Snowy park',
+  children: [
+     { title: "Environment map", image: '/matt/blog/images/snowy_park_01_2k.exr' },
+     { title: "2D warp strata", image: '/matt/blog/images/snowy_park_01_2k.-2d.exr' },
+     { title: "Hierarchical warp strata", image: '/matt/blog/images/snowy_park_01_2k.-hier.exr' }
+  ]
+ },
+  { title: 'Surgery',
+  children: [
+     { title: "Environment map", image: '/matt/blog/images/surgery_2k.exr' },
+     { title: "2D warp strata", image: '/matt/blog/images/surgery_2k.-2d.exr' },
+     { title: "Hierarchical warp strata", image: '/matt/blog/images/surgery_2k.-hier.exr' }
+  ]
+ },
+  { title: 'Qwantani',
+  children: [
+     { title: "Environment map", image: '/matt/blog/images/qwantani_2k.exr' },
+     { title: "2D warp strata", image: '/matt/blog/images/qwantani_2k.-2d.exr' },
+     { title: "Hierarchical warp strata", image: '/matt/blog/images/qwantani_2k.-hier.exr' }
+  ]
+ },
+ ]});
+</script>
+
+<p><br /></p>
+
+<p>The results are… interesting.</p>
+
+<p><em>Snowy park</em> is a fairly straightforward case.  Visually, I think that the
+hierarchical warp does best here, mostly maintaining pretty much
+rectangular strata.  I see at least one case where part of a stratum has
+been sheared off and is disconnected from the rest of it, but otherwise it
+looks pretty good.  The 2D warp goes a bit wavy; what we’re seeing is
+adjacent scanlines with significantly different sampling distributions so
+that the second sampling step warps the points very differently from
+scanline to scanline.  Nevertheless, all of the original strata remain
+connected, which is a good thing.</p>
+
+<p>The results are along similar lines for <em>Surgery</em> though there we can see
+the differences between how the two warping functions pull samples to
+the bright lights.  With the hierarchical warp, we see fairly
+distorted strata all around the lights, where the distortion happens in
+both dimensions.  With the two dimensional warp, the scanlines with bright
+lights have that same wavy distortion we saw with <em>Snowy park</em>, just much
+more so.</p>
+
+<p>Finally, there’s <em>Qwantani</em>.  The sun is about 150,000 times brighter than
+the blue sky around it and therefore much of the sampling domain is pulled
+toward the sun’s direction.  With the hierarchical warp, we can see that
+quite a few strata have been broken into pieces and many of the remaining
+ones are stretched much more in one dimension than the other.  The 2D warp
+has plenty of its own distortion, though for better or for worse, it’s
+localized in the scanlines that include the sun and its reflection.</p>
+
+<p>Conclusion? I don’t know—warping’s hard.  Rendering tests with those
+three environment maps indicate that both warping functions give similar
+error, so there’s no clear winner between them on that front, either.  “Use
+whichever approach is most efficient on your target architecture” is all
+I’ve got to offer for a conclusion for today.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

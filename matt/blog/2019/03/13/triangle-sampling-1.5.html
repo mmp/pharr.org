@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Adventures in Sampling Points on Triangles (Part 1.5): Reader Mail and Followups</title>
+  <meta name="description" content="Digging into a few improvements and nits that were pointed out via email as well as an investigation of another possible mapping to the triangle.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2019/03/13/triangle-sampling-1.5.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Adventures in Sampling Points on Triangles (Part 1.5): Reader Mail and Followups</h1>
+    <p class="post-meta">
+      <time datetime="2019-03-13T00:00:00-05:00" itemprop="datePublished">
+        
+        Mar 13, 2019
+      </time>
+      </p>
+  </header>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.js"></script>
+<script src="/jeri.js"></script>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>It’s a mixed bag, not having comments on the blog here.  I figure that I
+save a bunch of time and annoyance by not having to filter spam, but on the
+other hand, allowing comments would allow many-to-many discussion of posts,
+rather than the many-to-one and then one-to-many that we get from people
+emailing me and then my writing another post that summarizes those
+discussions.  As far as I can tell, there aren’t any particularly good
+options for allowing comments (especially given that I want to host this
+thing myself and am partial to a static website) and so here we are, back
+in one-to-many land.</p>
+
+<p><a href="/matt/blog/2019/02/27/triangle-sampling-1.html">Last
+time</a> I
+said that we’d talk about sampling spherical triangles next, but I got
+pulled into a few interesting email threads after the first post, so
+instead we’ll discuss a few of those here.</p>
+
+<h2 id="improving-performance-andrew-willmott">Improving Performance (Andrew Willmott)</h2>
+
+<p><a href="http://www.andrewwillmott.com/">Andrew Willmott</a> came up with an optimized
+implementation of Basu and Owen’s algorithm; it takes advantage of the
+redundancy in the three barycentric coordinates (i.e., that in barycentric
+space, they’re the vertices of an equilateral triangle with side length
+that depends on which digit is currently being processed.)  Given some
+additional attention, that insight leads to a branchless implementation
+that gives exactly the same results as my earlier one.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>std::array&lt;Float, 3&gt; LowDiscrepancySampleTriangle(Float u) {
+    uint32_t uf = u * (1ull &lt;&lt; 32);  // Fixed point
+    Float cx = 0.0f, cy = 0.0f;
+    Float w = 0.5f;
+
+    for (int i = 0; i &lt; 16; i++) {
+        uint32_t uu = uf &gt;&gt; 30;
+        bool flip = (uu &amp; 3) == 0;
+
+        cy += ((uu &amp; 1) == 0) * w;
+        cx += ((uu &amp; 2) == 0) * w;
+
+        w *= flip ? -0.5f : 0.5f;
+        uf &lt;&lt;= 2;
+    }
+
+    Float b0 = cx + w / 3.0f, b1 = cy + w / 3.0f;
+    return { b0, b1, 1 - b0 - b1 };
+}
+</code></pre>
+</div>
+
+<p>Andrew also notes that it’s possible to do even better: the step of
+reversing the bits of the sample index and dividing by 2<sup>32</sup> to
+get a van der Corput point to pass in to <code class="highlighter-rouge">LowDiscrepancySampleTriangle()</code>
+can be skipped, and then in turn, the loop can be modified to process the
+digits in “backwards” order.</p>
+
+<p>His improved version gives a 2.34x speedup on the CPU on my system
+here. I’d expect the benefit to be even greater on a GPU, thanks to the
+implementation maintaining fully coherent execution.</p>
+
+<h2 id="an-improved-2d-warp-eric-heitz-and-justin-talbot">An Improved 2D Warp (Eric Heitz and Justin Talbot)</h2>
+
+<p>Apparently sampling triangles is in the air; Eric Heitz recently posted a
+<a href="https://twitter.com/eric_heitz/status/1105097492964741120">tweet</a> with a
+link to a
+<a href="https://drive.google.com/file/d/1J-183vt4BrN9wmqItECIjjLIKwm29qSg/view">write-up</a>
+describing a new warping from barycentric coordinates to points on
+triangles.  The basic idea is to compress diagonals of the square sampling
+domain that are perpendicular to triangle’s diagonal until they end at the
+triangle’s diagonal.  As a bonus, that mapping is more efficient than the
+<a href="https://github.com/mmp/pbrt-v3/blob/f7653953b2f9cc5d6a53b46acb5ce03317fd3e8b/src/core/sampling.cpp#L154">traditional
+mapping</a>,
+since no square root is necessary.</p>
+
+<p>The implementation is straightforward; for the record, here’s my version of
+his algorithm:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>std::array&lt;Float, 3&gt; UniformSampleTriangle(const Point2f &amp;u) {
+    Float b0 = u[0] / 2, b1 = u[1] / 2;
+    Float offset = b1 - b0;
+    if (offset &gt; 0) b1 += offset;
+    else b0 -= offset;
+    return { b0, b1, 1 - b0 - b1 };
+}
+</code></pre>
+</div>
+
+<p>As I was reading Eric’s write-up, something tickled in my brain and I dug
+through old email; I found a message from 2011 from <a href="http://justintalbot.com/">Justin
+Talbot</a>, describing the same approach and asking
+if I knew if it was new.  It was one of those emails where I thought to
+myself, “huh, that’s interesting—I should think about this carefully
+before I reply.”  To my shame, I never did take the time to think it through,
+and never replied.  (Once again, my haphazard email habits do their part to
+impede progress.)</p>
+
+<p>Eric’s write-up has a number of nice visualizations of sample points and
+warped grids and seems to make a pretty clear case that the characteristics
+of the distortion with the new mapping are better than the traditional one
+(where we saw last time how things get extra stretched in one of the
+triangle corners.)</p>
+
+<p>Since Eric showed triangles and points on them, I figured that I’d measure
+rendering error, with the same test scene as last time, still at 16 samples
+per pixel.  The results were… interesting.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Warping  </th>
+      <th style="text-align: center">  Sampler  </th>
+      <th style="text-align: right">  MSE Error</th>
+      <th style="text-align: right">    Error : Basu-Owen</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">sqrt</td>
+      <td style="text-align: center">pmj02bn</td>
+      <td style="text-align: right">2.450e-5</td>
+      <td style="text-align: right">2.15x</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">sqrt</td>
+      <td style="text-align: center">stratified</td>
+      <td style="text-align: right">3.230e-5</td>
+      <td style="text-align: right">2.83x</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">  Heitz-Talbot  </td>
+      <td style="text-align: center">pmj02bn</td>
+      <td style="text-align: right">2.456e-5</td>
+      <td style="text-align: right">2.15x</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Heitz-Talbot</td>
+      <td style="text-align: center">stratified</td>
+      <td style="text-align: right">2.254e-5</td>
+      <td style="text-align: right">1.98x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>The winner is… The Heitz-Talbot warping with stratified sampling?  I can’t
+see any reason why stratified sampling would offer an improvement over
+pmj02bn points, since those are also 4x4 stratified (and then more).  Yet,
+that’s what the numbers say—stratified seems to be the best, at least in
+this case.  I suspect that this result either points to a bug in my pmj02bn
+sample generation code (which seems unlikely–I do actually, like, verify
+that the sample points are stratified all the ways they’re supposed to be),
+something subtle and interesting going on with the Heitz-Talbot mapping, or
+some other gremlin.</p>
+
+<p>One other thing to note is that with pmj02bn points, both mappings have
+essentially the same error. I suspect that this is an indication of the
+fact that pmj02bn points satisfy all of the elementary intervals, which in
+turn makes them resilient to stretching from mappings like these.  (So
+maybe my implementation of them isn’t buggy after all.)</p>
+
+<p>All of that doesn’t matter too much in this case, though, since Basu-Owen
+still wins handily (with all the caveats still of “in this one test scene
+with a big area light”.)</p>
+
+<h2 id="randomization-and-structure-per-christensen">Randomization and Structure (Per Christensen)</h2>
+
+<p>Per Christensen sent along a number of interesting observations, only one
+of which we’ll get to here today.  He noted that using Cranley-Patterson
+rotation to randomize the 1D sample points before applying Basu and Owen’s
+mapping might not be the best idea.  In particular, he pointed out that
+with an offset of 0.041630, you get these points:</p>
+
+<p align="center"><img src="/matt/blog/images/owen-tri-badrot.png" /> <br />
+<i>64 sample points with Basu and Owen's mapping, randomized by applying a
+Cranley-Patterson rotation of 0.041630 to the 1D van der Corput sample
+points.</i></p>
+
+<p>It feels fairly safe to say that that’s not an <em>awesome</em> set of sample
+points.</p>
+
+<p>Per’s observation got me excited and I started hoping that I could see even
+better results by improving the randomization.  First I tried simple random
+digit scrambling, based on <a href="https://www.uni-kl.de/AG-Heinrich/EMS.pdf">Kollig and Keller’s
+method</a>; it’s just a matter of
+computing a random 32-bit hash at each pixel and then for each sample,
+XORing the sample’s index with the pixel’s hash before reversing the bits
+and dividing by 2<sup>32</sup> to get a sample in [0,1).</p>
+
+<p>Here’s the result, compared to Cranley-Patterson rotation using a blue
+noise texture.  Like last time, the images are rendered at 16spp, using
+pmj02bn points, and multiple importance sampling.</p>
+
+<div class="card-img-top" style="display:block; width: 100%; padding-top: 77.083%;  position:relative;">
+<div id="Sampling60" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div></div>
+<script>
+Jeri.renderViewer(document.getElementById('Sampling60'), {
+  title: 'Sampling60', children: [
+ { title: 'Cranley-Patterson', image: '/matt/blog/images/owen-cranleypatterson-redo.png' },
+ { title: 'Kollig-Keller', image: '/matt/blog/images/owen-kkscramble.png' }
+ ]});
+</script>
+
+<p>(Click on the tabs to switch images, or use the number keys after selecting the image. Hit ‘f’ to go fullscreen. You can also pan and zoom using the mouse.)</p>
+
+<p>You can’t see much difference; their errors are within 1%.  I like the
+image with the blue-noise based Cranley-Patterson rotation better, thanks to
+blue noise, the human visual system, and all that.</p>
+
+<p>I then spent some time trying to implement a full and proper <a href="https://statistics.stanford.edu/sites/g/files/sbiybj6031/f/EFS%20NSF%20464.pdf">Owen random
+digit
+scrambling</a>,
+but was only able to make images with much higher error.  I assume there is
+some dumb bug in my code, but will cut bait on that for now in the
+interests of getting this posted.</p>
+
+<p><em>Next time, a little more reader email to get through and then, I hope,
+ finally, spherical triangles.</em></p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

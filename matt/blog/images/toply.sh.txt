@@ -1,0 +1,12 @@
+#!/bin/zsh
+
+d=${PWD#/home/mmp/disney/island/pbrt/}
+mkdir -p $d
+for f in *_geometry.pbrt ; do
+  env PLY_PREFIX=$d/$f ~/build/pbrt-v3/pbrt --toply $f >| x.pbrt
+  /bin/mv $d/*.ply .
+  echo $f
+  mv $f ${f}.orig
+  mv x.pbrt $f
+done
+rmdir $d

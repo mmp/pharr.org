@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the elephant (part 1)</title>
+  <meta name="description" content="&quot;Interesting&quot; things almost always come to light when a software system is given input with radically different characteristics than it has seen before. I le...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/07/08/moana-island-pbrt-1.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the elephant (part 1)</h1>
+    <p class="post-meta">
+      <time datetime="2018-07-08T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 8, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Walt Disney Animation Studios (WDAS) has just given the rendering research
+community an incredible gift with their release of the <a href="https://www.disneyanimation.com/technology/datasets">full scene
+description for the island from
+<em>Moana</em></a>.  Between
+geometry and textures, it’s just over 70 GB of data on disk for a single
+frame, making it a stellar example of the degree of complexity that
+production rendering deals with today; never before have rendering
+researchers and developers outside of film studios been able to
+work with realistic production scenes like this.</p>
+
+<p>Here’s a rendering of it with today’s pbrt:</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-moana-island.jpg" /> Moana
+<i>island rendered with <a href="https://github.com/mmp/pbrt-v3">pbrt-v3</a> at 2048x858 resolution
+with 256 samples per pixel.  Total rendering time using a 12 core / 24
+thread Google Compute Engine instance running at 2 GHz with the latest
+version of pbrt-v3 was 1h 44m 45s.</i></p>
+
+<p>It was a huge amount of work on Disney’s side to extract the scene from
+their internal scene representation and convert it to a format that’s
+generally accessible; major props to them for taking the time to package
+and prepare this data for widespread use.  I’m confident that their work to
+do this will be well repaid in the future as researchers use this scene to
+dig into the issues related to efficiently rendering scenes of this
+complexity.</p>
+
+<p>This scene has already taught me a lot and has made pbrt a better renderer,
+but before we get into that, first a little story for context.</p>
+
+<h2 id="the-hash-table-that-wasnt">The hash table that wasn’t</h2>
+
+<p>Years ago while interning in the rendering group at Pixar, I learned an
+important lesson: “interesting” things almost always come to light when a
+software system is given input with significantly different characteristics
+than it’s seen before.  Even for well-written and mature software systems,
+new types of input almost always expose heretofore unknown shortcomings in
+the existing implementation.</p>
+
+<p>I first learned this lesson while <em>Toy Story 2</em> was in production.  At some
+point, someone noticed that a surprising amount of time was being spent
+parsing the RIB scene description files.  Someone else in the rendering
+group (I believe it was Craig Kolb) whipped out the profiler and started
+digging in.</p>
+
+<p>It turned out that most of the parsing time was spent doing lookups in a
+hash table that was used to <a href="https://en.wikipedia.org/wiki/String_interning">intern
+strings</a>.  The hash table
+was a small fixed size, perhaps 256 elements, and it used chaining when
+multiple values hashed to the same cell.  Much time had passed since the
+hash table was first implemented and scenes now had tens of thousands of
+objects, so naturally such a small hash table would quickly fill and become
+ineffective.</p>
+
+<p>The expedient thing to do was to just make the hash table larger—all this
+was happening in the thick of production, so there was no time to do
+something fancy like make the hash table grow as it filled up.  One line
+change, rebuild and do a quick test before committing, and… no
+performance improvement whatsoever.  Just as much time was being spent on
+hash table lookups.  Fascinating!</p>
+
+<p>Upon further digging, it was discovered that the hash function that was
+being used was the equivalent of:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>int hash(const char *str) {
+    return str[0];
+}
+</code></pre>
+</div>
+
+<p>(Forgive me Pixar, if I’ve posted super-secret RenderMan source code
+there.)</p>
+
+<p>The “hash” function had been implemented in the 1980s, at which time
+someone had apparently decided that the computational expense of actually
+incorporating some contribution from all of the characters in the string in
+the hash value wasn’t worth it.  (And if you’ve only got a handful of
+objects in the scene and a 256 entry hash table, maybe, I guess.)</p>
+
+<p>Another historic implementation detail added insult to injury: once Pixar
+started making movies, the names for objects in scenes had grown fairly
+long, along the lines of “BuzzLightyear/LeftArm/Hand/IndexFinger/Knuckle2”.
+However, some earlier phase of the production pipeline used a fixed-size
+buffer for storing object names and would shorten any longer names, keeping
+only the end and helpfully adding a few periods to show that something had
+been lost: “…year/LeftArm/Hand/IndexFinger/Knuckle2”.</p>
+
+<p>Thence, all of the object names the renderer saw were of that form, the
+hash function hashed all of them to the bucket for ‘.’, and the hash table
+was actually a big linked list.  Good times.  At least the fix was simple
+once all that was figured out.</p>
+
+<h2 id="an-intriguing-invitation">An intriguing invitation</h2>
+
+<p>That lesson came to mind last year when Heather Pritchett and Rasmus
+Tamstorf from WDAS reached out to me and asked if I was interested in
+helping make sure that the <em>Moana</em> scene would render reasonably well with
+<a href="https://pbrt.org">pbrt</a>.<sup id="fnref:ptex"><a href="#fn:ptex" class="footnote">1</a></sup> Naturally I said yes.  I was delighted to
+help out and curious to see how it’d go.</p>
+
+<p>The foolish optimist in me was hopeful that there wouldn’t be any huge
+surprises—after all, pbrt was first released around 15 years ago and many
+people have used it and studied the code over the years.  It should be safe
+to assume there weren’t any embarrassments like RenderMan’s old hash
+function, right?</p>
+
+<p>Of course, the answer is “wrong”.  (And that’s why we’re here today, and
+for a few more posts after this one.)  While I was a little disappointed
+that pbrt wasn’t awesome out of the box, I think that my experience working
+with the <em>Moana</em> scene is a first validation of the value of having this scene
+available; pbrt is already a better system from my having dug into how it
+performed with it.</p>
+
+<h3 id="first-renderings">First renderings</h3>
+
+<p>I immediately downloaded the scene once I had access to it (waiting a few
+hours for it to make its way over my home Internet connection) and untarred
+it, giving me 29 GB of pbrt files and 38 GB of <a href="http://ptex.us">ptex</a>
+texture maps<sup id="fnref:size"><a href="#fn:size" class="footnote">2</a></sup>.  I threw caution into the wind, and tried to render it
+on my home system (feat. 16 GB of RAM and a 4 core CPU).  I came back a
+little while later to find the computer unresponsive, all of the RAM used,
+and pbrt still trying to finish parsing the scene description.  The OS was
+doing its best to make it happen with virtual memory, but it seemed
+hopeless.  After killing the job, it was still about a minute before the
+system was responsive again.</p>
+
+<p>Next up was a Google Compute Engine instance, allowing for more RAM (120 GB)
+and more CPUs (32 threads on 16 CPUs).  The good news is that pbrt could
+successfully render the scene (thanks to Heather and Rasmus’s efforts
+to get it into pbrt’s format). Seeing that pbrt could generate reasonable
+pixels for feature film content was thrilling, but the performance was
+something else: 34m 58s just to parse the scene description, with memory
+use upward of 70 GB during rendering.</p>
+
+<p>Now, it was 29 GB of pbrt scene description files on disk to parse and turn
+into something that could be rendered, so I wasn’t expecting a ten second
+startup phase.  But half an hour before rays start being traced? That’s bad
+enough to make it fairly difficult to work with the scene at all.</p>
+
+<p>One good thing about seeing that sort of performance is that it seemed very
+likely that there’s some really stinky stuff going on; not just “matrix
+inversion could be made 10% faster”, but “oops, we’re walking through a
+100,000 element linked list”. I was optimistic that it’d be possible to
+chop that down significantly once I understood what was happening.</p>
+
+<h3 id="no-help-from-the-statistics">No help from the statistics</h3>
+
+<p>The first place I looked for insight was the statistics that pbrt dumps out
+after rendering. pbrt’s major phases of execution are instrumented so that
+rough profiling data can be gathered by recording what’s actually running
+at periodic interrupts during rendering.  Unfortunately, the statistics
+didn’t explain much: of the nearly 35 minutes before rendering started, 4m
+22s was reported to be spent building BVHs, but none of the rest of the
+time was accounted for in any further detail.</p>
+
+<p>Building BVHs is the only meaningful computational task that happens during
+scene parsing; everything else is essentially just deserializing shape and
+material descriptions.  Knowing how much time was spent on BVH construction
+gave a sense of how (in)efficient the system was: what’s left is roughly
+30 minutes to parse 29 GB of data, or about 16.5 MB/s.  Well-optimized JSON
+parsers, which perform essentially the same task, seem to run at the rate
+of 50-200 MB/s, which validates the sense that there’s room for
+improvement.</p>
+
+<p>To better understand where the time was going, I ran pbrt using the Linux
+<a href="https://perf.wiki.kernel.org/index.php/Main_Page">perf</a> tool, which I’d
+never used before, but seemed like it would do the trick.  I did have to
+instruct it to actually look at the DWARF symbols to get function names
+(<code class="highlighter-rouge">--call-graph dwarf</code>), and had to dial down the sampling frequency from
+the default 4000 samples per second to 100 (<code class="highlighter-rouge">-F 100</code>) so I didn’t get 100
+GB trace files, but with that, things were lovely, and I was pleasantly
+surprised that the <code class="highlighter-rouge">perf report</code> tool had a nice curses interface.</p>
+
+<p>Here’s what it had to say after a run with pbrt as it was at the start of
+all this:</p>
+
+<p align="center"><img src="/matt/blog/images/perf-screenshot.png" />
+<i>I'm actually serious about &ldquo;nice curses interface&rdquo;.</i>
+</p>
+
+<p>We can see that over half of the time was spent on the mechanics of
+parsing: <code class="highlighter-rouge">yyparse()</code> is the parser generated by
+<a href="https://www.gnu.org/software/bison/">bison</a> and <code class="highlighter-rouge">yylex()</code> is the lexer
+generated by <a href="https://github.com/westes/flex">flex</a>.  Over half of the time
+in <code class="highlighter-rouge">yylex()</code> was spent in <code class="highlighter-rouge">strtod()</code>, which converts strings to doubles.
+We’ll hold off on attacking <code class="highlighter-rouge">yyparse()</code> and <code class="highlighter-rouge">yylex()</code> until the third
+posting in this series, but we already have a good indication that
+reducing the amount of data we throw at the renderer might be a good idea.</p>
+
+<h3 id="from-text-to-ply">From text to PLY</h3>
+
+<p>One way to spend less time parsing a text representation of data is to
+convert the data to something more efficient to parse.  Quite a bit of
+those 29 GB of scene description files is triangle meshes, and pbrt already
+had native support for <a href="https://en.wikipedia.org/wiki/PLY_(file_format)">PLY
+files</a>, which provide an
+efficient binary representation of polygon meshes.  pbrt also has a
+<code class="highlighter-rouge">--toply</code> command-line flag that will parse a pbrt scene description file,
+convert any triangle meshes it finds to PLY files, and emit a new pbrt file
+that refers to those PLY files instead.</p>
+
+<p>One catch was that the Disney scene makes extensive use of
+<a href="http://ptex.us">ptex</a> textures, which in turn require a <code class="highlighter-rouge">faceIndex</code> value
+to be associated with each triangle, indicating which face of the original
+subdivision mesh it came from.  It was simple enough to <a href="https://github.com/mmp/pbrt-v3/commit/6870bc7750b0f32c0e3ffa569eae2e8e0f8c268d">add support for a
+custom field in the PLY file to carry these values
+through</a>.
+Further investigation revealed that turning each and every mesh—even
+those with a handful of triangles—into a PLY file led to directories with
+tens of thousands of small PLY files, which offered their own performance
+challenges; changing the implementation to <a href="https://github.com/mmp/pbrt-v3/commit/3dae5fa7c0ed0dbd4fe2104179a5f7b8a0ea08a3">leave small meshes as
+is</a>
+took care of that.</p>
+
+<p>For what it’s worth, here’s a <a href="/matt/blog/images/toply.sh.txt">little shell
+script</a> I used to convert all of the
+<code class="highlighter-rouge">*_geometry.pbrt</code> files in a directory to use PLY for the larger
+meshes. Note that it has a few hard-coded assumptions about paths that need
+to be updated for it to work elsewhere.</p>
+
+<h3 id="a-first-speedup">A first speedup</h3>
+
+<p>After converting all the big meshes to PLY, the size of the on-disk
+representation went from 29 GB to 22 GB: 16.9 GB of pbrt scene files, and
+5.1 GB of binary PLY files.  After the conversion, overall system startup
+time was reduced to 27m 35s, a savings of 7m 23s, or a 1.3x
+speedup.<sup id="fnref:speedup"><a href="#fn:speedup" class="footnote">3</a></sup> Processing a PLY file is much more efficient than a text
+pbrt file: just 40s of startup time was spent parsing the PLY files, and
+thus we can see that PLY files are processed at about 130 MB/s, or about 8
+times faster than the pbrt text format.</p>
+
+<p>That was a nice easy victory to get us started, but there’s still plenty
+more to do.</p>
+
+<p><a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html">Next time</a> we’ll figure out where all the memory is actually being used, fix
+a few things there, and pick up bit more performance along the way.</p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:ptex">
+      <p>The motivations for my adding support for ptex and the Disney BSDF to pbrt last year may be understood better now. <a href="#fnref:ptex" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:size">
+      <p>All times reported here and in following posts are for the WIP version of the scene I was working with before the official release. It looks like the final version is a bit larger. We’ll stick with the results I recorded when working with the original scene, even if they don’t exactly match what they’d be with its final version. Presumably the lessons are the same. <a href="#fnref:size" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:speedup">
+      <p>Note that the speedup basically matches what we’d expect based on a ~50% reduction in the amount of data to parse and the amount of time the profiler reported we were spending in basic parsing, which is reassuring. <a href="#fnref:speedup" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

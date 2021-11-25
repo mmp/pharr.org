@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Need for More Speed: Profiling and Optimizing the pbrt Build</title>
+  <meta name="description" content="An investigation into building pbrt more efficiently, using lessons learned from clang&#39;s new -ftime-trace functionality.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2019/10/23/profiling-the-pbrt-build.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Need for More Speed: Profiling and Optimizing the pbrt Build</h1>
+    <p class="post-meta">
+      <time datetime="2019-10-23T00:00:00-05:00" itemprop="datePublished">
+        
+        Oct 23, 2019
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Ever since Aras Pranckevičius’s <a href="https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/">blog
+post</a>
+about adding support to <a href="https://clang.llvm.org">clang</a> to emit profiling
+information, I’ve had that on my list of things to try out—the idea is
+that if you can understand where the compiler is spending most of its time,
+then you have the ability to improve the performance of your build by
+fixing up inefficiencies (addressing expensive or unnecessary #includes,
+etc.)  I recently found the time to spend a few fun hours with Aras’s
+creation, and as always seems to happen with profiling and optimization, I
+learned all sorts of new things along the way.</p>
+
+<p>Naturally, I used <em>pbrt</em> for my explorations.  We’ve been doing early work
+for the next edition of <em>Physically Based Rendering</em>, and so there’s a
+<em>pbrt-v4</em> branch with candidate implementations of various new algorithms.
+I had a vague sense that build times were only getting slower, so I started
+out with a quick check to see where things stood: it turns out that with
+<a href="https://github.com/mmp/pbrt-v3">pbrt-v3</a>, it takes a total of 98s of CPU
+time to build the core <em>pbrt</em> library on my system.  <em>pbrt-v4</em> took
+144s—ouch.</p>
+
+<p>That 1.5x slower is not for any good reason: the new version is better in
+many ways, but it’s gotten simpler as much as it’s become more capable.
+All in all, it’s roughly the same number of lines of code.</p>
+
+<p>I had a few theories: the new version uses the C++ standard library more
+liberally than the old version, and it makes some use of 
+<a href="https://abseil.io">abseil</a> classes, mostly taking drop-ins for new things like
+<code class="highlighter-rouge">std::span</code> and <code class="highlighter-rouge">std::optional</code> that not all C++ compilers support yet.
+All of that’s template-heavy, which is usually not good for compile times.
+I had also gone to town with a
+<a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">CRTP-based</a>
+implementation of the vector math classes without checking to see
+how it affected compile times.  Vector math is used throughout the system, so if
+getting through that template-crazy header took a long time, it would hurt
+build times ubiquitously.</p>
+
+<p>Anyway, although there were plenty of possible culprits for the slowdown,
+I didn’t have any data to know for sure.  Time to fire up <em>clang</em> with
+Aras’s <code class="highlighter-rouge">-ftime-trace</code>.</p>
+
+<h2 id="getting-started-docker-to-the-rescue">Getting Started: Docker to the Rescue</h2>
+
+<p>The version of <em>clang</em> on my Mac doesn’t support <code class="highlighter-rouge">-ftime-trace</code>, and I was
+a little worried that building a newer <em>clang</em> from source would turn into a
+nightmare, mostly around fiddly things like getting it to build its own
+version of the standard library and then to look for it in the right place.
+Therefore, I turned to <em>docker</em>, our savior for avoiding that sort of
+configuration pain and saving me from the risk of messing up my everyday
+development system if I tried to bang things into working there.</p>
+
+<p>It turns out that Ubuntu 19.10 ships with <em>clang 9</em>, the latest version,
+which includes <code class="highlighter-rouge">-ftime-trace</code>, so the following <code class="highlighter-rouge">Dockerfile</code> is all that it
+took to get up and running:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>FROM ubuntu:19.10
+RUN apt-get update &amp;&amp; apt-get install -y build-essential git cmake curl rsync vim clang
+CMD [ "/bin/bash" ]
+</code></pre>
+</div>
+
+<p>A <code class="highlighter-rouge">docker build</code> and then a <code class="highlighter-rouge">docker run</code>, and I had myself a shell on the
+running container with my <em>pbrt-v4</em> source directory mounted—we live in
+glorious times.</p>
+
+<p>One thing that I quickly learned was that, at least on OSX, accessing
+local directories that are mounted in a <em>docker</em> container is surprisingly
+slow—slow like it spends 20 seconds scanning the dependencies after you
+type <code class="highlighter-rouge">make</code>, which is instantaneous when run locally.  At first I tried to
+live with it, but I soon learned that it’s not just slow, but it’s also
+unpredictable: <em>docker</em> would just go off to hyperspace for 2 seconds now and
+again when reading files, leaving my benchmark runs suggesting that it took 2
+seconds to parse a short header file.  That noise led me down a number of
+false paths before I figured out what was going on.</p>
+
+<p>Therefore, for the sake of reproducability and for the sake of not going
+insane, I got in the habit of <code class="highlighter-rouge">rsync</code>ing from the mounted volume to a local
+directory in the container (which lives in RAM).  With that, I started
+getting useful data.</p>
+
+<h2 id="starting-out-bottom-up">Starting out Bottom-Up</h2>
+
+<p>I started out by looking at the traces for individual source files, chosen
+more or less at random.  My thinking was that I’d see what stuck out and
+fix it under the assumption that it would probably help elsewhere.  I also
+thought that taking a narrow view at the start would make optimizing easier
+by giving myself a smaller amount of information to digest.</p>
+
+<p>As a representative example, here’s the <a href="/matt/blog/images/triangle.cpp.json">JSON trace
+file</a> for pbrt-v4’s equivalent of
+<a href="https://github.com/mmp/pbrt-v3/blob/master/src/shapes/triangle.cpp">shapes/triangle.cpp</a>.
+If you enter <code class="highlighter-rouge">chrome://tracing</code> in the address bar of a Chrome tab and load
+it, you get this nice visualization of compile time:</p>
+
+<p align="center">
+<a href="/matt/blog/images/tracing-triangle.png"><img src="/matt/blog/images/tracing-triangle.png" /></a>
+<i>Trace for shapes/triangle.cpp, with the time spent parsing stats.h selected.</i>
+</p>
+
+<p>It takes about 1900ms of CPU time to compile, roughly evenly split between parsing headers<sup id="fnref:pch"><a href="#fn:pch" class="footnote">1</a></sup> and
+generating code.</p>
+
+<p>I started out by digging into the time spent parsing headers.  At first I
+had mixed success, in part because it was something of a game of
+whack-a-mole.  You say to yourself, “How come this header is including
+<code class="highlighter-rouge">&lt;iostream&gt;</code>? It doesn’t need it, and <code class="highlighter-rouge">&lt;iostream&gt;</code> costs 50ms.”  Then you
+fix that and discover that the build time is unchanged—something else
+later in the chain is also including <code class="highlighter-rouge">&lt;iostream&gt;</code>, it actually does need
+it, and you feel sad.  I did pick up a few 2% victories along the way,
+tuning up a few widely-#included headers by removing unnecessary #includes,
+but I wasn’t making much of a dent in the overall build time.</p>
+
+<p>I did, however, keep noticing that <code class="highlighter-rouge">stats.h</code> stuck out: it’s 176.5ms in
+that trace there, and most files seemed to end up including it, one way or
+another.  (Its <em>pbrt-v4</em> implementation is more or less the same as its
+<a href="https://github.com/mmp/pbrt-v3/blob/master/src/core/stats.h">pbrt-v3
+equivalent</a>.)</p>
+
+<p>If you drill down into the time spent parsing <code class="highlighter-rouge">stats.h</code>, you can see that
+almost all of that time is spent parsing four standard library headers:
+<code class="highlighter-rouge">&lt;algorithm&gt;</code>, <code class="highlighter-rouge">&lt;functional&gt;</code>, <code class="highlighter-rouge">&lt;map&gt;</code>, and <code class="highlighter-rouge">&lt;vector&gt;</code>.  I found that I
+could eliminate all of them:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">&lt;algorithm&gt;</code> was only used for a single call to <code class="highlighter-rouge">std::min</code> and a single
+call to <code class="highlighter-rouge">std::max</code>, which I replaced with ternary operators.</li>
+  <li><code class="highlighter-rouge">&lt;functional&gt;</code>, the slowest of the lot, wasn’t actually necessary: for the
+stats system’s usage, raw
+function pointers were fine and the generality of <code class="highlighter-rouge">std::function</code> wasn’t
+necessary.</li>
+  <li><code class="highlighter-rouge">&lt;map&gt;</code> was used for a few private member variables in
+<code class="highlighter-rouge">StatsAccumulator</code>.  I ended up forward declaring a
+<code class="highlighter-rouge">StatsAccumulatorData</code> class in the header, storing a pointer to it in
+<code class="highlighter-rouge">StatsAccumulator</code>, and then defining it in
+<code class="highlighter-rouge">stats.cpp</code> so that <code class="highlighter-rouge">&lt;map&gt;</code> only had to be #included there.</li>
+  <li><code class="highlighter-rouge">&lt;vector&gt;</code> was only used for a <code class="highlighter-rouge">private static</code> member variable.  I
+instead declared it as a file <code class="highlighter-rouge">static</code> variable in <code class="highlighter-rouge">stats.cpp</code>.</li>
+</ul>
+
+<p>That brought <code class="highlighter-rouge">stats.h</code> down to 10.9ms to parse and gave a nice 15% speedup
+in <em>pbrt</em>’s overall build time—finally some solid progress.</p>
+
+<h2 id="top-down-ftw">Top-Down FTW</h2>
+
+<p>It was nice to finally have a clear victory, but performance still hadn’t
+caught up to <em>pbrt-v3</em>, which was annoying, since it’s never had the build
+profiling treatment in the first place.  I decided to switch tack and look
+at where time was being spent overall.</p>
+
+<p>Aras has also written a nice tool to aggregate the build profiling
+information,
+<a href="https://github.com/aras-p/ClangBuildAnalyzer">ClangBuildAnalyzer</a>.  Here’s
+the summary it gave for the version of the system I started with:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Compilation (143 times):
+  Parsing (frontend):           92.8 s
+  Codegen &amp; opts (backend):     51.3 s
+</code></pre>
+</div>
+
+<p>And here’s what it had to say about where things stood after I committed my
+<code class="highlighter-rouge">stats.h</code> fix:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Compilation (144 times):
+  Parsing (frontend):           74.2 s
+  Codegen &amp; opts (backend):     46.4 s
+</code></pre>
+</div>
+
+<p>Thus, with the improvements I had made so far, I was at a 1.19x speedup.</p>
+
+<p>Now, there’s something really stinky in those numbers—both before and
+after.  There was a hint of it in <code class="highlighter-rouge">shapes/triangle.cpp</code> trace.  It’s more
+clear in the trace for <code class="highlighter-rouge">filters/sinc.cpp</code>, which is also very similar to
+the <a href="https://github.com/mmp/pbrt-v3/blob/master/src/filters/sinc.cpp">sinc.cpp in
+<em>pbrt-v3</em></a>.
+Here’s <a href="/matt/blog/images/sinc.cpp.json">its trace file</a>.</p>
+
+<p align="center">
+<a href="/matt/blog/images/tracing-sinc.png"><img src="/matt/blog/images/tracing-sinc.png" /></a>
+<i>Trace for filters/sinc.cpp, wherein there's so little backend time that
+there's only space for "Ba..." in the diagram (upper right teal green box).</i>
+</p>
+
+<p>That’s 750ms to compile it, of which only 38ms were actually generating and
+optimizing code.</p>
+
+<p>The stinkiness is the ratio between frontend and backend time.  It was
+especially egregious for <code class="highlighter-rouge">filters/sinc.cpp</code>, but looking at the summary
+results, we can see that the compiler was spending nearly 2x as much time
+just parsing source code as it was on the meat and potatoes of code
+generation and optimization.  I didn’t digest how bad that was until I saw
+it in the aggregate statistics: before I got started looking at data, I’d
+always assumed that, even with all the grunginess of parsing C++, code
+generation and optimization time would dominate in pbrt builds, especially
+when running at <code class="highlighter-rouge">-O2</code>.</p>
+
+<p>As I started thinking about what might be the cause of that imbalance, I
+thought about the fact that <em>pbrt-v4</em> had been broken down into smaller
+pieces than <em>pbrt-v3</em>: rather than having a big <code class="highlighter-rouge">sampling.h</code> file, there
+was <code class="highlighter-rouge">sampling/warps.h</code> and <code class="highlighter-rouge">sampling/geometry.h</code> and
+<code class="highlighter-rouge">sampling/tabularized.h</code>, and so forth, all with their own <code class="highlighter-rouge">*.cpp</code> files.
+Thus, there were more source files to compile in the new version:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>% find ~/pbrt-v3/src -name \*.cpp | fgrep -v /ext/ | wc -l
+     133
+% find ~/pbrt-v4/src/pbrt -name \*.cpp | wc -l
+     197
+</code></pre>
+</div>
+
+<p>The attentive reader will now note that the factor of increase in source
+files is roughly equivalent to the factor of observed increase in
+compilation time.  Although my earlier attempts to make individual headers
+more efficient were all good and fine, there’s some inherent amount of
+#include-ing that’s necessary to compile any <code class="highlighter-rouge">.cpp</code> file, and having more
+of them gives you more of that.</p>
+
+<p>This brings us to the same rule that applies with runtime performance
+optimization: if you want to go faster, you can make the things you’re
+doing run more efficiently, or you can do less of them.  In retrospect,
+that trade-off in the structure of the system should have been obvious, but
+the truth is, it wasn’t, at least to me, until I saw the actual data.</p>
+
+<p>With that understanding in hand, I restructured the system into about a
+quarter as many <code class="highlighter-rouge">*.cpp</code> files: all of the pixel reconstruction filters went
+into <code class="highlighter-rouge">filters.cpp</code>, and so forth.  It’s fewer source files than <em>pbrt-v3</em>,
+and few enough that they can all live comfortably in a single directory.</p>
+
+<p>After another benchmarking run, <em>ClangBuildAnalyzer</em> reported:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Compilation (48 times):
+  Parsing (frontend):           30.4 s
+  Codegen &amp; opts (backend):     39.1 s
+</code></pre>
+</div>
+
+<p>Boom! A 2.07x speedup from where we started, with a 3x reduction in time
+spent in the frontend, and it’s 1.41x faster to build than pbrt-v3.  Now
+we’re talking.  On an 8 core system, it’s about ten seconds of wall clock
+time to build from scratch—I can be happy with that, and lacking further
+ideas for things to improve, left it there.</p>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p><code class="highlighter-rouge">-ftime-trace</code> helped deliver a victory, but the battle’s not won yet.  In
+spite of my trying to avoid the C++ standard library, more than half of the
+remaining frontend time is spent parsing standard library headers, which
+are full of insanity.<sup id="fnref:pch2"><a href="#fn:pch2" class="footnote">2</a></sup> Take <code class="highlighter-rouge">&lt;array&gt;</code>, which you’d think could be
+parsed in a jiffy: it’s just a simple wrapper around an array, after all.
+Turns out that it costs 85ms, 64ms of which are spent
+parsing… <code class="highlighter-rouge">&lt;string&gt;</code>, which you get courtesy of <code class="highlighter-rouge">&lt;array&gt;</code> #including
+<code class="highlighter-rouge">&lt;stdexcept&gt;</code>, otherwise known as the header I wish had no reason to exist.
+My own <code class="highlighter-rouge">array</code> implementation, which does the obvious thing and is enough
+to cover the important stuff, parses in 1.3ms.</p>
+
+<p>That lesson goes back at least as far as
+<a href="https://github.com/electronicarts/EASTL">EASTL</a>, but it seems that
+sometimes one has to learn these lessons for oneself.  I hold out hope that
+the availability of tools like <code class="highlighter-rouge">-ftime-trace</code> that illuminate these issues
+will lead to improvements in what ships with compilers.</p>
+
+<p>It was surprising how much fun it was to spend a few hours working on build
+performance—having good tools made all the difference.  One nice thing
+about optimizing the build is that, unlike with runtime performance
+optimization, it’s hard to introduce bugs in your system.  It either builds
+and links or it doesn’t; if everything builds successfully, you can be
+pretty sure your system still works (though you should test it anyway.)</p>
+
+<p>Best of all, build time optimization turns out to have the same dopamine
+hit as optimizing regular code does—“I made an improvement and it got
+faster: can I think a bit more and do even better?”  It’s fun times, and
+future you will thank today you for the time you saved by giving the
+build’s efficiency some attention.</p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:pch">
+      <p>I am aware of precompiled headers, but have never tried clang’s implementation.  They’ve always seemed treacherous as far as causing confusing errors if you get the dependencies wrong; I’ll use my lingering trauma from the MIPS C++ compiler’s buggy template cache as my excuse for avoiding them. In any case, for this post, I’m going to declare them out-of-bounds. <a href="#fnref:pch" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:pch2">
+      <p>I have no idea why precompiled headers aren’t used out of the box for the system-provided C++ standard library… Unless they are, in which case I’m <em>really</em> scared. <a href="#fnref:pch2" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Some Analysis of Physically Based Rendering&#39;s Bibliography (1-3ed)</title>
+  <meta name="description" content="Who&#39;s who in the bibliography and how that has changed over the first three editions.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2020/12/26/pbr-bibliography-1-3ed.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Some Analysis of Physically Based Rendering&#39;s Bibliography (1-3ed)</h1>
+    <p class="post-meta">
+      <time datetime="2020-12-26T00:00:00-06:00" itemprop="datePublished">
+        
+        Dec 26, 2020
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>While I’ve continued failing to deliver on my <a href="/matt/blog/2020/04/26/debugging-intro.html">promises to blog about
+debugging renderers</a>, I have at
+least been productive on other fronts.  The fourth edition of <em>Physically
+Based Rendering</em> is coming along well, and I’ve recently been spending time
+working on the “Further Reading” sections that end each chapter.</p>
+
+<p>It’s been fun work, diving through all kinds of graphics research and
+especially in getting caught up in the areas where I haven’t been paying
+close-enough attention.  As the end of that task started to come into
+sight, I started to wonder: who is the most cited person in the
+bibliography?  It’s a short step from that to wonder who that was in
+previous editions and how that has changed over the editions.  After a
+little bit of shell scripting, the TeX files yielded the goods.  Today, we
+have the results for the first three editions.  It should be possible to
+say something about the bibliography of the fourth edition in a week or
+two, once things get a little more first-draft complete in the bibliography
+department.</p>
+
+<p>Before we get to the results, some words about methodology.  I counted
+named authors on each and every publication in the bibliography, be it a
+blog post or a SIGGRAPH paper, all of it weighted equally.  Editing a book
+or a proceedings didn’t count but otherwise everything was fair game.  No
+points for position in author list, one way or the other.</p>
+
+<p>In terms of interpreting the results, there are many caveats.  First and
+foremost, the citations are naturally affected by the topics that the book
+does and does not focus on.  There’s plenty of graphics not covered in the
+book, and so all of the corresponding work generally isn’t cited at all.
+Also, the specific topics covered in each edition shift around and that
+also affects the citations; we’ll see the effect of that shortly.  Finally,
+although we try to be evenhanded, there is surely some unevenness in the
+choices: for example, I am pretty sure that papers written by the authors
+of <em>Physically Based Rendering</em> benefit from some unconscious bias as far
+as whether they make the bibliography or not.  In short, the metric that
+this ranking is respect to is hard to define precisely and even if one
+could define it, it probably wouldn’t mean much of anything.
+(Alternatively, I think that the h-index is safe for now.)</p>
+
+<p>With that said, here are the top-cited people for the first three editions.
+The numbers after names are the number of citations the corresponding
+person had in the book’s bibliography.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>First Edition (2004)</th>
+      <th>Second Edition (2010)</th>
+      <th>Third Edition (2016)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Greenberg (26)</td>
+      <td>Jensen (31)</td>
+      <td>Jensen (33)</td>
+    </tr>
+    <tr>
+      <td>Shirley (25)</td>
+      <td>Shirley (29)</td>
+      <td>Shirley (31)</td>
+    </tr>
+    <tr>
+      <td>Hanrahan (22)</td>
+      <td>Greenberg, <br />Hanrahan (27)</td>
+      <td>Keller (27)</td>
+    </tr>
+    <tr>
+      <td>Jensen (16)</td>
+      <td>Ramamoorthi (23)</td>
+      <td>Wald (25)</td>
+    </tr>
+    <tr>
+      <td>Arvo (14)</td>
+      <td>Wald (18)</td>
+      <td>Greenberg,<br />Hanrahan (24)</td>
+    </tr>
+    <tr>
+      <td>D. Mitchell (13)</td>
+      <td>Keller (17)</td>
+      <td>Slusallek (21)</td>
+    </tr>
+    <tr>
+      <td>Keller (12)</td>
+      <td>Arvo, Seidel,<br /> Slusallek (16)</td>
+      <td>Marschner,<br /> Ramamoorthi (19)</td>
+    </tr>
+    <tr>
+      <td>Heckbert, Torrance (10)</td>
+      <td>D. Mitchell (13)</td>
+      <td>Seidel, Arvo (17)</td>
+    </tr>
+    <tr>
+      <td>Cook, Kajiya, Levoy,<br />Pattanaik, Ward (8)</td>
+      <td>Pattanaik, Torrance,<br /> Walter (12)</td>
+      <td>Jarosz (16)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>There’s already plenty to see in the tally.  For starters, with Eric Veach
+just missing the list for the first edition with 6 citations and with he
+and Jim Kajiya not being on it at all after the first edition, this list is
+evidently not a perfect measure of impact.</p>
+
+<p>Moving on and accepting it for what it is, there’s Pete Shirley
+consistently maintaining his number two spot for three editions running,
+adding to his count at enough of rate to stay in place.  Henrik Wann Jensen
+jumped up to first place for both the second and third editions; I was
+surprised that he only netted two more citations between those two editions
+given how much good stuff he published in the interim.  Upon review, we
+seem to have cut a number of his second edition citations for the third due
+to shifting focus and cases where there came to be work from others to
+point to instead. (Sorry for the headwind, Henrik.)</p>
+
+<p>Changes to the topics discussed in the book have had other impacts.  Don
+Greenberg lost his number one spot in large part because the first edition
+had more to stay about tone reproduction and perceptual issues than later
+ones have.  Thus, the first edition cited a lot of the work from Cornell on
+that front from the 1990s, but when that topic was cut in the second
+edition, the corresponding citations went away as well.  Don is, needless
+to say, still doing fine in the end.</p>
+
+<p>Related, Ravi Ramamoorthi rocketed up from two citations in the first
+edition to 23 in the second, a flood of great research being further
+boosted in the bibliographic count by a chapter on precomputed light
+transport (and thus, plenty in the book about spherical harmonics).
+Dropping that chapter and those references in the third edition didn’t help
+his placement in the list, in spite of citations added from lots more neat
+work in the meantime.  (That change also hurt Pat Hanrahan between the
+second to third editions, though his Turing award level productivity mostly
+made up for it with new citations.)</p>
+
+<p>Last but not least, Wojciech Jarosz has the distinction of being the only
+person to go from being not cited at all in the first edition to being on
+the list in the third.</p>
+
+<p>As for the fourth edition, it is already clear that the list will be shaken
+up with a number of new names.  Beyond that, the specifics are not yet
+settled.  Will Henrik maintain the top spot once again?  Will it be another
+round of “always a bridesmaid” for Pete Shirley?  The answer is not yet
+clear, but stay tuned for early results once drafts of the rest of the
+“Further Reading” sections are finished in the next few weeks.</p>
+
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

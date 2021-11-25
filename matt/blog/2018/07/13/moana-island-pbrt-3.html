@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the elephant (part 3)</title>
+  <meta name="description" content="More work on getting pbrt to parse the scene description of Disney&#39;s Moana Island scene in a reasonable amount of time, wherein parsing and graphics state ma...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/07/13/moana-island-pbrt-3.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the elephant (part 3)</h1>
+    <p class="post-meta">
+      <time datetime="2018-07-13T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 13, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Today we’ll look at two more places where pbrt was spending a lot of time
+when parsing Disney’s <em>Moana</em> island scene and see what we can do to
+improve performance there.  With those taken care of, we’ll wrap up, at
+least for now and as far as what’s reasonable to do in pbrt-v3.  One last
+posting in a few days will dig into how much farther we can go if we remove
+the constraint of not making changes that would make the source code be too
+different than the system described in <em>Physically Based Rendering</em>.</p>
+
+<h2 id="optimizing-the-parser-itself">Optimizing the parser itself</h2>
+
+<p>After the performance improvements from <a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html">last
+time</a>, the fraction of time
+spent in pbrt’s parser, already significant at the beginning, naturally
+went up. By now, it was by far where most time was spent during startup.</p>
+
+<p>I finally bit the bullet and <a href="https://github.com/mmp/pbrt-v3/commit/ea34ef7452601e53c3c3ade4cce11ec5e55e49d2">implemented a hand-written tokenizer and
+parser</a>
+for pbrt scenes.  The <a href="https://pbrt.org/fileformat-v3.html">pbrt scene file
+format</a> is fairly easy to parse: quoted
+strings aside, tokens are separated by white space and the grammar is very
+straightforward (there’s never a need to look ahead more than one token),
+but a custom parser was still about a thousand lines of code to write and
+debug.  It helped to have lots of scenes to test with; after fixing the
+outright crashes, I kept going until everything I had rendered exactly the
+same images as before: there’s no excuse for any sort of pixel difference
+solely from swapping out the parser. At that point, I was as confident as I
+could be that I had it right.</p>
+
+<p>I did my best to keep the new version efficient, <code class="highlighter-rouge">mmap()</code>ing input files
+when possible and using a re-implementation of C++17’s
+<a href="http://en.cppreference.com/w/cpp/string/basic_string_view"><code class="highlighter-rouge">std::string_view</code></a>
+to minimize making copies of strings from the file’s contents.  Also, because
+<code class="highlighter-rouge">strtod()</code> had consumed a lot of time in earlier traces, I wrote a
+<a href="https://github.com/mmp/pbrt-v3/blob/9f717d847a807793fa966cf0eaa366852efef167/src/core/parser.cpp#L320"><code class="highlighter-rouge">parseNumber()</code>
+function</a>
+with some care: single-digit integers and regular integers are handled
+separately, and <code class="highlighter-rouge">strtof()</code> is used rather than <code class="highlighter-rouge">strtod()</code> in the common
+case when pbrt is compiled to use 32-bit floats.<sup id="fnref:str"><a href="#fn:str" class="footnote">1</a></sup></p>
+
+<p>Throughout the implementation of the new parser, I was a little worried
+that the old parser would be faster: after all, flex and bison have seen
+years of development and optimization.  There was no way to know if all the
+time I’d spent on writing a new one had been wasted until it was finished
+and working correctly.</p>
+
+<p>To my relief, the custom parser was a big win: flex and bison’s generality
+brought along enough of a performance cost that the new version could
+handily beat them.  With the new parser, startup time dropped to 13m 21s,
+an incremental 1.5x speedup!  As an added bonus, all of the support for
+flex and bison could then be removed from pbrt’s build system.  All that was
+always a headache, especially on Windows, where most people don’t have
+those installed by default.</p>
+
+<h2 id="graphics-state-management">Graphics state management</h2>
+
+<p>With the parser much faster, a new annoyance stuck out: at that point,
+roughly 10% of setup time was spent in the <code class="highlighter-rouge">pbrtAttributeBegin()</code> and
+<code class="highlighter-rouge">pbrtAttributeEnd()</code> functions, and most of that time in dynamic memory
+allocation and freeing.  Back during that first 35 minute run, those
+functions used around 3% of the runtime, so weren’t anything to worry
+about, but this is how it goes in the optimization business: once you start
+knocking down the big things, the smaller things start to matter more.</p>
+
+<p>pbrt’s scene description is based on a hierarchical graphics state, where
+there’s a current transformation, a current material, and so forth, and
+where you can snapshot the current state (<code class="highlighter-rouge">pbrtAttributeBegin()</code>), make
+some changes to it before adding some shapes to the scene, and then pop
+back to the original state (<code class="highlighter-rouge">pbrtAttributeEnd()</code>).</p>
+
+<p>The graphics state is stored in a structure named… wait for
+it… <code class="highlighter-rouge">GraphicsState</code>.  A <code class="highlighter-rouge">std::vector</code> is used to store copies of
+<code class="highlighter-rouge">GraphicsState</code> objects for the stack of saved graphics states.  Looking at
+<code class="highlighter-rouge">GraphicsState</code>’s members suggested something to worry about—three
+<code class="highlighter-rouge">std::map</code>s from names to instances of textures and materials:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>struct GraphicsState {
+    // ...
+    std::map&lt;std::string, std::shared_ptr&lt;Texture&lt;Float&gt;&gt;&gt; floatTextures;
+    std::map&lt;std::string, std::shared_ptr&lt;Texture&lt;Spectrum&gt;&gt;&gt; spectrumTextures;
+    std::map&lt;std::string, std::shared_ptr&lt;MaterialInstance&gt;&gt; namedMaterials;
+};
+</code></pre>
+</div>
+
+<p>Examining the scene files, I found that most instances of saving and
+restoring graphics state were along these lines:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>AttributeBegin
+    ConcatTransform [0.981262 0.133695 -0.138749 0.000000 -0.067901 0.913846 0.400343 0.000000 0.180319 -0.383420 0.905800 0.000000 11.095301 18.852249 9.481399 1.000000]
+    ObjectInstance "archivebaycedar0001_mod"
+AttributeEnd
+</code></pre>
+</div>
+
+<p>In other words: update the current transformation and instantiate an object
+instance; no changes were made to the contents of any of those
+<code class="highlighter-rouge">std::map</code>s.  Making a complete copy of them—allocating red-black tree
+nodes, incrementing shared pointer reference counts, allocating space for
+and copying strings—was almost always a waste, with all of that being
+freed, unaccessed, when the previous graphics
+state was restored.</p>
+
+<p>I replaced each of those maps with a <code class="highlighter-rouge">std::shared_ptr</code> to a map and
+implemented a copy-on-write approach, where a copy is made inside an
+attribute begin/end block only if their contents need to be modified.  The
+<a href="https://github.com/mmp/pbrt-v3/commit/65d90464ad30c83d8e7e256c6e0daddca0c6d7ca">change</a>
+wasn’t too complicated, but it reduced startup time by just over a minute,
+getting us to 12m 20s of processing before rendering began—an incremental
+speedup of 1.08x.</p>
+
+<h2 id="what-about-rendering-time">What about rendering time?</h2>
+
+<p>The attentive reader will note that I haven’t said anything at all about
+rendering time so far.  To my surprise, it’s been fairly tolerable out of
+the box: pbrt can render film-resolution images of the scene with a few
+hundred samples per pixel in two to three hours using twelve cores.  For
+example, this image, one of the slower ones, renders in 2h 51m 36s:</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-moana-dunes.jpg" /> Moana
+<i>island dunes rendered with <a href="https://github.com/mmp/pbrt-v3">pbrt-v3</a> at 2048x858 resolution
+with 256 samples per pixel.  Total rendering time using a 12 core / 24
+thread Google Compute Engine instance running at 2 GHz with the latest
+version of pbrt-v3 was 2h 51m 36s.</i></p>
+
+<p>That seems surprisingly reasonable to
+me. I’m sure there’s room for improvement and that a closer look at where
+time is being spent would reveal plenty of “interesting” things, but it
+hasn’t yet been compelling to dig into that.</p>
+
+<p>Looking at the profile, roughly 60% of rendering time is spent in
+ray–object intersections (most of it in BVH traversal), and 25% is spent
+in ptex texture lookups.  Those percentages are similar to what they are in
+simpler scenes, so there’s nothing immediately obviously broken
+there. (Though I’m sure that Embree could trace those rays in a bit less
+time.)</p>
+
+<p>Parallel scalability is not great, unfortunately.  I’m generally seeing
+around 1400% CPU usage for rendering, compared to the 2400% ideal (on 24
+virtual CPUs with Google Compute Engine).  The issue seems to be lock
+contention in ptex, but I haven’t dug into that further.  A likely
+contributor to that is that pbrt-v3 doesn’t compute ray differentials for
+indirect rays in the path tracer; in turn, those rays will always access
+the most detailed texture MIP level, which is not very friendly to texture
+caching.</p>
+
+<h2 id="conclusion-wrt-pbrt-v3">Conclusion (w.r.t. pbrt-v3)</h2>
+
+<p>After fixing up graphics state management, I hit the point where it wasn’t
+obvious how to make further progress without making substantial changes to
+the system; nothing was left that both took a lot of time and hadn’t yet
+seen attention for optimization.  Therefore, we’ll stop here, at least as
+far as pbrt-v3 goes.</p>
+
+<p>Overall, it was good progress: from 35 minutes to 12m 20s of startup time
+before rendering, a 2.83x speedup overall.  Further, memory use was reduced
+from 80 GB to 69 GB by being smarter about the transformation cache. All of
+that is available now if you sync to the latest version of pbrt-v3 (or if
+you have done so in the past few months.)  And we’ve come to understand
+what a mess <code class="highlighter-rouge">Primitive</code> memory is for this scene; we figured out how to
+save another 18 GB of memory, though didn’t implement that in pbrt-v3.</p>
+
+<p>Here is where those 12m 20s at startup is spent after all of these
+optimizations:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Function / operation</th>
+      <th style="text-align: right">Percent of runtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BVH construction</td>
+      <td style="text-align: right">34%</td>
+    </tr>
+    <tr>
+      <td>Parsing (ex. <code class="highlighter-rouge">strtof()</code>)</td>
+      <td style="text-align: right">21%</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">strtof()</code></td>
+      <td style="text-align: right">20%</td>
+    </tr>
+    <tr>
+      <td>Transform cache</td>
+      <td style="text-align: right">7%</td>
+    </tr>
+    <tr>
+      <td>Reading PLY files</td>
+      <td style="text-align: right">6%</td>
+    </tr>
+    <tr>
+      <td>Dynamic memory allocation</td>
+      <td style="text-align: right">5%</td>
+    </tr>
+    <tr>
+      <td>Inverting transformations</td>
+      <td style="text-align: right">2%</td>
+    </tr>
+    <tr>
+      <td>Graphics state management</td>
+      <td style="text-align: right">2%</td>
+    </tr>
+    <tr>
+      <td>Other</td>
+      <td style="text-align: right">3%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>Multi-threading more of the startup phase would probably be the best option
+to improve performance from there: almost everything during scene parsing
+is single-threaded; BVH construction is a natural candidate. It also might
+be interesting to peel off things like PLY file reading and BVH generation
+for individual object instances and run them asynchronously in the
+background while allowing parsing to proceed in the main thread.</p>
+
+<p>At some point I’ll look into whether there are faster <code class="highlighter-rouge">strtof()</code>
+implementations; pbrt just uses whatever the system provides.  I am wary
+about replacing that with something that’s not super well tested, however;
+parsing floats is one of those things that you really want to trust
+will always just work so you don’t have to worry about it.</p>
+
+<p>Further reducing the load on the parser is also appealing: we still have 17
+GB of text input files to parse.  We could support a binary encoding of
+pbrt input files (possibly along the lines of <a href="https://renderman.pixar.com/resources/RenderMan_20/ribBinding.html#binary-encoding">RenderMan’s
+approach</a>),
+though I have mixed feelings about the idea; being able to open up scene
+description files in a text editor and edit away is quite useful, and I
+worry that sometimes using a binary encoding would end up being confusing
+to students using pbrt in classes.  This is probably one of those places
+where the right decision for pbrt is probably different than the right
+decision for an industrial-grade commercial renderer.</p>
+
+<p>It was a fun adventure to chase down all of these optimizations and to
+better understand how various design decisions in pbrt turned out to have
+unexpected implications with a scene of this complexity.  All this is a
+great example of how useful it is to have a true production-complexity
+scene available to the general rendering community; huge thanks again to
+Disney for taking the time to put this scene together and make it available
+to everyone.</p>
+
+<p>For our <a href="/matt/blog/2018/07/15/moana-island-pbrt-4.html">next installment</a>, we’ll look at a few things that
+further improve performance if we allow more radical changes to pbrt.</p>
+
+<h2 id="note">note</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:str">
+      <p>On the Linux system I tested on, <code class="highlighter-rouge">strtof()</code> is no faster than <code class="highlighter-rouge">strtod()</code>.  On OS X, remarkably, <code class="highlighter-rouge">strtod()</code> is about twice as fast, which makes no sense at all.  I left my usage of <code class="highlighter-rouge">strtof()</code> as is purely on hard-headed principle. <a href="#fnref:str" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

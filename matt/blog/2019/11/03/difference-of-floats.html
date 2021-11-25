@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Accurate Differences of Products with Kahan&#39;s Algorithm</title>
+  <meta name="description" content="A nifty use of fused multiply add to avoid catastrophic cancellation that makes for my new favorite floating-point trick.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2019/11/03/difference-of-floats.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Accurate Differences of Products with Kahan&#39;s Algorithm</h1>
+    <p class="post-meta">
+      <time datetime="2019-11-03T00:00:00-05:00" itemprop="datePublished">
+        
+        Nov 3, 2019
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>I’ve recently returned to the land of floating-point error analysis to try
+to polish up a few more details for the next edition of <em>Physically Based
+Rendering</em>.  Floating-point is an interesting corner of computation, full
+of surprises (good and bad) and neat tricks to help with the bad.
+Along the way, I came across this <a href="https://stackoverflow.com/a/50065711">posting on
+StackOverflow</a>, which pointed me at
+a nifty algorithm for accurately computing \(a \times b-c \times d\).</p>
+
+<p>Before we dig into that algorithm, what’s so tricky about \(a \times b-c
+\times d\), anyway?  Consider \(a=33962.035\), \(b=-30438.8\),
+\(c=41563.4\), and \(d=-24871.969\).  (Those are actual values that
+came up during a run of <em>pbrt</em>.)  With 32-bit floats, \(a \times
+b=-1.03376365 \times 10^9\) and \(c \times d=-1.03376352 \times 10^9\).
+Subtract those, and you get \(-128\).  If you do the math in double
+precision and convert to float at the end, you get \(-75.1656\).  What
+happened?</p>
+
+<p>The problem is that the value of each product is way off in \(-1 \times
+10^9\) land, where the spacing between representable floating point values
+is huge—it’s 64.  Thus, when \(a \times b\) and \(c \times d\) are
+respectively rounded to the nearest representable float, they turn into
+multiples of 64.  In turn, their difference will be a multiple of 64 and
+there’s no hope of coming any closer to \(-75.1656\) than \(-64\).  In
+this case, the result was even farther away, due to the way the two
+products were rounded at \(-1 \times 10^9\).  We’ve run straight into
+good old catastrophic cancellation.<sup id="fnref:cc"><a href="#fn:cc" class="footnote">1</a></sup></p>
+
+<p>Here’s that better approach:<sup id="fnref:gen"><a href="#fn:gen" class="footnote">2</a></sup></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>inline float DifferenceOfProducts(float a, float b, float c, float d) {
+    float cd = c * d;
+    float err = std::fma(-c, d, cd);
+    float dop = std::fma(a, b, -cd);
+    return dop + err;
+}
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">DifferenceOfProducts()</code> computes \(a \times b-c \times d\) in a way that avoids
+catastrophic cancellation.  It was originally described by the legend,
+William Kahan, in <a href="https://people.eecs.berkeley.edu/~wkahan/Qdrtcs.pdf">On the Cost of Floating-Point Computation Without
+Extra-Precise
+Arithmetic</a>. Incidentally,
+Kahan’s write ups are generally fun reads, full of commentary about the
+state of the floating-point world as well as math and technical insight.
+That one’s conclusion includes:</p>
+
+<blockquote>
+  <p>Those of us who have grown old fighting against the vagaries of
+floating-point arithmetic and ill-conceived compiler “optimizations” take
+pride in our victories in that battle. But bequeathing the same battle to
+the generations that follow us would be contrary to the essence of
+civilization.  Our experience indicts programming languages and
+development systems as sources of too many of the vagaries against which
+we have had to fight. Too many are unnecessary, as are certain of the
+tempting “optimizations” safe for integers but occasionally fatal for
+floating-point.</p>
+</blockquote>
+
+<p>With that salt given its due appreciation, back to
+<code class="highlighter-rouge">DifferenceOfProducts()</code>: its use of fused multiply-add (FMA) instructions
+is the key to its cleverness.<sup id="fnref:avail"><a href="#fn:avail" class="footnote">3</a></sup> Mathematically, <code class="highlighter-rouge">FMA(a,b,c)</code> is
+\(a \times b+c\), so at first it may appear to just be useful as a
+micro-optimization: one instruction in the place of two.  However, FMA
+offers something special—it only rounds once.</p>
+
+<p>With regular old \( a \times b+c \), first \(a \times b\) is computed, and that value, which
+generally can’t be represented exactly in floating point, is rounded to the
+nearest float.  Then, \(c\) is added to that rounded value, and that result
+is again rounded to the nearest float.  FMA is implemented so that rounding
+only happens at the end—the intermediate value of \(a \times b\) is maintained at
+sufficient accuracy so that when \(c\) is added to it, the final result is
+the closest float to the true value of \(a \times b+c\).</p>
+
+<p>With that understanding of FMA in mind, back to
+<code class="highlighter-rouge">DifferenceOfProducts()</code>. Here again are the first two lines:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>    float cd = c * d;
+    float err = std::fma(-c, d, cd);
+</code></pre>
+</div>
+
+<p>The first computes the rounded value of \(c \times d\), and the second… subtracts
+\(c \times d\) from its product? If you didn’t know how FMAs work, you’d think that
+<code class="highlighter-rouge">err</code> would always be zero. With an FMA, the second line actually extracts
+the amount of rounding error in the computed value of \(c \times d\) and stores it
+in <code class="highlighter-rouge">err</code>.  From there on out, it’s a straight shot:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>    float dop = std::fma(a, b, -cd);
+    return dop + err;
+</code></pre>
+</div>
+
+<p>A second FMA computes the difference of products with an FMA, rounding only
+at the end.  Thus, it’s immune to catastrophic cancellation, but it had to
+work with the rounded value of \(c \times d\).  The <code class="highlighter-rouge">return</code> statement patches that
+up by adding in the error extracted in the second line.  Jeannenrod et
+al. <a href="https://hal.archives-ouvertes.fr/ensl-00649347/">showed</a> that the
+result is correct to 1.5 ulps, which is stellar: FMA and the basic
+floating-point operations are accurate to 0.5 ulps, so that’s almost as
+good as could be.</p>
+
+<h2 id="using-the-new-hammer">Using the New Hammer</h2>
+
+<p><code class="highlighter-rouge">DifferenceOfProducts()</code> turns out to be useful surprisingly often once you
+start looking for places to apply it.  Computing a quadratic discriminant?
+Call <code class="highlighter-rouge">DifferenceOfProducts(b, b, 4 * a, c)</code>.<sup id="fnref:no"><a href="#fn:no" class="footnote">4</a></sup> Computing the determinant
+of a 2x2 matrix? It’s got you covered.  I count over 80 uses of it in the
+implementation of next version of <em>pbrt</em>.  Of them, my favorite is the
+cross product function.  It had always been a source of trouble, which
+eventually led to hands being thrown up and doubles being used in the
+implementation in order to avoid catastrophic cancellation:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>inline Vector3f Cross(const Vector3f &amp;v1, const Vector3f &amp;v2) {
+    double v1x = v1.x, v1y = v1.y, v1z = v1.z;
+    double v2x = v2.x, v2y = v2.y, v2z = v2.z;
+    return Vector3f(v1y * v2z - v1z * v2y,
+                    v1z * v2x - v1x * v2z,
+                    v1x * v2y - v1y * v2x);
+}
+</code></pre>
+</div>
+
+<p>Now, we can stick with floats and use <code class="highlighter-rouge">DifferenceOfProducts()</code>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>inline Vector3f Cross(const Vector3f &amp;v1, const Vector3f &amp;v2) {
+    return Vector3f(DifferenceOfProducts(v1.y, v2.z, v1.z, v2.y),
+                    DifferenceOfProducts(v1.z, v2.x, v1.x, v2.z),
+                    DifferenceOfProducts(v1.x, v2.y, v1.y, v2.x));
+}
+</code></pre>
+</div>
+
+<p>That tricky example at the start of this post was actually part of a cross
+product.  At some point <em>pbrt</em> needed to compute the cross product of the
+vectors \((33962.035, 41563.4, 7706.415)\) and \((-24871.969, -30438.8,
+-5643.727)\).  Computed using floats, the resulting vector would have been
+\((1552, -1248, -128)\). (As a general rule, getting not-very-big 
+integer values back from a floating-point calculation that involved larger
+numbers is a pretty good tell that you’ve got catastrophic cancellation
+going on in there.)</p>
+
+<p>In double precision, that cross product is \((1556.0276, -1257.5151,
+-75.1656)\) and we can see that with floats, \(x\) was sort of ok,
+\(y\) was getting meh, and \(z\) supplied the disaster we used for
+motivation.  With <code class="highlighter-rouge">DifferenceOfProducts()</code> and floats all the way?
+\((1556.0276, -1257.5153, -75.1656)\). \(x\) and \(z\) match double
+precision exactly and \(y\) is just barely off—there’s that extra ulp.</p>
+
+<p>And what about performance?  <code class="highlighter-rouge">DifferenceOfProducts()</code> does two FMAs, a
+multiply, and an add.  The naive algorithm can be implemented with one FMA
+and one multiply, which might seem that it would take half as much time.
+In practice, it doesn’t seem to matter much once you’ve got the values at
+hand in registers: in a synthetic benchmark on my laptop, I measured
+<code class="highlighter-rouge">DifferenceOfProducts()</code> to be only 1.09x more expensive than the naive
+algorithm.  Double precision was 2.98x slower.</p>
+
+<p>Once you start to become aware of catastrophic cancellation, all sorts of
+innocuous-looking expressions in code can start to make you nervous.
+<code class="highlighter-rouge">DifferenceOfProducts()</code> turns out to be good medicine for a good number of
+them.  It’s easy to use, and there’s not much reason to not use it widely.</p>
+
+<h2 id="notes">notes</h2>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:cc">
+      <p>Catastrophic cancellation isn’t a worry when subtracting quantities with different signs or when adding quantities with the same sign. Conversely, it can be a problem when adding values with different signs.  Thus, sums should generally be looked at with the same wariness as differences. <a href="#fnref:cc" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:gen">
+      <p>I’ll leave it as an exercise to the reader to work out a <code class="highlighter-rouge">SumOfProducts()</code> function that protects against catastrophic cancellation. For a slightly more challenging exercise, explain why, in <code class="highlighter-rouge">DifferenceOfProducts()</code>, <code class="highlighter-rouge">dop + err == dop</code> if the signs of <code class="highlighter-rouge">a*b</code> and <code class="highlighter-rouge">c*d</code> are different. <a href="#fnref:gen" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:avail">
+      <p>An FMA instruction has been available on GPUs for over a decade, and on most CPUs for at least five years now. On CPUs, you may need to add compiler flags to get your compiler to emit it directly when you use <code class="highlighter-rouge">std::fma()</code>; <code class="highlighter-rouge">-march=native</code> works on gcc and clang. <a href="#fnref:avail" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:no">
+      <p>In IEEE floating-point, multiplication by powers of two is exact, so <code class="highlighter-rouge">4 * a</code> doesn’t incur any rounding error, assuming there is no overflow. <a href="#fnref:no" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

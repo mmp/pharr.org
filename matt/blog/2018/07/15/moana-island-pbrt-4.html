@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the elephant (part 4)</title>
+  <meta name="description" content="Another pass at reducing memory use when rendering Disney&#39;s Moana island scene, this time with a future version of pbrt where we are free to make bigger chan...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/07/15/moana-island-pbrt-4.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the elephant (part 4)</h1>
+    <p class="post-meta">
+      <time datetime="2018-07-15T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 15, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>I have a branch of pbrt that I use for trying out new ideas, implementing
+neat things from papers, and generally exploring things that end up in a
+future edition of <em>Physically Based Rendering</em>.  Unlike
+<a href="https://github.com/mmp/pbrt-v3">pbrt-v3</a>, which we try to keep as close as
+possible to the system described in the book, it’s possible to change
+anything in that branch.  Today we’ll look at how a few more radical
+changes to the system than we’ve considered previously in this series
+significantly reduce memory usage with Disney’s <em>Moana</em> island scene.</p>
+
+<p>A note on methodology: in the previous three posts, all of the statistics
+were measured with the WIP version of the scene I was working with before
+it was released.  For this one, we’ll switch to the final version, which is
+slightly more complex.</p>
+
+<p>When rendering the latest <em>Moana</em> island scene,
+pbrt-v3 uses 81 GB of RAM to store the scene description.  Today’s
+pbrt-next uses 41 GB—about half was much.  A handful of changes totaling
+a few hundred lines of code was enough to get us there.</p>
+
+<h2 id="smaller-primitives">Smaller Primitives</h2>
+
+<p>Recall that in pbrt a <code class="highlighter-rouge">Primitive</code> is a combination of a shape, its
+material, its emission function (if it’s an area light), and a record of
+which participating media are inside and outside its surface.  In pbrt-v3,
+<code class="highlighter-rouge">GeometricPrimitive</code>s store:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>    std::shared_ptr&lt;Shape&gt; shape;
+    std::shared_ptr&lt;Material&gt; material;
+    std::shared_ptr&lt;AreaLight&gt; areaLight;
+    MediumInterface mediumInterface;
+</code></pre>
+</div>
+
+<p>As <a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html#primitive-woes">discussed
+earlier</a>,
+most of the time, <code class="highlighter-rouge">areaLight</code> is <code class="highlighter-rouge">nullptr</code>, and the <code class="highlighter-rouge">MediumInterface</code> holds
+a pair of <code class="highlighter-rouge">nullptr</code>s.  Therefore, in pbrt-next I added a <code class="highlighter-rouge">SimplePrimitive</code>
+variant of <code class="highlighter-rouge">Primitive</code> that only stores pointers to a shape and a material.
+It is used in place of <code class="highlighter-rouge">GeometricPrimitive</code> when possible:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>class SimplePrimitive : public Primitive {
+    // ...
+    std::shared_ptr&lt;Shape&gt; shape;
+    std::shared_ptr&lt;Material&gt; material;
+};
+</code></pre>
+</div>
+
+<p>For non-animated object instances, there’s now <code class="highlighter-rouge">TransformedPrimitive</code>,
+which just stores a pointer to a primitive and a transformation, saving the
+nearly 500 bytes of <a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html#transformedprimitives-95-wasted-space-really-hurts">unneeded
+bloat</a>
+that an <code class="highlighter-rouge">AnimatedTransform</code> instance added to pbrt-v3’s
+<code class="highlighter-rouge">TransformedPrimitive</code>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>class TransformedPrimitive : public Primitive {
+    // ...
+    std::shared_ptr&lt;Primitive&gt; primitive;
+    std::shared_ptr&lt;Transform&gt; PrimitiveToWorld;
+};
+</code></pre>
+</div>
+
+<p>(pbrt-next has an <code class="highlighter-rouge">AnimatedPrimitive</code> for the case where an animated
+transformation is actually needed.)</p>
+
+<p>With these changes, the statistics report 7.8 GB used for <code class="highlighter-rouge">Primitive</code>s,
+down from 28.9 GB in pbrt-v3. Lovely as it is to save 21 GB, that’s not as
+much of a reduction as we’d have expected from the back of the envelope
+estimate earlier; we’ll come back to that discrepancy at the end of this
+post.</p>
+
+<h2 id="smaller-shapes">Smaller Shapes</h2>
+
+<p>Memory used for geometry is also significantly reduced in pbrt-next: space
+used for triangle meshes is down from 19.4 GB to 9.9 GB and space used for
+curves is down from 1.4 GB to 1.1 GB.  A little more than half of this
+savings comes from a simplification of the <code class="highlighter-rouge">Shape</code> base class.</p>
+
+<p>In pbrt-v3, <code class="highlighter-rouge">Shape</code> brings with it a few members that all <code class="highlighter-rouge">Shape</code>
+implementations carry along—these are just a few things that are handy to
+have access to in <code class="highlighter-rouge">Shape</code> implementations.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>class Shape {
+    // ....
+    const Transform *ObjectToWorld, *WorldToObject;
+    const bool reverseOrientation;
+    const bool transformSwapsHandedness;
+};
+</code></pre>
+</div>
+
+<p>To understand why those member variables are problematic, it’s helpful to
+understand how triangle meshes are represented in pbrt.  First, there’s a
+<code class="highlighter-rouge">TriangleMesh</code> class, which stores the vertex and index buffers for an
+entire mesh:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>struct TriangleMesh {
+    int nTriangles, nVertices;
+    std::vector&lt;int&gt; vertexIndices;
+    std::unique_ptr&lt;Point3f[]&gt; p;
+    std::unique_ptr&lt;Normal3f[]&gt; n;
+    // ...
+};
+</code></pre>
+</div>
+
+<p>Each triangle in the mesh is represented by a <code class="highlighter-rouge">Triangle</code>, which inherits
+from <code class="highlighter-rouge">Shape</code>.  The idea is to keep <code class="highlighter-rouge">Triangle</code>s as small as
+possible: they only store a pointer to the mesh that they’re a
+part of and a pointer to the offset in the index buffer where their vertex
+indices start:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>class Triangle : public Shape {
+    // ...
+    std::shared_ptr&lt;TriangleMesh&gt; mesh;
+    const int *v;
+};
+</code></pre>
+</div>
+
+<p>When the <code class="highlighter-rouge">Triangle</code> implementation needs to find the positions of its
+vertices or the like, it does the appropriate indexing to get them from the
+<code class="highlighter-rouge">TriangleMesh</code>.</p>
+
+<p>The problem with pbrt-v3’s <code class="highlighter-rouge">Shape</code> is that the values it stores are the same for
+all of the triangles in a mesh, so it’d be better to just store them once for
+each entire mesh in <code class="highlighter-rouge">TriangleMesh</code> and then to allow <code class="highlighter-rouge">Triangle</code>s to access
+a single copy of the shared values when needed.</p>
+
+<p>That’s fixed in pbrt-next: the <code class="highlighter-rouge">Shape</code> base class in pbrt-next doesn’t have
+those members and as such, each and every <code class="highlighter-rouge">Triangle</code> is 24 bytes smaller.
+The <code class="highlighter-rouge">Curve</code> shape follows a similar strategy and also benefits from a
+leaner <code class="highlighter-rouge">Shape</code>.</p>
+
+<h2 id="shared-triangle-buffers">Shared triangle buffers</h2>
+
+<p>Although the <em>Moana</em> island scene makes extensive use of object instancing
+for explicitly replicated geometry, I wondered how much reuse there might
+happen to be across things like index buffers, texture coordinate buffers,
+and so forth across separate triangle meshes.</p>
+
+<p>I wrote a little class that hashes those buffers as they come in and stores
+them in a cache.  I modified <code class="highlighter-rouge">TriangleMesh</code> to check the cache and
+use the already stored version of any redundant buffer that it needed.
+There was a nice benefit: 4.7 GB of redundant storage was eliminated, which
+was much more than I expected.</p>
+
+<h2 id="the-stdshared_ptr-disaster">The std::shared_ptr disaster</h2>
+
+<p>With the changes so far, the statistics reported about 36 GB of known
+memory allocations, while at the start of rendering, <code class="highlighter-rouge">top</code> reported 53 GB
+used.  Sigh.</p>
+
+<p>I was dreading another series of slow <code class="highlighter-rouge">massif</code> runs to figure out which
+allocations the statistics were missing when an email from <a href="https://zeuxcg.org/">Arseny
+Kapoulkine</a> appeared in my inbox.  Arseny explained to
+me that <a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html#geometricprimitive-50-wasted-space-hurts">my earlier estimates of <code class="highlighter-rouge">GeometricPrimitive</code> memory
+use</a>
+were significantly off.  It took a few back and forths before I fully
+understood; many thanks to Arseny for pointing the issue out and for
+explaining until I understood.</p>
+
+<p>Before Arseny’s email, my mental model of how <code class="highlighter-rouge">std::shared_ptr</code>s were
+implemented was that there was a shared descriptor that stored a reference
+count and the pointer to the actual allocated object, along the lines of:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>template &lt;typename T&gt; class shared_ptr_info {
+    std::atomic&lt;int&gt; refCount;
+    T *ptr;
+};
+</code></pre>
+</div>
+
+<p>Then I assumed that a <code class="highlighter-rouge">shared_ptr</code> instance would just point to and use
+that:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>template &lt;typename T&gt; class shared_ptr {
+    // ...
+    T *operator-&gt;() { return info-&gt;ptr; }
+    shared_ptr_info&lt;T&gt; *info;
+};
+</code></pre>
+</div>
+
+<p>In short, I assumed that <code class="highlighter-rouge">sizeof(shared_ptr&lt;&gt;)</code> is the same as the size of
+a pointer, and I assumed that there was about 16 bytes of additional
+overhead for each shared pointer.</p>
+
+<p>That is not so.</p>
+
+<p>In the implementation on my system here, the shared descriptor is 32
+bytes, and <code class="highlighter-rouge">sizeof(shared_ptr&lt;&gt;)</code> is 16 bytes. As such, a
+<code class="highlighter-rouge">GeometricPrimitive</code> that’s mostly <code class="highlighter-rouge">std::shared_ptr</code>s is about twice as big
+as I’d estimated.  If you’re curious about the whys, these two Stack
+Overflow postings nicely explain the details: <a href="https://stackoverflow.com/a/9201435">1</a>
+<a href="https://stackoverflow.com/a/34046853">2</a>.</p>
+
+<p>Almost all of my uses of <code class="highlighter-rouge">std::shared_ptr</code> in pbrt-next didn’t need to be
+shared pointers. In a day’s frenzy of hacking, I replaced as many as I
+could with <code class="highlighter-rouge">std::unique_ptr</code>, which is indeed the same size as a regular
+pointer.  For example, here’s what <code class="highlighter-rouge">SimplePrimitive</code> looks like now:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>class SimplePrimitive : public Primitive {
+    // ...
+    std::unique_ptr&lt;Shape&gt; shape;
+    const Material *material;
+};
+</code></pre>
+</div>
+
+<p>The payoff was better than I’d hoped for: memory use at the start of
+rendering dropped from 53 GB to 41 GB—a 12 GB savings, totally unexpected
+just a few days ago, and down to basically half of what pbrt-v3 uses.
+Woop!</p>
+
+<p><a href="/matt/blog/2018/07/16/moana-island-pbrt-5.html">Next time</a>, we’ll finally wrap up this series with a look at rendering
+performance with pbrt-next and discuss a few ideas about additional things
+to look into for reducing memory use with this scene.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

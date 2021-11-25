@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the Elephant (Part 8): Meet The GPU</title>
+  <meta name="description" content="Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on th...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the Elephant (Part 8): Meet The GPU</h1>
+    <p class="post-meta">
+      <time datetime="2021-07-25T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 25, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>It’s been over three months since my <a href="/matt/blog/2021/04/11/moana-time-to-first-pixel.html">last
+post</a> about rendering Disney’s
+<a href="https://www.disneyanimation.com/resources/moana-island-scene/">Moana Island
+scene</a> with
+<a href="https://github.com/mmp/pbrt-v4">pbrt-v4</a>.  Back then, I promised a
+further update that would discuss performance when rendering the scene on
+the GPU, but here we are with months gone by and no further news.  Today,
+finally, I’ll start to rectify that.</p>
+
+<p>Most of the delay was due to lack of motivation: for once, performance was
+surprisingly good out of the box. Where we left off last time, pbrt-v4’s
+CPU rendering path was down to 96.8 seconds of wall-clock time between the
+start of parsing the scene description and the start of actual rendering
+work.  With the GPU path selected and with no further attention to performance tuning,
+rendering started after 83.3 seconds—1.16x faster.</p>
+
+<p>Of course, faster is to be expected, as roughly half of the pre-rendering
+time on the CPU is spent building BVHs.  pbrt’s BVH construction code is
+written for clarity rather than performance, is only sort-of parallelized,
+and runs entirely on the CPU.  When rendering on the GPU, all of the BVH
+construction is handled by highly-optimized code in OptiX, most
+of it running on the GPU.  If using <em>that</em> had been slower than pbrt’s CPU path,
+then there surely would have been “interesting” things to discover.
+However, faster was the expectation, and faster was what we got.</p>
+
+<p>Further sapping motivation for blogging, not only was system startup fast,
+but rendering the scene itself on the GPU pretty much just worked the first
+time.  Here’s the beach view, rendered using an NVIDIA RTX A6000 GPU.  I’m
+going to save the topic of GPU rendering performance for a later post, but,
+well… It’s most definitely <em>fast</em>.</p>
+
+<p align="center">
+<img src="/matt/blog/images/pbrt-v4-moana-beach-gpu.jpg" alt="Moana Island beach view rendered with pbrt-v4 using the GPU" />
+<i>Moana Island beach view rendered with pbrt-v4 on an NVIDIA RTX A6000 GPU with 1024 samples per pixel.</i>
+</p>
+
+<p>Good performance is always nice, but this series of blog posts has mostly
+been about chasing down and fixing performance problems due to poor scaling
+in the face of complexity; everything running well doesn’t leave
+much to write about. With what I saw at first, I assumed that I would end
+up with a short post without much technical content that instead declared
+victory and showed a few pretty pictures.  Happily (in a way), once I
+started actually looking at the data, there were all sorts of good surprises.</p>
+
+<h2 id="the-value-of-logging-for-finding-stinky-things">The Value of Logging For Finding Stinky Things</h2>
+
+<p>I’m all for a good debugger and a good profiler, but it’s surprising
+how far one can go with basic instrumentation and logging.  For example,
+if you give pbrt <code class="highlighter-rouge">--log-level verbose</code> in its command-line arguments, it
+prints all sorts of chatty information as it does its work, announcing that
+it’s starting up the thread pool, telling you what it has found as far as
+GPUs in the system, and giving updates about what it’s currently working
+on.</p>
+
+<p>Here are a few lines of what it prints early on when rendering
+the Moana island scene:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[ tid 000 @     0.103s parser.cpp:745 ] Started parsing materials.pbrt
+[ tid 000 @     0.103s parser.cpp:620 ] Finished parsing materials.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainA/isMountainA.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainB/isMountainB.pbrt
+[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isGardeniaA/isGardeniaA.pbrt
+[ tid 000 @     0.103s parser.cpp:745 ] Started parsing isMountainA/objects.pbrt
+</code></pre>
+</div>
+<p>In each line we get the id of the thread that issued the log message (here,
+always the main thread), the elapsed time since pbrt started running, the
+location in the source where the logging call was made, and then whatever
+it has to tell us.  Here we can immediately see that the entirety of
+<code class="highlighter-rouge">materials.pbrt</code> was parsed nearly instantaneously.  We can
+also see that multiple additional files are being parsed in parallel, each
+getting started without pbrt waiting for the one before it to finish.  This all
+is to be expected, so no surprises so far.</p>
+
+<p>As I was gearing up to start writing this post, I noticed the following when doing
+a run with <code class="highlighter-rouge">--log-level verbose</code>:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[ tid 000 @    43.820s wavefront/integrator.cpp:140 ] Starting to create lights
+[ tid 000 @    53.465s wavefront/integrator.cpp:229 ] Done creating lights
+</code></pre>
+</div>
+<p>That’s ten seconds to create the light sources in the scene.  Those ten seconds
+were especially evident when seen live—there’s “Starting to create
+lights”, then no logging whatsoever for ten long seconds before pbrt comes
+back, bright eyed and proud that it’s gotten all the lights taken care of.
+That long pause was enough for me to realize something was off; I knew that
+it had been no more than 5 or so seconds to create the lights for this
+scene before, so there was surely something amiss.</p>
+
+<p>While a profiler could have cleared up what was happening in those ten
+seconds, a simple sampling-based approach was enough: I re-ran pbrt (still
+using an optimized build) with the debugger, waited for that long ten
+second pause, then stopped execution and printed out the current stack
+trace before letting it resume.<sup id="fnref:sampling-profiling"><a href="#fn:sampling-profiling" class="footnote">1</a></sup> A few quick iterations of
+that was all it took to discover that much of that time was spent in two
+functions that checked whether an image had any pixels with floating-point
+<a href="https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L199">infinity</a>
+or
+<a href="https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L208">not-a-number</a>
+values.</p>
+
+<p>I had added those checks after spending way too much time debugging an
+unexpected infinity that turned out to be from an environment map light
+source that had an infinite-valued pixel.  Now, the Moana island scene
+includes an environment map that is 8k pixels square, otherwise known as 64
+million pixels.  Oh, and those pixels are stored as 8-bit values, so
+there’s no risk of funny floating-point values in any of them.  Perhaps looping over all of them, lovingly converting them from 8-bit sRGB to float, and then seeing if they were perhaps infinite was not the best use of cycles.</p>
+
+<p>It took two <a href="https://github.com/mmp/pbrt-v4/commit/f5668154f298ecef5a6fc5a1d62a9ec11e6abecf">one-line
+fixes</a>
+to early out in that case, and light creation time went back to the 5
+seconds or so that it used to be.  The total time to first pixel went down
+to 77.9 seconds—19 seconds faster than when rendering with the
+CPU.</p>
+
+<h2 id="basic-profiling-in-the-renderer">Basic Profiling in the Renderer</h2>
+
+<p>Fixing that self-inflicted wound gave me some momentum; it was a small
+taste of the satisfaction of making something slow run faster and that was
+enough to give me motivation to dig in further.  However, the task is
+trickier than it was before since pbrt is now doing work on both the CPU
+and the GPU. It’s important to understand what each is up to; for example,
+maybe it’s fine if the CPU is mostly idle at some point if the GPU is
+working full-tilt.  However, if both are lounging around not doing much,
+then perhaps we should see where the slacking lies.</p>
+
+<p>Sticking with my log-based methodology, I <a href="https://github.com/mmp/pbrt-v4/commit/6e48cc048a393af74124b01f6bae6b8871d454ed">added a <code class="highlighter-rouge">--log-utilization</code>
+command-line
+option</a>
+to pbrt.  It causes an extra thread to be launched that measures current
+system activity every 100ms and reports it to pbrt’s verbose log.  Thus,
+when it’s running, you get updates ten times as a second about what’s going
+on interspersed with pbrt’s regular logging output, which makes it easy to
+connect to what pbrt is doing.  Here’s what it reports at the start of
+light creation:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>[ tid 000 @    43.213s pbrt/wavefront/integrator.cpp:140 ] Starting to create lights
+[ tid 000 @    43.267s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
+[ tid 000 @    43.267s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+[ tid 000 @    43.367s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0140 user 0.0000 nice 0.0016 system 0.9845 idle
+[ tid 000 @    43.368s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+[ tid 000 @    43.468s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
+[ tid 000 @    43.469s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
+</code></pre>
+</div>
+<p>Both CPU and GPU activity are reported where a value of 1 represents full
+utilization.  The system I’m using has a 32 core/64 thread CPU, so all 64 of those
+threads would need to be active and doing work to achieve a 1.
+Here, we can see that we’ve got one thread keeping busy (1/64=0.0156), with
+everything else sitting idle.  That’s not impressive, but it’s not
+unexpected: there’s little parallelism in that part of
+the system.</p>
+
+<p>Just as with the regular text logging, I often find it productive to
+eyeball that output.  Though it’s not as fancy as a graphical profiler,
+there’s nearly zero overhead to using it; sometimes, low friction is more
+important than comprehensive data.  Reading such logs is actually
+how I did all of the work described in this and the two following posts,
+though it’s also easy enough to make graphs using that output as well.</p>
+
+<h2 id="first-performance-graphs-and-setting-a-baseline">First Performance Graphs and Setting a Baseline</h2>
+
+<p>As a baseline, here is where things stood with the light creation fix in
+there, shown using separate graphs for the CPU and the GPU.<sup id="fnref:gpu-lag"><a href="#fn:gpu-lag" class="footnote">2</a></sup>
+These
+graphs start after the scene description has been parsed and materials,
+textures, and lights have been created. For these investigations we’ll
+focus on the geometric work that happens after all that finishes, starting
+47 seconds in.  Up until then both the CPU and GPU path run the same code,
+which has probably received <a href="/matt/blog/2021/04/11/moana-time-to-first-pixel.html">enough
+attention</a> for now.</p>
+
+<p>Here, x axis is time in seconds and the y axis is processor utilization.
+The start of rendering is indicated by a vertical dashed line.</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-fiximage.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-fiximage.svg" alt="GPU utilization" />
+</p>
+
+<p>Four phases of work that are shown in these graphs:</p>
+
+<ul>
+  <li><em>Process non-instanced geometry</em>: all of the non-instanced geometry (e.g., the mountains and the ocean surface) is converted to objects like pbrt’s <code class="highlighter-rouge">TriangleMesh</code>, including reading geometry that stored in PLY files from disk. Once this geometry is in memory, pbrt has OptiX build BVHs for it.  (Triangles and non-triangles go into separate BVHs.)</li>
+  <li><em>Build instance BVHs</em>: For each geometric object that is instanced (e.g., each type of shrub and flower), the geometry is read from disk and an individual BVH is built.</li>
+  <li><em>Process instance uses</em>: For each use of a geometric instance, a structure is initialized that bundles up the handle to the instance’s BVH and the transformation matrix that places it in the scene.</li>
+  <li><em>Build top-level BVH</em>: The final scene-wide BVH is built including both the non-instanced geometry and all of the instance uses.</li>
+</ul>
+
+<p>Going back to the graphs, the only thing to be happy about is the final
+stage of building the final top-level BVH: there’s not much left for the
+CPU to do at that point and the GPU is nicely occupied during that phase.
+For worse and for better, there’s plenty of unused computing capacity left
+sitting idle in the rest of the graph.</p>
+
+<h2 id="a-first-small-victory">A First Small Victory</h2>
+
+<p>The nearly 6 seconds spent on <em>Process instance uses</em> was one of the first
+things that caught my eye, even though it’s not where most of the time is
+spent.  If you look at <a href="https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1427">the corresponding
+loop</a>,
+there’s not much to it; there’s a hash table lookup using the name of the instance
+(e.g. “xgCabbage_archivecoral_cabbage0003_geo”).  That leads to the handle to
+its BVH and then there’s just a bit of data movement, initializing an
+<code class="highlighter-rouge">OptixInstance</code> structure with the transformation matrix and a few other
+things so that the instance use is part of the final scene BVH.</p>
+
+<p>Since that loop is not doing much that is computationally intensive, it
+didn’t seem worth parallelizing when I first wrote it.  However, when you
+have over 39 million instances, a little bit of data movement for each one adds up.
+It’s easy enough to parallelize that loop:
+<a href="https://github.com/mmp/pbrt-v4/commit/757f00567cc11d2b9202daca21793eebaeb18a45">(1)</a>
+<a href="https://github.com/mmp/pbrt-v4/commit/1820fa7d618da0b51179261091b02279a2dd3dba">(2)</a>, 
+and doing so brings <em>Process instance uses</em> down from 5.9 seconds to 1.1 seconds of
+wall-clock time, which brings us to 72.2 seconds for time to first pixel.  These
+graphs show the improvement:</p>
+<p align="center">
+<img src="/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg" alt="CPU utilization" />
+<br />
+<img src="/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg" alt="GPU utilization" />
+</p>
+<p>(As in earlier posts, the scale of the x axis is the same as the baseline graph
+in order to make it easier to compare successive graphs with each other.)</p>
+
+<p>CPU utilization during that phase is still a little spiky, but that phase
+now achieves the best CPU utilization of all of them. With its total
+time down to one second, it’s hard to worry too much more about it.</p>
+
+<h2 id="looking-ahead">Looking Ahead</h2>
+
+<p>It was a slow start, but we’ve gone from lack of motivation to two easy
+fixes that shaved roughly ten seconds off of startup time.  Furthermore,
+those have brought us to being “just” twelve seconds away from a
+sub-one-minute time to first pixel.  <em>That</em> would be exciting, and there’s
+still got plenty of idle processor time in the graphs and plenty of code
+still unexamined under the lens of Moana.  To that end, we’ll dig into the
+instance BVH phase next time around.</p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:sampling-profiling">
+      <p>I’m not sure where I first learned about this trick.  I’m almost certain that I read a blog post extolling the idea somewhere years ago but am unable to find it again now. <a href="#fnref:sampling-profiling" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:gpu-lag">
+      <p>The GPU’s performance monitoring API reports its results averaged over an unspecified but up-to-one-second amount of previous time whereas the CPU numbers are calculated strictly based on activity in the last 100ms. This leads to some lag in the GPU results that manifests itself in activity sometimes being charged to the wrong stage; an example is “Process instance uses”, which doesn’t actually use the GPU at all. (I also believe that the spike in GPU activity at the start of “Build instance BVHs” should be charged to “Process non-instanced geometry.”) However, rather than futzing with the data, I have reported it as measured. <a href="#fnref:gpu-lag" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

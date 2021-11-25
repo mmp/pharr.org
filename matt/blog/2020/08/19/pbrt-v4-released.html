@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>An early release of pbrt-v4 and some notes about pbrt-gpu</title>
+  <meta name="description" content="The code is on github, scenes are available, and now it&#39;s just a matter of finishing writing the book...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2020/08/19/pbrt-v4-released.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">An early release of pbrt-v4 and some notes about pbrt-gpu</h1>
+    <p class="post-meta">
+      <time datetime="2020-08-19T00:00:00-05:00" itemprop="datePublished">
+        
+        Aug 19, 2020
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p align="center"><a href="/matt/blog/images/frame180.jpg"><img src="/matt/blog/images/frame180.jpg" /></a>
+<i>A frame of @beeple's Zero Day, rendered with pbrt-v4.</i></p>
+
+<p>I’m happy to report that we’ve posted a first drop of the <a href="https://github.com/mmp/pbrt-v4">source code to
+pbrt-v4</a>, the next version of pbrt,
+corresponing to the system that will be described in the next edition of
+<em>Physically Based Rendering</em>.  There’s a ton of new stuff in this release;
+as with previous releases, I’d estimate that at least a third of the system
+is new.</p>
+
+<p>Of course, there are known bugs, rough edges, and there’s not much more
+documentation than the code itself.  This is a release for the adventurous
+and for people familiar with pbrt-v3, but we hope that by making it
+available now the final version will be that much better thanks to bugs
+fixed and our having had the chance to make various improvements before the
+book text was final.</p>
+
+<p>Not only do we have a range of new state-of-the-art rendering techniques
+implemented in pbrt-v4 (detailed extensively in the
+<a href="https://github.com/mmp/pbrt-v4/blob/master/README.md">README</a>), but what
+I’m perhaps most excited about with this release is the arrival of GPU
+rendering as an option for pbrt.  (Note that pbrt-v4 still runs on the CPU
+on systems that don’t have a supported GPU, just as well as it ever did;
+keeping portability across a wide range of systems was critically
+important.)</p>
+
+<p align="center"><a href="/matt/blog/images/sportscar-sky.jpg"><img src="/matt/blog/images/sportscar-sky.jpg" /></a>
+<i>Yasutoshi Mori (@MirageYM)'s sportscar model rendered with pbrt-v4,
+where nearly every surface uses a measured BRDF from the <a href="http://rgl.epfl.ch/materials"> RGL Material Database</a>.</i></p>
+
+<p>I gave a <a href="https://www.youtube.com/watch?v=prZJ8FBG9BI&amp;t=6386s">talk</a> about
+the GPU work at HPG this year; the key challenge was not whether it would
+be possible to implement a GPU ray tracer in the first place, but whether a
+system that still had the soul of pbrt would remain after doing so—could
+it still be clean enough to fulfill the pedagogical goals of pbrt and to be
+understandable enough to work as a basis for the book?</p>
+
+<p>I think we were successful—the GPU version runs all of the same C++ code
+as regular pbrt to generate camera rays, compute values for low-discrepancy
+sampling patterns, evaluate and sample lights and BSDFs, filter image
+samples—pretty much all of the core rendering computation.  That is all
+wired up differently for the GPU than for the CPU—on the GPU, in a
+sequence of individual kernels connected with work queues—but it’s built
+out of all of the same pieces.  I’ve posted a <a href="https://www.youtube.com/watch?v=AXuk7bmhZ2g">video walkthrough of the
+code</a> that gives an overview
+of changes to the system’s organization, mostly related to the GPU path.</p>
+
+<p align="center">
+<a href="/matt/blog/images/sanmiguel-courtyard-second.jpg"><img src="/matt/blog/images/sanmiguel-courtyard-second.jpg" /></a> <i>Our old friend,
+San Miguel from Guillermo M. Leal Llaguno, rendered with
+pbrt-v4.</i></p>
+
+<p>And GPUs nowadays are fast… After a little performance work after HPG,
+now pbrt on the GPU is even faster than it was when I gave that talk.
+Speedups versus pbrt running on a 6 core CPU are generally 50-100x.  If you
+feel like a 6 core CPU isn’t a fair baseline, then it’s about 10-20x faster
+than running pbrt on a 32-core Threadripper 3970X.  While I recognize that
+as an employee of a GPU manufacturer, I may be expected to have some bias
+on this topic, I think the performance is compelling.  I am super excited
+to see all that code that was originally written for not-GPUs running so
+quickly.</p>
+
+<p>pbrt’s GPU path requires three things:</p>
+
+<ul>
+  <li>C++17 support on the GPU, including kernel launch taking C++ lambdas.</li>
+  <li>Unified memory so that the CPU can allocate and initialize data
+structures for code that runs on the GPU.</li>
+  <li>An API for ray-object intersections on the GPU.</li>
+</ul>
+
+<p>The current implementation is built using CUDA and OptiX, the only options
+that fulfill those requirements at this point.  Almost all of the CUDA code
+is plain old C++17; there’s no use of shared memory, inter-thread
+communication, or any fancy GPU programming stuff in it.  We’d be happy to
+take patches getting pbrt running on other vendors’ GPUs, should any of
+them also support modern C++, unified memory, and ray tracing.</p>
+
+<p>And now, it’s time to get back to writing the book…</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

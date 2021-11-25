@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: first benchmark results (part 5)</title>
+  <meta name="description" content="Wherein for some, the only reasonable explanation was that I must have cheated.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/22/ispc-volta-first-results.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: first benchmark results (part 5)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-22T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 22, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p><em>As before, this is from memory.  I did my best to get the details right,
+but get in touch if I got anything wrong.</em></p>
+
+<p>There was a small set of benchmarks that the compiler team used to evaluate
+parallel programming models—things like Black-Scholes options pricing,
+evaluating the Mandelbrot set, a little stencil computation.  Most of them
+were just tens of lines of code.</p>
+
+<p>The most complex, <a href="https://github.com/syoyo/aobench">aobench</a>, weighed in
+at roughly 300 lines.  If I remember correctly, the graphics folks pushed
+aobench on them as something that was at least vaguely representative of
+the sort of irregularity that was typical of graphics workloads.
+Anything more complex or more realistic was a non-starter: it would have
+been too much to handle for a number of the parallel programming models at
+hand.</p>
+
+<p align="center"><img src="/matt/blog/images/ao.png" width="300" /></p>
+<p><em>aobench, via modern ispc. 15.6x faster than serial code on a
+2-core laptop with AVX2.</em></p>
+
+<p>Intel had all sorts of parallel programming models; some only targeted
+multi-core and some only targeted SIMD.  There was Cilk for multi-core in
+the Intel C compiler, there was the auto-vectorization and <code class="highlighter-rouge">#pragma simd</code>
+stuff there, there was the OpenCL compiler, there was the metaprogramming
+stuff from RapidMind that merged with Intel Ct and ended up as Intel Array
+Building Blocks, there was Thread Building Blocks, and there was Intel
+Concurrent Collections.  Probably other stuff I’ve forgotten, too.</p>
+
+<p>In general, the models that only targeted multi-core exhibited linear
+scaling with the number of cores, and those that targeted SIMD exhibited
+linear scaling with SIMD width for computations without control flow but
+didn’t work at all for those that did—computing the Mandelbrot set and
+aobench.  Different vector lanes wanting to follow different execution
+paths was too much for them.</p>
+
+<p>Anyhoo, once volta came to be fairly complete and I was happy with the
+quality of the code coming out of it, I coded some of the benchmarks up in
+volta and measured the performance.  I was rather surprised: volta beat
+<code class="highlighter-rouge">#pragma simd</code> (the closest contender) for many of them and was quite close
+for the rest.  Except for the stencil. I think.</p>
+
+<p>And it wasn’t just that it won for things like aobench where it could
+actually deal with the control flow, but it was faster even for a number of
+the simple benchmarks.  It was just by a few percent, but it <em>won</em>.  I ran and
+re-ran the tests, just to be sure I hadn’t messed something up.</p>
+
+<p>Intel had hundreds of people working on the compiler and prided themselves
+on generating better x86 code than any other compiler.  That it had come
+together that well with volta, admittedly for a set of simple benchmarks,
+was fairly shocking, shall we say.</p>
+
+<p>I don’t remember how I first communicated those results to the compiler
+team, but it was just as surprising to them—that the combination of volta
+with it’s strange-graphics-people programming model and this thing LLVM
+that they’d heard of a little bit, together working out so well was pretty
+much unimaginable.</p>
+
+<p>There was soon a meeting to discuss all this with ten or so folks from the
+compiler team.</p>
+
+<p>Beyond collective surprise, reactions were split.  Most of the people were
+intrigued by the result—LLVM wasn’t the well-known powerhouse that it is
+today, and the idea that one programmer leveraging it could beat the icc
+compiler… Surely there were interesting things to learn from what had
+happened.  We had a great, healthy discussion of the results and dug into
+some of the differences in the generated code.  I may have explained what
+SPMD on SIMD was again.</p>
+
+<h2 id="an-alternative-interpretation-of-the-results">An alternative interpretation of the results</h2>
+
+<p>One or two of them came to another conclusion: there was only one way to
+explain it—I must have cheated.  I assume they imagined that I must have
+specialized the compiler to have special cases to detect the benchmark
+programs and then just spit out perfect pre-prepared code when it saw them,
+no compilation involved at all.  That being the most likely way to explain
+beating icc, of course.</p>
+
+<p>Assuming typical game theory for the jerks, here’s what the thinking would
+have been: I was a jerk too, and my real goal here was not to actually
+solve a problem, but was to leverage SIMD either to usurp them in their roles
+in parallel programming models in the compiler group or to advance some
+other nefarious agenda.</p>
+
+<p>Under that scenario, I’d naturally hold my cards close, keeping the
+compiler source code secret and only begrudgingly letting them try the
+binary.  Maybe I’d try to defer even that for a few months, claiming I
+wanted to make a few more improvements first.  If I was cheating, I’d try
+to prevent their discovery of that as long as possible in the hopes of
+being successful in my evil plan first.</p>
+
+<p>Alternatively, if I actually had a good idea, the thing to do would be to
+keep the details of it to myself, to prevent them from taking them and
+claiming them as their own to maintain their position.</p>
+
+<p>Me, I was still just trying to convince the professionals to write this
+compiler so I didn’t have to.  I did exactly the thing we’d told them about
+lots of times already.  So I emailed around a tarball of the source code
+after the meeting.</p>
+
+<p>Forgive me, but I’m pretty sure I included an apology in the email: <em>it’s
+the first time I’ve written a compiler, so forgive me if parts of the
+implementation aren’t very good</em>.  A lesson learned from the jerks:
+sometimes it’s fun to twist the knife a little.</p>
+
+<p>It turned out that I wasn’t cheating, though it was noted that volta’s
+transcendental functions weren’t as precise as the other compilers’.  I
+modified volta to use Intel’s Intrinsics for Short Vector Math Library
+(SVML), which is what the others were using.  The performance gap narrowed
+on options pricing, but volta was still winning.  It was unchanged on the
+others, which didn’t use transcendentals.</p>
+
+<h2 id="keep-your-source-code-secretseriously">Keep your source code secret—seriously?</h2>
+
+<p>The idea of keeping the source code secret may seem strange.  After all, we
+all worked at the same company, right?</p>
+
+<p>As it turns out, some teams would jealously guard their source code, only
+making binary releases available to other teams at Intel, and only at
+well-defined delivery points.  It was one defense against the jerks.</p>
+
+<p>Here’s how it went: if you were working on something that others wanted to
+attack, sometimes they’d take the in-progress version of the system and
+pick it apart, finding a bunch of examples where it didn’t yet work well,
+and putting together an argument that your thing was in terrible shape
+wasn’t working, and thus should be canceled.</p>
+
+<p>And sometimes that sort of tactic actually worked; management was
+shockingly receptive to this sort of hysteria.  Maybe it was that they were
+too far away from the technology to be able to evaluate the arguments on
+their merits, or maybe again it was an appreciation for gladiatorial combat
+as decision making process.</p>
+
+<p>The best case scenario was that the your team would have to spend a lot of
+time convincing management that they were actually on track and that things
+were fine.  The easier thing was to just not share your code in the first
+place.</p>
+
+<p>Good times.</p>
+
+<p><em>Next time we’ll talk about parallel programming model bake-offs and how
+ things went with the initial internal users of volta.</em></p>
+
+<p><a href="/matt/blog/2018/04/23/ispc-volta-users-and-ooo.html">Next: First users and modern CPUs coming through</a></p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

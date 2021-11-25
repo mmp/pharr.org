@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CHECK_RARE and making sense of unusual occurrences</title>
+  <meta name="description" content="A variation on traditional assertions that I&#39;ve found to be fairly useful.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/05/31/check-rare.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">CHECK_RARE and making sense of unusual occurrences</h1>
+    <p class="post-meta">
+      <time datetime="2018-05-31T00:00:00-05:00" itemprop="datePublished">
+        
+        May 31, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Ray tracers are ‘interesting’ in that they end up doing a fairly similar
+set of computations—intersect, shade, sample, repeat—over billions of
+individual rays.  (Apparently it was <a href="https://www.expandedcinematography.com/industrialised-cinematography.html">13,486,203,269,559,350 rays to render
+Lego
+Batman</a>—otherwise
+known as 13 million billion of them.)  When rendering a scene, more or less
+the same code runs for each of those rays and accesses the same scene
+representation, just starting out with a different initial ray.  Every once
+in a while, code that previously worked flawlessly for billions of rays
+before it will fail in a surprising way.</p>
+
+<p>A fun example: a while ago at Google, someone was running a lot of jobs
+rendering with pbrt to generate some synthetic data.  One of the jobs never
+finished; it turned out that the renderer was stuck in an infinite loop.  I
+started digging in and found that it was stuck in a root-finding routine;
+this was surprising, since the algorithm used there had been carefully
+chosen to always make forward progress.  It’d never been any trouble
+before.</p>
+
+<p>That routine uses Newton-bisection to find the zero of a function.  It
+maintains an interval that is known to bracket the zero and then works on
+refining the interval until it’s small enough.  It first tries to take a
+Newton step, using the function’s derivative to estimate the position of
+the zero. If that leads to a point that’s inside the interval, it uses that
+as an improved interval endpoint.  Otherwise it bisects the interval.  This
+approach ensures that the interval gets smaller with each iteration.</p>
+
+<p>How could that not terminate? It turned out that in that one run, pbrt came
+to a situation where the derivative at one endpoint of the interval took it
+exactly to the second endpoint and the derivative at the second endpoint
+took it exactly to the first.  Here’s a sketch of what was going on (dashed
+lines represent the derivatives):</p>
+
+<p align="center"><img src="/matt/blog/images/badfunction.jpg" width="300" /></p>
+<p><em>A rare state of affairs: we have a zero in the interval \([a,b]\), the
+derivative at \(a\) suggests that the zero is at exactly \(b\) and the
+derivative at \(b\) suggests it’s exactly at \(a\).</em></p>
+
+<p>The problem was that given an interval \([a,b]\) and a proposed new
+\(t\) value from the Newton step, the check for whether to bisect instead
+was written like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>if (t &lt; a || t &gt; b) t = 0.5f * (a + b);
+</code></pre>
+</div>
+
+<p>In this particular case, this code accepted the Newton step at each end and
+ended up endlessly jumping between the two endpoints.  Good times.  The fix
+was simple—bisect unless the new endpoint is strictly inside the
+interval:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>if (t &lt;= a || t &gt;= b) t = 0.5f * (a + b);
+</code></pre>
+</div>
+
+<p>When that check was first written, it was completely unimaginable that the
+interval and the derivatives would ever line in the way they did for that
+one run; what are the odds of <em>that</em>?  But if you trace enough rays, then
+even these unimaginable things start happening now and again.</p>
+
+<h2 id="assertions-and-rare-occurrences">Assertions and rare occurrences</h2>
+
+<p>These sorts of rare-but-legitimate happenings can make it hard to write
+good assertions in a ray tracer; things that you’d like to say will never
+happen sometimes do, legitimately.  That’s unfortunate, since assertions
+can be a big help when writing software; when they fail, a fundamental
+assumption has been violated, and you know something needs to be fixed.
+(John Regehr has a <a href="https://blog.regehr.org/archives/1091">nice blog post on
+assertions</a> that’s worth reading.)</p>
+
+<p>Here’s an example of this challenge from a experimental branch of pbrt I’m
+hacking around in: the following few lines of code call a <code class="highlighter-rouge">Refract()</code>
+function that computes a refracted ray direction using Snell’s law.  It
+returns a Boolean value that indicates whether total internal reflection
+has occurred.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Vector3f wo = ..., wi = ...;
+Float eta = ...;
+Normal3f n = ...;
+bool tir = Refract(wo, n, eta, &amp;wi);
+</code></pre>
+</div>
+
+<p>As it turns out, this code is called after the Fresnel reflectance has been
+computed for the surface and is only called if some light has been found to
+be refracted as per the Fresnel equations.  Thus, in principle, total
+internal reflection should never occur here: we’ve already implicitly
+tested for that case.</p>
+
+<p>However, if we assert that <code class="highlighter-rouge">tir</code> is false, we’ll quickly find out that
+theory and practice don’t always match up.  The issue is that the math that
+<code class="highlighter-rouge">Refract()</code> uses to check for whether total internal reflection has
+happened is slightly different than the math in the Fresnel equations.  As
+such, rarely, they’ll come to inconsistent answers due to floating-point
+round-off error.<sup id="fnref:ref"><a href="#fn:ref" class="footnote">1</a></sup>  Therefore, we need to handle the total internal reflection
+case here when it occurs:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>if (tir)
+    return Spectrum(0);
+</code></pre>
+</div>
+
+<p>That’s fine and easy enough, but it should make you nervous.  What if,
+contrary to our assumption, <code class="highlighter-rouge">Refract()</code> was actually returning false fairly
+frequently?  That’d mean there was a bug somewhere, but we just obscured it
+by handling the total internal reflection case here.</p>
+
+<p>Enter <code class="highlighter-rouge">CHECK_RARE</code>.  Before handling the total internal reflection case,
+there’s this line:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>CHECK_RARE(1e-6, tir == true);
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">CHECK_RARE</code> takes a maximum allowed frequency and a condition that
+shouldn’t happen very often.  During program execution, it tracks how
+frequently the condition is true.  Then, when the renderer exits, if the
+condition was true too often—a statistically significant fraction of the
+time more than the given frequency—an error is issued.  At that
+point, we know something’s fishy and can start digging in.</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>The basic gist of what <code class="highlighter-rouge">CHECK_RARE</code> needs to do is to check the given
+condition and tally up how many times it’s checked and how many times it’s
+true.  As a first doesn’t-actually-work whack at it, it’s just something
+like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#define CHECK_RARE(freq, condition)                    \
+    do {                                               \
+        static int64_t numTrue, total;                 \
+        ++total;                                       \
+        if (condition) ++numTrue;                      \
+    } while(0)
+</code></pre>
+</div>
+
+<p>(<a href="https://stackoverflow.com/a/154138">Here’s what’s going on with the <code class="highlighter-rouge">do</code>
+<code class="highlighter-rouge">while(0)</code></a>, if that idiom isn’t
+familiar.)</p>
+
+<p>That obviously doesn’t work; not only will there be race conditions when we
+run multi-threaded, there’s no way to check the accumulated counts at the
+end of program execution.  Here’s a full <code class="highlighter-rouge">CHECK_RARE</code> implementation that
+handles that and more. It’s a little tricky, but we’ll discuss all the bits
+of it below.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>#define TO_STR(x) #x
+#define EXPAND_AND_TO_STR(x) TO_STR(x)
+
+#define CHECK_RARE(freq, condition)                                    \
+    do {                                                               \
+        static_assert(std::is_floating_point&lt;decltype(freq)&gt;::value,   \
+                      "Expected float frequency as first argument");   \
+        static_assert(std::is_integral&lt;decltype(condition)&gt;::value,    \
+                      "Expected Boolean condition as second argument");\
+                                                                       \
+        static thread_local int64_t numTrue, total;                    \
+                                                                       \
+        using RareSums = std::map&lt;std::string,                         \
+                                  std::pair&lt;int64_t, int64_t&gt;&gt;;        \
+        static StatRegisterer _([](RareSums &amp;sums) {                   \
+            std::string title(__FILE__ " " EXPAND_AND_TO_STR(__LINE__) \
+                              ": CHECK_RARE failed: " #condition);     \
+            sums[title].first += numTrue;                              \
+            sums[title].second += total;                               \
+            numTrue = total = 0;                                       \
+        });                                                            \
+                                                                       \
+        ++total;                                                       \
+        if (condition) ++numTrue;                                      \
+    } while(0)
+</code></pre>
+</div>
+
+<p>First, the <code class="highlighter-rouge">static_assert</code>s: when I use <code class="highlighter-rouge">CHECK_RARE</code> I can never remember
+what the order of parameters is, so those at least give useful compile-time
+error messages when I get them wrong.</p>
+
+<p>Next, the number of times the condition is checked and the number of times
+it’s true are stored in <code class="highlighter-rouge">thread_local</code> variables.  Naturally we’re running
+multi-threaded here, and we don’t want to pay the cache-coherency cost of
+using <code class="highlighter-rouge">std::atomic</code> variables for these counters; that’d be catastrophic
+for performance.  It’s much more efficient for each thread to keep its own
+counts for now.</p>
+
+<p>Then, there’s a funny little trick to be able to accumulate those
+thread-local values when we want to sum them up at the end of program
+execution: <code class="highlighter-rouge">static StatRegisterer</code>. Because it’s a static variable, the
+<code class="highlighter-rouge">StatRegisterer</code> constructor will be run exactly one time, by whichever
+thread gets there first.  The <code class="highlighter-rouge">StatRegisterer</code> class just holds on to all
+of the lambda functions its given; here’s its <a href="https://github.com/mmp/pbrt-v3/blob/master/src/core/stats.h#L52">implementation in
+pbrt-v3</a>.</p>
+
+<p>At the end of program execution, when we want to sum the counts, the thread
+pool has a function that will run a given callback in each active
+thread—it basically schedules a number of jobs equal to the number of
+threads and includes a
+<a href="https://en.wikipedia.org/wiki/Barrier_(computer_science)">barrier</a> in the
+jobs to ensure that each thread only runs one job.  We set things up so
+that each thread runs all of the lambdas provided to the <code class="highlighter-rouge">StatRegisterer</code>;
+in turn, those add all of the thread’s local values to the global sums
+stored in the <code class="highlighter-rouge">RareSums</code> <code class="highlighter-rouge">map</code>.</p>
+
+<p>Whew.</p>
+
+<h2 id="what-counts-as-failure">What counts as failure?</h2>
+
+<p>Given the accumulated count of times that the condition was true and the
+total number of times it was checked, the last thing is to decide if we’ve
+found a statistically-significant result: for example, if an instance of
+<code class="highlighter-rouge">CHECK_RARE</code> is called only once and the condition is true for that one
+time, that doesn’t really tell us anything useful.</p>
+
+<p>One way to formalize what’s going on here is as a <a href="https://en.wikipedia.org/wiki/Bernoulli_process">Bernoulli
+process</a>; we’ve got
+samples from an underlying process that can take on two conditions (true or
+false) with unknown probabilities.  The maximum likelihood estimator
+\(\hat{\theta}\) of the probability of the condition being true is just
+the number of times the condition was true divided by the total number of
+samples, and the <a href="https://math.stackexchange.com/questions/1399944/estimating-variance-of-estimator-of-bernoulli-process">sample
+variance</a>
+is \((\hat{\theta} (1 - \hat{\theta}))/(n-1)\).</p>
+
+<p>These are easy enough to compute:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Float freqEstimate = double(numTrue) / double(total);
+Float varianceEstimate = 1 / double(total - 1) * freqEstimate *
+    (1 - freqEstimate);
+</code></pre>
+</div>
+
+<p>For a small expected frequency of an event and a large number of samples
+(the common case), this is basically the estimated frequency divided by the
+number of samples. It gets small quick.</p>
+
+<p>I ended up deciding that two standard deviations was a reasonable
+confidence level to require before reporting a failure. In practice, the
+<code class="highlighter-rouge">CHECK_RARE</code>s in pbrt run frequently enough to have very low estimated
+variance, so it’s not too fiddly about how many sigmas we require here.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>if (freqEstimate - 2 * varianceEstimate &gt;= maxFrequency) {
+    // report failure of CHECK_RARE....
+}
+</code></pre>
+</div>
+
+<p>And that’s it for <code class="highlighter-rouge">CHECK_RARE</code>; a pretty easy thing to implement in the
+end.  It’s nice to have in the toolbox; I’ve found that as I work through
+pre-existing code that handles edge cases, it’s nice to leave a few
+<code class="highlighter-rouge">CHECK_RARE</code>s behind, just to be sure it’s all working as expected.
+They’ve found more than enough bugs along the way to be worth the little
+trouble.</p>
+
+<h2 id="note">note</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:ref">
+      <p>In a production system, the right thing to do here probably would be to refactor the code so that <code class="highlighter-rouge">Refract()</code> used values previously computed for the Fresnel stuff, thus enforcing consistency.  For pbrt, modularity is important as well, so this is what it is. <a href="#fnref:ref" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

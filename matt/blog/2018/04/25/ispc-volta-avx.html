@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: Bringing up AVX and giving something back to LLVM (part 7)</title>
+  <meta name="description" content="The arrival of AVX on Sandybridge CPUs offered the potential for a doubling of performance. But first, there was the minor matter of getting an AVX backend w...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/25/ispc-volta-avx.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: Bringing up AVX and giving something back to LLVM (part 7)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-25T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 25, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Come late 2011, I was pretty excited about the imminent arrival of AVX on
+Sandybridge CPUs: after years of SSE’s 4-wide vectors (for 32-bit data
+types), AVX was doubling that, making it possible to do 8-wide 32-bit
+vector ops instead.  This was probably the most exciting thing that had
+happened in Intel’s SIMD ISA since SSE arrived in the first place in 1999.
+The arrival of AVX was particularly exciting for volta—in the best case,
+lots of things would run roughly twice as fast, thanks to having twice as
+many vector lanes, and in the worst case, this whole SPMD on SIMD thing
+might be shown to be not so exciting after all.</p>
+
+<p>Twice as fast is huge: the 1990s was the last time you saw anything close
+to “twice as fast” in a single CPU generation.  Today, single-core CPU
+performance may improve by 10-20% per generation thanks to a better
+semiconductor process, slightly faster clocks, and microarchitectural
+improvements, but that’s about it.</p>
+
+<p>The funny thing about it was, Intel was about to ship AVX but there’d be a
+delay, in some cases of years, before AVX made anything run faster.  For
+things the autovectorizer could handle, it’d just be a recompile.  For
+everything that had been written in SSE intrinsics, well,
+someone’d have to go and recode it in AVX intrinsics before it’d be any
+faster.  For all the scalar code in the world that didn’t use SIMD, there’d
+be no benefit from AVX.  What was the incentive in writing
+all those intrinsics in the first place if you’d have to do it all again in
+a few years again anyway?</p>
+
+<p>Lots of things are wrong with coding in intrinsics—not just the eternal
+puzzle of what gets a single underscore and what gets a double underscore
+before it, but this whole fact that it completely ties you to a particular
+ISA and its capabilities.  The state of affairs is completely different
+with GPUs, where vendors are able to make significant architectural
+changes from generation to generation, delivering speedups with more cores
+and more vector lanes without programmers needing to modify their
+code.</p>
+
+<p>For the most part, people at Intel didn’t seem to bothered by things being
+this way; I never really understood it.  Well, some were bothered, but I
+didn’t understand why leadership wasn’t actively freaking out about
+it—you’re shipping a CPU with double the computational capability as the
+one from a year before, but almost no one will enjoy that benefit?</p>
+
+<p>My only guess is that it was the legacy of many years where C (and Fortran)
+mapped perfectly well to Intel’s CPU architectures; before multi-core and
+SIMD were important, there was no need for them to worry about programming
+models themselves, so I guess they got comfortable with that not being
+their concern.</p>
+
+<p>While there was plenty of noise around parallel programming models in
+Intel’s compiler group, it didn’t have the sense of “the future of the
+company depends on it”, like the way that NVIDIA approached CUDA, for
+example.  Who knows, maybe the future of the company doesn’t depend on it;
+I guess Intel’s still in business.  It still seemed strange to be
+increasing the SIMD width without having a plan for how developers would
+actually make good use of it.</p>
+
+<p>In any case, I’d take those vector lanes if they were giving ‘em to me.
+I started work on AVX support for volta as soon as early support for AVX
+started appearing in LLVM.</p>
+
+<h2 id="adding-a-new-backend-to-volta">Adding a new backend to volta</h2>
+
+<p>Adding a new backend to volta basically involves enabling the corresponding
+LLVM code generator and then writing a bunch of LLVM IR by hand to bridge
+the gap between basic operations the compiler wanted to be able to perform
+and the specifics of a given ISA.  For example, the volta standard library
+provides a <code class="highlighter-rouge">min()</code> function that operates on various types.</p>
+
+<p>Here’s the implementation (written in volta) for <code class="highlighter-rouge">float</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>static inline float min(float a, float b) {
+    return __min_varying_float(a, b);
+}
+</code></pre>
+</div>
+
+<p>In turn, each backend needs to provide an implementation of
+<code class="highlighter-rouge">__min_varying_float()</code>, written manually in LLVM IR.  For AVX, there’s a
+corresponding instruction and LLVM exposes it via an intrinsic, and we can
+just call that.</p>
+
+<p>Here’s the definition for AVX:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>define &lt;8 x float&gt; @__min_varying_float(&lt;8 x float&gt;, &lt;8 x float&gt;) {
+  %call = call &lt;8 x float&gt; @llvm.x86.avx.min.ps.256(&lt;8 x float&gt; %0, &lt;8 x float&gt; %1)
+  ret &lt;8 x float&gt; %call
+}
+</code></pre>
+</div>
+
+<p>LLVM turns that into a single <code class="highlighter-rouge">vminps</code> instruction for a call to <code class="highlighter-rouge">min()</code> in
+volta.</p>
+
+<p>If AVX didn’t have a single instruction that did this operation, the IR for
+the AVX target would need do whatever made the most sense to do the
+computation through other operations.  (Things like scatter and gather for
+SSE4 are implemented that way.)</p>
+
+<h2 id="banging-on-avx-support-in-llvm">Banging on AVX support in LLVM</h2>
+
+<p>As explained previously, volta never would have been possible without LLVM;
+if the out of the box SSE4 code generation hadn’t been as good as it was,
+I’d likely have ended my early experiments and moved on to a new project.
+I owed LLVM big, so wanted to do something helpful in return.</p>
+
+<p>I started trying to use the LLVM AVX backend before it was even complete; I
+imagine the developers probably weren’t ready to have anyone banging on it
+at that point.  I was really excited to see how AVX worked out for volta,
+though, and I also figured I could help out a bit with testing their
+implementation.</p>
+
+<p>It turned out that volta was pretty effective at exercising LLVM’s vector
+code generation.  Not only did it generate lots of vectorized LLVM IR, it
+also emitted lots of x86 vector intrinsics directly (like
+<code class="highlighter-rouge">__min_varying_float()</code>); both of these were fairly different
+characteristics than the IR that most other LLVM-based compilers usually
+generated.  This made it easy to find lots of bugs in that early AVX
+backend in LLVM.</p>
+
+<p>Just to give a sense of typical output, here’s a semi-random selection of some
+of the code generated for the deferred shading example, here using AVX with
+modern ispc.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>	vmovups   1856(%rsp), %ymm3
+	vdivps    %ymm2, %ymm3, %ymm13
+	vmulps    %ymm13, %ymm1, %ymm1
+	vdivps    1792(%rsp), %ymm1, %ymm4
+	vmulps    608(%rsp), %ymm13, %ymm1
+	vdivps    1376(%rsp), %ymm1, %ymm11
+	vmulps    %ymm4, %ymm4, %ymm1
+	vmulps    %ymm11, %ymm11, %ymm2
+	vaddps    %ymm2, %ymm1, %ymm1
+	vmulps    %ymm13, %ymm13, %ymm2
+	vaddps    %ymm1, %ymm2, %ymm1
+	vrsqrtps  %ymm1, %ymm2
+</code></pre>
+</div>
+
+<p>Here’s all of the assembly for that example:
+<a href="/matt/blog/images/deferred.S.txt">deferred.S</a>.</p>
+
+<p>As I got started trying to use the nascent AVX backend, the first LLVM bugs
+I hit were generally crashes and assertion failures; various things in
+LLVM that hadn’t been exercised for the new target or that had assumptions
+about their input that was no longer true with the new target.  I’d boil
+down a little test case with LLVM’s bugpoint, a nifty tool that does an
+automated binary search to find a minimal test case, and then send it off.</p>
+
+<p>After things would compile, the next step was correctness.  I had a test
+suite of a few hundred volta programs that I used during development; each
+one was a short function that did a small computation and then verified
+that the result matched an expected value.  Not only were these tests
+useful for verifying volta’s own correctness as I was developing it, but they
+also worked out well to find LLVM vector codegen correctness bugs.
+Whenever one of those tests failed on a new target, I’d dig in; sometimes
+it was my own bug, e.g. in the IR I’d written for the backend, and
+sometimes a LLVM codegen bug.  Once all of those tests passed, I could
+confidently start compiling larger programs.</p>
+
+<p>As LLVM’s vector code correctness became solid for a given backend, I spent
+a lot of time looking at generated assembly along the way (as did volta’s
+users); this led to lots of observations of cases where LLVM vector code
+quality could be improved.</p>
+
+<p>I seem to have filed a total of <a href="https://bugs.llvm.org/buglist.cgi?bug_status=UNCONFIRMED&amp;bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=REOPENED&amp;bug_status=RESOLVED&amp;bug_status=VERIFIED&amp;bug_status=CLOSED&amp;email1=pharr&amp;emailassigned_to1=1&amp;emailreporter1=1&amp;emailtype1=substring&amp;order=Importance&amp;query_format=advanced&amp;resolution=---&amp;resolution=FIXED&amp;resolution=INVALID&amp;resolution=WONTFIX&amp;resolution=LATER&amp;resolution=REMIND&amp;resolution=DUPLICATE&amp;resolution=WORKSFORME&amp;resolution=MOVED">144 LLVM
+bugs</a>
+over the course of development of volta/ispc.
+The LLVM developers generally fixed them remarkably quickly. That made it
+a lot of fun—it felt like we were making good progress together, I could
+go on to find progressively more esoteric bugs as they fixed the
+earlier ones.  In the end, the LLVM backends for AVX and beyond came to be
+super solid; I’d like to think the issues volta found helped a bit with
+that process.</p>
+
+<p>On the LLVM side, many thanks to Nadav Rotem, who did a lot of key work on
+vector select in LLVM; Bruno Cardoso Lopes, who did a lot of work on AVX
+codegen and fixed most of those bugs; and Craig Topper, who did a lot
+for AVX2.  And of course, huge thanks to Chris Lattner for starting the
+whole effort in the first place, as well as the rest of the LLVM team.</p>
+
+<h2 id="survey-says">Survey says…</h2>
+
+<p>All the sweat was worth it.  It was really exciting once things started
+working with AVX and I could start measuring performance.  In general
+benefits of 1.5x to 2x from AVX were typical.
+And it just took a recompile; existing volta code didn’t need to be
+modified to see those performance benefits.  Once again, a relief that
+there hadn’t been some unexpected hiccough that made things not go as
+expected.</p>
+
+<p>Here are a few results measured with today’s ispc, measuring speedup
+on a single core versus scalar code.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Workload</th>
+      <th style="text-align: right">SSE4 speedup</th>
+      <th style="text-align: right">AVX1 speedup</th>
+      <th style="text-align: right">AVX1:SSE4 ratio</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Black-Scholes</td>
+      <td style="text-align: right">4.13x</td>
+      <td style="text-align: right">6.12x</td>
+      <td style="text-align: right">1.48x</td>
+    </tr>
+    <tr>
+      <td>Ray tracer</td>
+      <td style="text-align: right">2.60x</td>
+      <td style="text-align: right">5.42x</td>
+      <td style="text-align: right">2.08x</td>
+    </tr>
+    <tr>
+      <td>Deferred shading</td>
+      <td style="text-align: right">4.15x</td>
+      <td style="text-align: right">5.00x</td>
+      <td style="text-align: right">1.20x</td>
+    </tr>
+    <tr>
+      <td>Aobench</td>
+      <td style="text-align: right">3.33x</td>
+      <td style="text-align: right">4.86x</td>
+      <td style="text-align: right">1.46x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><em>Single core speedups for a few workloads, showing the
+ performance benefit from AVX (measured with today’s ispc).</em></p>
+
+<p>I could have sworn that Black-Scholes was essentially 2x faster when AVX
+landed.  Something to dig into at some point, but those are the numbers
+today.</p>
+
+<p>AVX2 was a big step forward as well as 8-wide 32-bit integer operations
+were also available:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Workload</th>
+      <th style="text-align: right">SSE4 speedup</th>
+      <th style="text-align: right">AVX2 speedup</th>
+      <th style="text-align: right">AVX2:SSE4 ratio</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Black-Scholes</td>
+      <td style="text-align: right">4.13x</td>
+      <td style="text-align: right">6.97x</td>
+      <td style="text-align: right">1.68x</td>
+    </tr>
+    <tr>
+      <td>Ray tracer</td>
+      <td style="text-align: right">2.60x</td>
+      <td style="text-align: right">6.56x</td>
+      <td style="text-align: right">2.52x</td>
+    </tr>
+    <tr>
+      <td>Deferred shading</td>
+      <td style="text-align: right">4.15x</td>
+      <td style="text-align: right">6.38x</td>
+      <td style="text-align: right">1.54x</td>
+    </tr>
+    <tr>
+      <td>Aobench</td>
+      <td style="text-align: right">3.33x</td>
+      <td style="text-align: right">6.78x</td>
+      <td style="text-align: right">2.03x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>Needless to say, it was amazing to see those speedups actually happen.  A
+doubling of SIMD vector width is relatively cheap, transistor- and
+power-wise. I don’t know the actual numbers, but it’s way cheaper by those
+metrics to double vector width than to double the number of cores on a CPU.
+And it turns out, if you have a reasonable programming model, compiler, and
+amenable workloads, you can see something approaching a doubling of
+performance at sub-linear silicon cost.  Victory!</p>
+
+<p><em>Next time, more details on some of the nitty-gritty of getting things to
+ run fast.</em></p>
+
+<p><a href="/matt/blog/2018/04/26/ispc-volta-more-on-performance.html">Next: More on optimizations and performance</a></p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

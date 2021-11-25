@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the Elephant (Part 7): Time To First Pixel</title>
+  <meta name="description" content="Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the Elephant (Part 7): Time To First Pixel</h1>
+    <p class="post-meta">
+      <time datetime="2021-04-11T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 11, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>With <a href="/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">memory use under
+control</a>,
+today’s topic will be “time to first pixel” when rendering <a href="https://www.disneyanimation.com/resources/moana-island-scene/">Disney’s Moana
+Island
+scene</a> with
+pbrt—that is, how much time goes by between launching the renderer and
+the start of actual rendering.  This measure covers all of the costs of
+system startup, including parsing the scene, creating lights, shapes, and
+textures, and building acceleration structures.</p>
+
+<p>Time to first pixel is a useful metric in that it is often the main
+constraint on iteration time: have a bug in a ray intersection routine and
+want to see if your fix took care of it?  Moved a light and want to see how
+the image looks?  Time to first pixel is a big part of how quickly you get
+those answers.</p>
+
+<p>Before we dig into the numbers, here is another view of the Moana Island
+scene rendered with pbrt-v4:</p>
+
+<p align="center">
+<img src="/matt/blog/images/pbrt-v4-moana-beach.jpg" alt="Moana Island beach view rendered with pbrt-v4" />
+<i>Moana Island beach view rendered with pbrt-v4. Rendering time at 1920x804 resolution with 1,024 samples per pixel was 63m58s on a 64 core AMD 3970X CPU.</i>
+</p>
+
+<h3 id="foundations">Foundations</h3>
+
+<p>The starting point was pretty ugly when I was first given access to the
+Moana Island scene 2.5 years ago: <a href="/matt/blog/2018/07/08/moana-island-pbrt-1.html#first-renderings">pbrt-v3’s time to first pixel was
+34m58s</a>,
+which is nothing short of horrific.  By the end of my efforts then, it was
+<a href="/matt/blog/2018/08/03/moana-reader-mail.html#parsing-floats-revisited">down to
+9m18s</a>,
+a 3.76x improvement.  At the time, that felt pretty good.  This is, after
+all, a scene that exhibits the complexity of what is present in film
+production today (or at least, what was present 5 or so years ago when
+<em>Moana</em> was made), and so it is to be expected that there will be some work
+to be done before it’s ready to render.</p>
+
+<p>To get started, I measured time to first pixel with the latest version of
+pbrt-v4 using a single thread–it was 6m50s.  Good news at the start for
+once!  Here is a table that summarizes these timings and the respective
+speedups:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th style="text-align: right">Time</th>
+      <th style="text-align: right">Speedup</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pbrt-v3 (original)</td>
+      <td style="text-align: right">2098s</td>
+      <td style="text-align: right">1x</td>
+    </tr>
+    <tr>
+      <td>pbrt-next (2.5 years ago)</td>
+      <td style="text-align: right">558s</td>
+      <td style="text-align: right">3.76x</td>
+    </tr>
+    <tr>
+      <td>pbrt-v4 (starting point today)</td>
+      <td style="text-align: right">410s</td>
+      <td style="text-align: right">5.12x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>Where did that unexpected performance improvement come from?  Part of it is
+that I ran the pbrt-v4 test on a modern CPU, while the earlier
+measurements were on a Google Compute Engine instance with what is now a 5
+or so year old CPU.  Thus, the latest measurement benefited from a higher
+CPU clock rate and a few years of microarchitectural improvements.</p>
+
+<p>Another factor is an improvement to the surface area heuristic cost
+computation in pbrt’s BVH construction algorithm.  In pbrt-v3 it used an
+<a href="https://github.com/mmp/pbrt-v3/blob/aaa552a4b9cbf9dccb71450f47b268e0ed6370e2/src/accelerators/bvh.cpp#L336">O(n^2)
+algorithm</a>,
+while it’s <a href="https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L296">an O(n) algorithm</a>  in
+pbrt-v4.
+In my defense, n in this case is fixed at 12, which saves me from the
+full infamy of
+<a href="https://randomascii.wordpress.com/2019/12/08/on2-again-now-in-wmi/">Dawson’s</a>
+<a href="https://randomascii.wordpress.com/2021/02/16/arranging-invisible-icons-in-quadratic-time/">law</a>,
+though it’s still pretty indefensible.  Anyway, if I remember correctly,
+improving that in pbrt-v4 roughly doubled the performance of BVH
+construction, so that was surely part of it.</p>
+
+<p>For a starting point, here is a plot of CPU utilization over time with
+single-threaded pbrt-v4 with the Moana island scene.  The horizontal axis
+is time in seconds and the vertical is CPU utilization, measured with
+respect to the 64 threads offered by an AMD 3970X CPU.  There’s not a lot
+to see vertically, but the graph gives us a baseline and also shows where
+the time is going: mostly parsing and BVH construction, both for instances
+and for the top-level BVH.</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-1thread.svg" alt="CPU utilization with one thread" />
+</p>
+
+<p>(For this and following graphs, I’ve put light and texture creation into a
+single category, since it’s about 8 seconds for both of them, most of those
+spent reading the PNG for the environment light source.)</p>
+
+<h3 id="about-all-those-idle-threads">About all those idle threads…</h3>
+
+<p>Over the past year, I had already spent some time working on reducing
+pbrt-v4’s time to first pixel.  That work was largely motivated by pbrt’s
+GPU rendering path: it wasn’t unusual to spend more time loading the scene
+description than rendering it with the GPU.  Optimizing startup was thence
+the most effective way to speed up rendering—Amdahl’s law strikes again.</p>
+
+<p>That work was easier to do with pbrt-v4’s <a href="/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html#a-reorganization-of-the-parsing-code">redesign of the scene parsing
+code</a>:
+once the high-level <code class="highlighter-rouge">ParsedScene</code> object is initialized, various
+opportunities for parallelism are easily harvested.  With pbrt-v3, parsing
+the scene description was intermingled with creating the scene data
+structures, so there was less opportunity for extracting parallelism and
+all of the work until the start of rendering was single-threaded.</p>
+
+<p>With pbrt-v4, it’s <a href="https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/parsedscene.cpp#L907">easy to parallelize loading
+textures</a>
+when parameters for all of the ones to be loaded are at hand in a single
+<code class="highlighter-rouge">vector</code>.  Shapes are <a href="https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L125">created in parallel as
+well</a>.
+In practice, this means that if meshes are provided in PLY format files,
+those can be loaded in parallel.  Finally, the <a href="https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L276">BVHs for object
+instances</a>
+are created in parallel, since they’re all independent.  This is all
+opportunistic parallelism—<i>for</i> loops over independent items that can be
+processed concurrently.  It doesn’t scale well if there are only a few
+items to loop over and it’s susceptible to load imbalance, but it’s
+something, and something’s worth taking if it’s easy to do so.</p>
+
+<p>The BVH construction code has also been <a href="https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L366">(slightly)
+parallelized</a>:
+sub-trees are built in parallel when there are many primitives.  This isn’t
+the state of the art in parallel BVH construction, but it, too, is
+something.</p>
+
+<p>Given those improvements and 64 threads, pbrt-v4 does better; here is a
+graph of CPU usage over time until rendering begins.  Note that this graph
+has the same scale as the earlier one, so we can directly see how much time
+to first pixel has been reduced—it’s about 115 seconds less.</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-64threads.svg" alt="CPU utilization with 64 threads" />
+</p>
+
+<p>The big wins come from instance BVH construction and creating the final
+top-level scene-wide BVH, which are sped up by factors of 4.2x and 2.4x,
+respectively.  Neither is an exemplar of ideal parallel speedup, but again,
+it’s not bad for not much work.</p>
+
+<h3 id="parsing-in-parallel">Parsing in parallel</h3>
+
+<p>It is evident from that graph that parsing performance must be improved in
+order to make a meaningful further reduction in time to first pixel—with
+BVH construction performance improved, parsing is about 5/6 of the total
+time.  After a bit of thought, I realized that pbrt-v4’s new approach to
+parsing and scene construction also offered the opportunity to parse the
+scene description in parallel.</p>
+
+<p>For context, pbrt has always offered an <code class="highlighter-rouge">Include</code> directive in its scene
+description files; it corresponds to <code class="highlighter-rouge">#include</code> in C/C++ and is
+semantically the same as expanding the text of the file inline at the point
+where it is included.  This is a handy capability to have, but it
+effectively requires serial processing of included files.  For example, if
+one first <code class="highlighter-rouge">Include</code>s a file that has</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>Material "conductor"
+</code></pre>
+</div>
+<p>and then <code class="highlighter-rouge">Include</code>s a file that has</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>Shape "trianglemesh" ...
+</code></pre>
+</div>
+<p>then the triangle mesh will have the “conductor” material applied to it.</p>
+
+<p>While one could perhaps imagine a more sophisticated implementation of
+<code class="highlighter-rouge">Include</code> that allowed parsing files in parallel and then patching things
+up afterward, I decided to add a new directive, <code class="highlighter-rouge">Import</code>.  It’s the same
+idea as <code class="highlighter-rouge">Include</code>—parse the given file and then add the stuff described in
+it to the scene description—but its semantics are different.  While it
+inherits the current graphics state—the current material, transformation
+matrix, and so forth—at the start of its parsing, changes to the graphics
+state do not persist afterward.  However, the shapes, lights, object
+instances, and participating media that are specified in the file are added
+to the scene.  In practice, most uses of <code class="highlighter-rouge">Include</code> can be replaced with an
+<code class="highlighter-rouge">Import</code>.</p>
+
+<p>Thanks to the <code class="highlighter-rouge">ParsedScene</code> representation, we can <a href="https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L749">kick off a new thread
+to
+parse</a>
+each <code class="highlighter-rouge">Import</code>ed file , have it <a href="https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L448">initialize a separate
+<code class="highlighter-rouge">ParsedScene</code></a>,
+and then <a href="https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L461">merge that one
+in</a>
+with the main <code class="highlighter-rouge">ParsedScene</code> <a href="https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L981">when the thread has finished
+parsing</a>.
+It’s a hundred or so lines of code in the end.</p>
+
+<p>Turning to the Moana scene, Disney’s original pbrt conversion of it has a
+top-level file, <code class="highlighter-rouge">island.pbrt</code>, that then has 20 <code class="highlighter-rouge">Include</code> statements
+for the main parts of the scene: the geometry of the mountains, the ocean
+surface, the beach dunes, the various hero trees, and so forth.  All of
+those can safely be brought in using <code class="highlighter-rouge">Import</code>.</p>
+
+<p>With that simple change, parsing is 3.5x faster and time to first pixel is
+down to 123 seconds. Progress!</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-import-top.svg" alt="CPU utilization with top-level Import statements" />
+</p>
+
+<p>Parsing time has greatly improved, though for most of that phase only four
+threads are running, trailing down to a single thread for the last few
+seconds.  We have a good old load imbalance, where most of the imported
+files are parsed quickly but then getting through the four heaviest ones is
+the bottleneck.</p>
+
+<p>Each of those four has a ~5GB pbrt file to be parsed along the way.  I went
+ahead and manually split each of those into 10 or so smaller files that are
+themselves loaded via <code class="highlighter-rouge">Import</code>.  With that, parsing has sped up by a total
+of 6.1x and we’re down to 97 seconds of time to first pixel.  If 64 threads
+are giving a 6.1x speedup, one might think that fewer cores might do well.
+It is so: with 16 cores, it’s 124 seconds to first pixel, and with 8, it’s
+149.</p>
+
+<p align="center">
+<img src="/matt/blog/images/ttfp-import-deep.svg" alt="CPU utilization with multiple levels of Import statements" />
+</p>
+
+<p>The second half of the parsing phase is still just a few CPU cores chugging
+along, but I ran out of motivation to keep manually splitting up the big
+files; that’s the sort of thing that would ideally be done automatically by
+an exporter anyway.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>As we wrap up now, pbrt-v4 is 21.6x faster in time to first pixel for the
+Moana Island scene than pbrt-v3 was originally and 4.2x faster than it was
+where things stood at the start of this write-up, all of that additional
+improvement due to parallelism.  That’s satisfying progress, and I have to
+admit that seeing 30 threads all simultaneously working on parsing the
+scene description is a thrill; I wouldn’t have expected any parallelism in
+that phase a few weeks ago.</p>
+
+<p>That said, even in the final graph there’s a lot more area above the curve
+where CPUs are idle than there is below where they’re getting things done.
+Eyeballing it, I’d guess that if the 64 CPU threads were used to their full
+capabilities, it might be possible to have a 20 second time to first pixel.</p>
+
+<p>Getting to that point would require much more complexity in pbrt’s
+implementation, however: it would likely end up kicking off work as soon as
+it was available (“start creating this light in a separate thread”, etc.).
+Having all of the object creation happening concurrently with parsing would
+also introduce the risks of ugly bugs due to race conditions, which I’m not
+sure is worth it, especially for a system with pbrt’s goals.  Therefore,
+we’ll stop there for time to first pixel, at least for the moment.</p>
+
+<p>To wrap up these updates, next time we’ll look at pbrt-v4’s performance
+rendering this scene, focusing on the GPU rendering path.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: going all in on volta (part 3)</title>
+  <meta name="description" content="Getting serious about volta (and making sure the project wasn&#39;t killed).">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/20/ispc-volta-going-all-in.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: going all in on volta (part 3)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-20T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 20, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>After Sweden, I still had my day job at Intel that didn’t involve writing a
+compiler; I was the tech lead of the advanced rendering group.  At the
+time, I reported to Elliot Garbus, then the VP in charge of graphics software.</p>
+
+<p>Elliot was the best manager I’ve ever had.  To be honest, I didn’t expect
+that at first: while he’d been technical early in his career, it’d been
+years since he had done anything hands-on, and his background wasn’t in
+graphics anyway.  It wasn’t clear to me that we had enough in common for
+much to come out of relationship, but he seemed nice enough at least.</p>
+
+<p>Elliot turned out to be impressively intellectually curious; he always had
+insightful questions when I talked to him about the things I and the
+rendering group were working on.  In time, I also came to learn that you
+could completely trust him to have your back; this was really helpful in
+the highly political environment of Intel. These were both great
+foundations.</p>
+
+<p>Most importantly, I came to learn that he was a master of coming to
+understand the people who worked for him and then effectively guiding and
+coaching them.  Sometimes other people can understand you in ways that you
+hadn’t understood yourself, and Elliot was great at that.  One felt that he
+truly cared about finding ways to help you grow as a person, pushing you in
+directions that were a little uncomfortable but worth stretching for.  I’ve
+never had that sort of experience with another manager.</p>
+
+<p>I was planning on leaving Intel the Fall after Sweden.  I was burned out on
+the place after the drama of Larrabee and had already been making
+arrangements for the transition with Elliot.  As we worked through the
+details, Elliot continued to be intrigued by each new result from volta as
+it came in.  I was still hacking away on it.
+He’d seen first-hand how problematic it had been to not be able to use
+Larrabee’s vector units effectively, and encouraged me to stick around and
+see where volta went.  He argued that if I walked away, we’d never know if
+the approach really worked or not.</p>
+
+<p>Fortunately, he convinced me to stay in the end, remaining at Intel as an
+individual contributor, just working on volta.</p>
+
+<p align="center"><img src="/matt/blog/images/volta.jpg" width="300" /></p>
+
+<h2 id="stayin-alive">Stayin’ alive</h2>
+
+<p>If I was going to stay, it was important to me to have confidence that
+volta wouldn’t be killed.  In the political environment of Intel, it very
+well might have happened at some point along the way.</p>
+
+<p>For example, if I was actually in the compiler team, quite possibly at some
+point some folks would have stepped in and said, “Great, <em>now</em> we
+understand.  Thank you <em>so</em> much!  We got this—we’ll take it from here and
+implement this in the commercial compiler. Oh, and there’s no need for you
+to work on volta any more since that would just be wasted work.”  And if
+they sold management on that idea (quite possible), then that’d be the end
+of volta, regardless of whether they actually went through with their side
+of it.</p>
+
+<p>In a rational world, that sort of thing wouldn’t happen: why wouldn’t they
+want their compiler to be the best it could be, regardless of where the
+ideas came from?  It may have been that some of the folks who had
+established themselves as the experts in this area were more concerned with
+maintaining the appearance of mastery of the topic than anything else.  It
+also may have been that they still didn’t believe in the use-case volta was
+attacking—the HPC community was apparently plenty happy with
+auto-vectorization, and that seemed to matter the most.</p>
+
+<p>In any case, it was quite possible that in the future, some of them would
+have been happy to have this thorn in their side just go away, so I had to
+be careful.</p>
+
+<p>Elliot was key to my confidence that my work wouldn’t be wasted.  I knew he
+would protect the project, and he agreed that I could open-source the
+compiler once it was ready.  It was really important to me that I could do
+that; once volta was open source, there was no way it could be killed
+through Intel politics.  To open source software at Intel, all that was
+needed was VP approval (and going through some straightforward process), so
+with his agreement, I could get to work with confidence.</p>
+
+<h2 id="on-jerks-and-institutional-acceptance-of-them">On jerks and institutional acceptance of them</h2>
+
+<p>A few more words to explain why I had these worries.</p>
+
+<p>First, to be absolutely clear, there were lots of great people at Intel and
+specifically in Intel’s compiler team.  There were plenty of good engineers
+doing good work, perfectly nice people who wanted to do the right thing.
+By numbers, they were by far the majority.</p>
+
+<p>The problem was that just a few jerks, especially in positions of power or
+influence, could fuck you up real good.</p>
+
+<p>Intel had more than its share of them and therefore, everyone at Intel balanced some
+amount of technical work with some amount of politics work.  You had to.
+Politics was more than the standard “advocate for yourself” stuff; at
+minimum it was periodically defending yourself against attacks from others
+who wanted your territory and would try to get your project shut down so
+they could take it.</p>
+
+<p>Some people there approached their work with little in way of technological
+contributions, but a lot of politics. It turned out that that could be a
+perfectly successful career strategy—undermining others as necessary to
+maintain and advance your position without ever actually delivering much of
+substance yourself.  Those were the jerks.</p>
+
+<p>One thing that made it easier for them was the fact that software career
+path at Intel was all about getting away from coding ASAP—writing code
+was for new grads and less expensive engineers in foreign countries.<sup id="fnref:2"><a href="#fn:2" class="footnote">1</a></sup>
+The glory was being in an architect, never coding yourself, but setting
+direction.  In that role, one could go far without producing anything more
+than slide decks, I mean foils.</p>
+
+<p>Because there were the jerks out there, you always had to be aware of
+them. Even if you didn’t want to pursue that model for your own career, you had
+to defend against them or you’d be wiped out.</p>
+
+<p>I never understood why Intel upper management didn’t seem bothered by their
+presence.  I suppose that once that mode of success takes root, it’s
+cancerous to the organization and would be hard to root out.  Perhaps they
+figured that Intel was doing pretty well as a company, so why fix what
+ain’t broke?  Maybe they saw it as a good kind of aggressiveness and were
+happy with the idea of everyone fighting it out, gladiators in the
+Colosseum fighting each other to win, all for the glory of Intel.</p>
+
+<p>Sometimes the management enablers of the jerks would encourage you to
+“assume best intentions” in your interactions with them.  You’d quickly be
+out-maneuvered if you did; they didn’t play that game, and knew to take
+advantage of any opening they were given.</p>
+
+<p>Elliot never told me to “assume best intentions” with them.</p>
+
+<p>As he helped me figure out how to navigate my interactions with the
+jerks, I’m pretty sure he offered up a dismissive profanity to describe
+what he thought of them.</p>
+
+<p><em>Next time for real, we’ll talk about SPMD on SIMD and early design
+ influences; it’ll be a little more cheery than this one turned out to be. It’ll be
+ the posting</em> after <em>that before we get to the first reveal of results to the
+ compiler team.</em></p>
+
+<p><a href="/matt/blog/2018/04/21/ispc-volta-c-and-spmd.html">Next: C’s influence and implementing SPMD on SIMD</a></p>
+
+<h2 id="note">note</h2>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:2">
+      <p>As always, there were exceptions. There were a handful of senior people who still programmed; much respect to them. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

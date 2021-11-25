@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Debugging Your Renderer: Introduction (part 1 of n)</title>
+  <meta name="description" content="Debugging a renderer is its own beast, with the gift of bugs manifested visually, sometimes taunting you with millions of correct pixels and just a few that ...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2020/04/26/debugging-intro.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Debugging Your Renderer: Introduction (part 1 of n)</h1>
+    <p class="post-meta">
+      <time datetime="2020-04-26T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 26, 2020
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>The great pleasure of computer graphics is simple: write program, make
+picture.  Then you write a better program, and you get a better picture.
+It’s something that doesn’t happen if you work with compilers or operating
+systems, and while I’m sure those fields have their own pleasures, for me,
+there’s nothing like a better picture.</p>
+
+<p>Another thing that can happen is that you write a better program, and you
+get the same picture more quickly.  That, too, is a delight, from
+satisfactions like turning something that stuttered along at a few frames
+per second into something that runs in real-time. Alternatively, you can
+trade off “faster” for “better,” as laid out by Jim Blinn’s observation:</p>
+
+<blockquote>
+  <p>As technology advances, rendering time remains constant.</p>
+</blockquote>
+
+<p>Maybe you’re working on a renderer for a movie and it’s crisis time:
+there’s not enough time to render the rest of the movie before it’s due.
+You, rendering hero, optimize the renderer and make it fast enough that
+rendering will be finished early.  Time to breathe a sigh of relief, right?</p>
+
+<p>No, but congratulations anyway: the artists will add more complexity until
+rendering is once again pushing up on the time left to get the movie
+finished.  Your work has haven’t bought any more breathing room, but you’ve
+made it possible for the film to be more visually rich, which is even
+better, even if it isn’t any less stressful.</p>
+
+<p>There’s one little thing about that feedback loop, though—sometimes it
+goes: write program, make bad picture.  One moment you’re rendering
+something like this and feeling good about your cutting-edge subsurface
+scattering model, having just turned it up to be based on a hendeca-pole:</p>
+
+<p align="center"><img src="/matt/blog/images/head-good.png" /></p>
+
+<p>And then you make a few more changes—often things that seem completely
+innocuous.  You re-compile and re-render, and you get something like this,
+which happens to be what I spent a few hours debugging last Tuesday:</p>
+
+<p align="center"><img src="/matt/blog/images/head-bad.png" /></p>
+
+<p>There’s the other thing that comes along with programs that make pictures:
+bugs manifested visually.  It’s both a blessing and a curse—images can
+offer clues about what’s going on, but the clues are often inscrutable.</p>
+
+<p>That bug turned out to be that a loop over all pixels that needed to
+sample illumination from the light had an incorrect count of the number of
+pixels with visible reflective geometry.  Once you know that, the image
+makes some sense.  (You can see, for example, that the loop starts with the
+pixels at the top of the image. The bands in the middle where the good
+pixels start petering out hint that the renderer is running in parallel.)  The trick
+is to learn how to work backward from images like this one, interpreting
+those artifacts into theories about what went wrong that can guide you.
+The better you can do that, the more efficiently you can debug your
+renderer, and in turn, the more effective you are as a programmer.</p>
+
+<p>I’d like to think that over the years I’ve picked up a few useful tricks in
+the renderer-debugging department, including approaches for working
+backwards from buggy images, techniques for drilling down into what’s
+happening when a renderer goes wrong, and some programming habits that help
+avoid getting to the point of buggy images in the first place.  I’m overdue
+writing all that up, but better late than never: we’ll dig into these
+topics in a series of posts over the coming weeks.</p>
+
+<p><em>Next time: the basics—a few words about unit tests.</em></p>
+
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

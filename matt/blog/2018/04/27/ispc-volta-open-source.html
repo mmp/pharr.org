@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: the open source release and the end of volta (part 9)</title>
+  <meta name="description" content="Wherein the open source process was rocky and a name was mangled.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/27/ispc-volta-open-source.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: the open source release and the end of volta (part 9)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-27T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 27, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p><em>The usual caveat: this is all from memory and it’s been a few years
+now. If you were around then and see anything I misremembered, please send
+an email and I’ll happily make corrections.</em></p>
+
+<p>In the Spring of 2011, there was a reorg and most of the graphics software
+people moved into the hardware organization.  It didn’t make sense for me
+to join them there, and so I landed in the compiler group, reporting to
+Geoff Lowney, an Intel Fellow who was the compiler group’s CTO.  I was sad
+to no longer be working for Elliot and to (organizationally) leave my
+graphics friends. I was a little worried, too: it felt a little like moving
+to enemy territory.</p>
+
+<p>Fortuantely, Geoff was fantastic: even before I joined his group, his
+attitude about volta had been one of openness and intellectual curiosity—
+it’s really interesting that it works so well; what can we learn from it?
+That coupled with great depth in compilers was really nice; I learned a lot
+from him.  He was a strong supporter of the project for the rest of my time
+at Intel; I’m super thankful for all of his help along the way.</p>
+
+<p>I continued developing volta and around late Spring, I started to think it
+was ready to see the wider world.  Enough people internally had used it and
+had good experiences with it that I had some confidence that things would
+go well with a broader set of users.  And I was excited about being able to
+spread the message to programmers outside Intel: there’s much more
+computational capability in your CPU than you probably realize; it’s just a
+matter of having the right programming model.</p>
+
+<p>Elliot, my previous manager, had already agreed to let me open source
+volta, and I knew I could completely trust his word.  But the thing is, it
+was your <em>current</em> VP who has to approve open sourcing anything that’s
+being developed in their organization.  My new VP was in charge of the
+compiler team.</p>
+
+<p>He wasn’t quite as excited about open sourcing it.</p>
+
+<p>There were some concerns about it being confusing to customers, having both
+an open source compiler and a commercial compiler; there were concerns about
+who would maintain it if I left Intel someday—that sort of thing.  There
+may have been more to it than that, but no one ever said as much.</p>
+
+<p>We went round and round a few times, but in the end it was settled: no, the
+compiler would not be open sourced. (But I could keep working on it and
+continue to follow the noble path of “influencing” the production compiler,
+not that that had had any visible effect thus far.)  The decision was
+obviously pretty frustrating to me, since I’d continued working on volta
+all that time under the expectation that it would eventually be open
+sourced.</p>
+
+<p>At least it was obvious how to proceed: there was no reason to work on
+volta if it was going to be locked up forever inside Intel, and at that
+point, there wasn’t anything else I was interested in working on there.</p>
+
+<p>So I tendered my resignation.</p>
+
+<p>Backpedaling ensued, and approval was granted.  I hurried to get the
+details taken care of as quickly as possible and get the code pushed to
+github, lest something change and have my license to do it be revoked.</p>
+
+<h2 id="rip-volta-long-live-ispc">RIP volta, long live ispc</h2>
+
+<p>Intel (naturally) has very strict rules about naming products.  Among them,
+product names start with “Intel”, and then they must precisely describe
+what the product does.  Not a lot of room for creativity, and “volta” was
+dead on arrival as the compiler’s actual name once it was open sourced.</p>
+
+<p>This was fairly typical Intel: their fear of being sued by someone for
+trademark infringement overwhelmed the consideration of actually naming
+things well.  (Alternatively understood, the people approving names were so
+desperate to cover themselves that they set up rules that ensured there’d
+never be a trademark lawsuit, so that they wouldn’t ever get into trouble for
+letting something more daring through.)  Anyway, check out <a href="https://ark.intel.com/">Intel product
+names</a> at some point with this lens—“Intel® SSD
+730 Series” and all that.</p>
+
+<p>So, “Intel” and describe precisely what it does.  Well, it’s the “Intel
+SPMD program compiler”, then, or ispc.  I’m still a little sad about
+“volta” being replaced by that monstrosity—“program compiler”, I mean,
+really?<sup id="fnref:crying"><a href="#fn:crying" class="footnote">1</a></sup></p>
+
+<p align="center"><img src="/matt/blog/images/crying-bjork.jpg" width="300" /></p>
+
+<p>Ironically, the new name made the compiler sound more official than it was,
+more like something that Intel was broadly behind than was actually the
+case.</p>
+
+<h2 id="the-initial-release">The initial release</h2>
+
+<p>After the trademark folks approved the name, there was a little more
+administrivia and then getting approval to post the code on github, which
+was at the time quite new-fangled and exotic, especially from the Intel
+perspective.</p>
+
+<p>I spent a lot of time polishing the code and documentation.  I wanted the
+source code to be clean and well commented, and I wanted the
+<a href="http://ispc.github.io/ispc.html">documentation</a> to be thorough.  I figured
+that making the first impression be as good as possible would be time
+well-spent in terms of getting peoples’ attention and getting more people
+to use it.</p>
+
+<p>To my regret now, I also started out with a fresh git repository.  At the
+time, I didn’t want all of my fooling around explorations before I had a
+plan for the compiler to be public, and it’s a little embarrassing when half
+your commit messages are “small fixes” or “added todo”.  Now I wish I could
+spelunk through all that and nail down more details of the early history.</p>
+
+<p>In any case, the code went live on github on June 21, 2011.  That was just
+about a year since the start of my fooling around with LLVM.</p>
+
+<p>I sent out some emails and tweeted an announcement that evening:</p>
+
+<blockquote>
+  <p>What I’ve been working on for the last ~year… The Intel SPMD Program
+Compiler (ispc) is now available at ispc.github.com.</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+  <p>Native, high performance {SPMD,SIMT,map/kernel,shader-style} CPU
+programming. ispc.github.com. Wake your SIMD units from their slumber!</p>
+</blockquote>
+
+<p>(Mind you, this was in the historic days of 140 character tweets, so it
+took two of them to get through that.)</p>
+
+<p>That was about it for marketing.  People started trying it out and saw good
+results; it all continued to work as advertised. Whew.</p>
+
+<p><em>Next time: continuing ispc development as an open source project,
+ adventures giving talks to academics, and my departure from Intel.</em></p>
+
+<p><a href="/matt/blog/2018/04/28/ispc-talks-and-departure.html">Next: Spreading the word and leaving Intel</a></p>
+
+<h1 id="notes">notes</h1>
+<div class="footnotes">
+  <ol>
+    <li id="fn:crying">
+      <p>How great is it that Google Image search can deliver on <a href="https://www.youtube.com/watch?v=hwIexBNVrfs">“Bjork crying”</a> and provide this photo of her as a sad-or-maybe-sleepy child? <a href="#fnref:crying" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

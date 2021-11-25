@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the elephant (part 5)</title>
+  <meta name="description" content="The conclusion of a series of investigations into improving pbrt&#39;s efficiency when rendering Disney&#39;s Moana island scene, wherein we look at rendering time a...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/07/16/moana-island-pbrt-5.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the elephant (part 5)</h1>
+    <p class="post-meta">
+      <time datetime="2018-07-16T00:00:00-05:00" itemprop="datePublished">
+        
+        Jul 16, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>To conclude this series, we’ll start by looking at the performance of
+rendering Disney’s <em>Moana</em> island scene with pbrt-next, a branch of pbrt
+that I use to try out new ideas where it’s possible to make more radical
+changes to the system than is possible in pbrt-v3, which has to stay true
+to the system described in the book.  We’ll wrap up with a discussion of a
+few possible directions for further improvements, ranging from the
+straightforward to the perhaps a little extreme.</p>
+
+<h2 id="rendering-time">Rendering time</h2>
+
+<p>pbrt-next has many changes in its light transport algorithms, including
+changes to how BSDFs are sampled and improvements to Russian roulette
+algorithms.  It ends up tracing more rays than pbrt-v3 to render this
+scene, so it’s not possible to directly compare the runtime of the two
+renderers.  Performance is generally similar, with one important exception:
+when rendering the <em>Moana</em> island scene view below, pbrt-v3 spends 14.5% of
+runtime doing <a href="https://ptex.us">ptex</a> texture lookups.  That had seemed not
+unreasonable to me before, but pbrt-next spends just 2.2% of runtime.
+That’s awfully interesting.</p>
+
+<p>Looking at the statistics, we have:<sup id="fnref:isect"><a href="#fn:isect" class="footnote">1</a></sup></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>pbrt-v3:
+    Ptex block reads                              20828624
+    Ptex lookups                                 712324767
+
+pbrt-next:
+    Ptex block reads                               3378524
+    Ptex lookups                                 825826507
+</code></pre>
+</div>
+
+<p>We can see that in pbrt-v3, ptex texture is read from disk every 34 texture
+lookups.  In pbrt-next, it’s only every 244 lookups—roughly a 7x
+reduction in disk I/O.  I guessed that this is because pbrt-next computes
+ray differentials for indirect rays, causing it to access higher MIP levels
+for them, which in turn gives a more coherent set of accesses for the ptex
+texture cache, reduces the number of misses and thence the amount of
+I/O.<sup id="fnref:diff"><a href="#fn:diff" class="footnote">2</a></sup> A quick test confirmed the guess: with ray differentials
+disabled, ptex performance was much worse.</p>
+
+<p>The effect of better ptex performance went beyond the savings in
+computation and I/O.  On a 32 CPU system, pbrt-v3 only had a 14.9x speedup
+during rendering after the scene description was parsed.  pbrt typically
+exhibits near-linear parallel scaling, so that was pretty disappointing.
+Thanks to much less lock contention in ptex, pbrt-next is 29.2x faster on a
+32 CPU system and is 94.9x faster on a 96 CPU system—back to its happy
+place.</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-moana-roots.jpg" /> Moana
+<i>island beach roots rendered with pbrt at 2048x858 resolution with 256
+samples per pixel.  Total rendering time using a 96 vCPU Google Compute
+Engine instance running at 2 GHz with pbrt-next was 41m 22s.  Speedup from
+mulithreading during rendering was 94.9x. (I'm not sure what's going on
+with the bump mapping here.)</i></p>
+
+<h2 id="future-work">Future work</h2>
+
+<p>Reducing memory use with such a complex scene is rather addictive: saving
+multiple gigabytes from a change is much more exciting than the tens of MB
+that might be saved with a scene of lesser complexity.  I have a good list
+of things I’m hoping to look into in the future, time permitting.  Here’s
+an overview.</p>
+
+<h3 id="further-reducing-triangle-buffer-memory">Further reducing triangle buffer memory</h3>
+
+<p>Even with the reuse of buffers that store the same values for multiple
+triangle meshes, a fair amount of memory is still used for triangle
+buffers.  Here’s a breakdown of memory use for various triangle buffer
+types in the scene:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th style="text-align: right">Memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Positions</td>
+      <td style="text-align: right">2.5 GB</td>
+    </tr>
+    <tr>
+      <td>Normals</td>
+      <td style="text-align: right">2.5 GB</td>
+    </tr>
+    <tr>
+      <td>UVs</td>
+      <td style="text-align: right">98 MB</td>
+    </tr>
+    <tr>
+      <td>indices</td>
+      <td style="text-align: right">252 MB</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>I’m wary of doing anything at all to the provided vertex positions, but
+there are a few possibilities for the others.  There are a number of
+<a href="http://jcgt.org/published/0003/02/01/">memory-efficient representations for normal
+vectors</a>, offering various
+storage/compute trade-offs.  Adopting one of the 24-bit or 32-bit
+representations that would reduce normal storage to 663 MB and 864 MB,
+respectively, saving over 1.5 GB of RAM.</p>
+
+<p>Memory use for texture coordinates and index buffers for this scene is
+surprisingly low. I assume that’s because this scene has many procedurally
+generated plants and that all of the variations of a given plant type have
+the same topology (thus, index buffer) and parameterization (thus, UV
+coordinates). In turn, reuse of matching buffers is quite effective.</p>
+
+<p>For other scenes, it would probably be fine to quantize UV texture
+coordinates to 16-bits or to use half-precision floats, depending on their
+range.  For this scene, it seems that all of the texture coordinate values
+are either zero or one and thus, could be represented with a single
+<em>bit</em>—thus, a 32x reduction in storage for those is possible.  This state
+of affairs is presumably thanks to the use of ptex for texturing,
+eliminating the need for UV atlasing.  Given how little memory is used for
+texture coordinates now, implementing that isn’t particularly compelling.</p>
+
+<p>pbrt always uses 32-bit integers for index buffers.  For small meshes with
+fewer than 256 vertices, only 8 bits per index is needed and for meshes
+with fewer than 65,536 vertices, 16 bits could be used.  Changing pbrt to
+adapt in that manner wouldn’t be too difficult. If we wanted to get fancy,
+we could allocate just enough bits for the indices to represent the
+necessary range, at the cost of some complexity in looking up their values.
+With just a quarter of a GB of memory used for vertex indices at this
+point, it’s hard to get too excited about any of those options for this
+scene.</p>
+
+<h3 id="the-bvh-construction-memory-spike">The BVH construction memory spike</h3>
+
+<p>A detail that hasn’t been mentioned in the discussion of memory use so far:
+there’s a brief spike of 10 GB of additional memory use right before
+rendering.  This happens when the (big) BVH for the entire scene is built.
+pbrt’s BVH construction code is written to work in two phases: first it
+creates a BVH with a <a href="https://github.com/mmp/pbrt-v3/blob/9c707675837967604eeee7ec35789a10c8676c84/src/accelerators/bvh.cpp#L61">traditional
+representation</a>:
+two child pointers at each node.  Once the tree is built, that tree is
+converted to a <a href="https://github.com/mmp/pbrt-v3/blob/9c707675837967604eeee7ec35789a10c8676c84/src/accelerators/bvh.cpp#L95">memory-efficient
+layout</a>,
+where the first child of a node is immediately after it in memory and the
+offset to the second child is stored as an integer.</p>
+
+<p>The idea behind that separation was pedagogical—that it would be easier
+to understand BVH construction algorithms without the messiness of their
+needing to also convert the tree to the compact representation along the
+way.  The result is that memory spike, however; fixing that has some more
+appeal now given its impact for this scene.</p>
+
+<h3 id="converting-pointers-to-integers">Converting pointers to integers</h3>
+
+<p>There are many 64-bit pointers in various data structures that could be
+represented as 32-bit integers.  For example, each <code class="highlighter-rouge">SimplePrimitive</code> has a
+pointer to a <code class="highlighter-rouge">Material</code>.  Most <code class="highlighter-rouge">Material</code> instances are shared among many
+primitives in the scene and there are never more than a few thousand of
+them; as such, we could maintain a single global <code class="highlighter-rouge">vector</code> of all materials,</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>std::vector&lt;Material *&gt; allMaterials;
+</code></pre>
+</div>
+
+<p>and could then just store 32-bit integer offsets into that vector in
+<code class="highlighter-rouge">SimplePrimitive</code>, saving 4 bytes.  The same trick could be used for the
+pointer to the <code class="highlighter-rouge">TriangleMesh</code> in each <code class="highlighter-rouge">Triangle</code> and in many other places.</p>
+
+<p>With that change, there’d be a slight overhead to accessing the actual
+pointers and the system would be a little less clear to students who were
+trying to understand how the system worked; this also is probably a case
+where in the context of pbrt it’s better to keep the implementation a bit
+more understandable at the cost of not fully optimizing memory use.</p>
+
+<h3 id="arena-based-allocation">Arena-based allocation</h3>
+
+<p>A separate call to <code class="highlighter-rouge">new</code> (actually, <code class="highlighter-rouge">make_unique</code>, but same difference) is
+made for each individual <code class="highlighter-rouge">Triangle</code> and primitive in the scene.  Those
+allocations all carry some bookkeeping overhead that presumably accounts
+for most of the five or so GB of memory unaccounted for in the statistics.
+Because the lifetimes of all those allocations are the same—until
+rendering finishes—we could save that allocation overhead by allocating
+them from a <a href="https://github.com/mmp/pbrt-v3/blob/9c707675837967604eeee7ec35789a10c8676c84/src/core/memory.h#L61">memory
+arena</a>.</p>
+
+<h3 id="vtable-hacks">vtable hacks</h3>
+
+<p>My last idea is gross, and I apologize, but I’m intrigued by it.</p>
+
+<p>Each triangle in the scene carries an overhead of at least two vtable
+pointers: one for its <code class="highlighter-rouge">Triangle</code> and one for its <code class="highlighter-rouge">SimplePrimitive</code>.  That’s
+16 bytes.  The <em>Moana</em> island scene has a total of 146,162,124 unique
+triangles, which adds up to almost 2.2 GB of highly-redundant vtable
+pointers.</p>
+
+<p>What if we didn’t have an abstract base-class for <code class="highlighter-rouge">Shape</code> and what if
+each shape implementation didn’t inherit from anything?  That’d save us the
+vtable pointers, but of course then given a pointer to a shape, we wouldn’t
+know what kind of shape it was, which would be sort of useless.</p>
+
+<p>It turns out that on x86 CPUs today, <a href="https://en.wikipedia.org/wiki/X86-64#Canonical_form_addresses">only 48 bits of 64-bit pointers are
+actually
+used</a>.  As
+such, there are 16 extra bits that we could hijack to store some
+information in, such as… the type of shape that it’s pointing to.  In
+turn, with a little bit of work, we can work our way back to being able to
+do the equivalent of virtual function calls.</p>
+
+<p>Here’s how it would go: we’d first define a <code class="highlighter-rouge">ShapeMethods</code> structure that
+held function pointers, like this:<sup id="fnref:rs"><a href="#fn:rs" class="footnote">3</a></sup></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>struct ShapeMethods {
+   Bounds3f (*WorldBound)(void *);
+   // Intersect, etc. ...
+};
+</code></pre>
+</div>
+
+<p>Each shape implementation would implement a bounding function, and
+intersection function, and so forth, taking the equivalent of a <code class="highlighter-rouge">this</code>
+pointer as its first argument, like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Bounds3f TriangleWorldBound(void *t) {
+    // Only Triangle pointers will ever be passed to this function.
+    Triangle *tri = (Triangle *)t;
+    // ...
+</code></pre>
+</div>
+
+<p>We’d have a global table of the <code class="highlighter-rouge">ShapeMethods</code> structures, where the
+<em>n</em>th entry was for the shape type with index <em>n</em>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ShapeMethods shapeMethods[] = {
+  { TriangleWorldBound, /*...*/ },
+  { CurveWorldBound, /*...*/ };
+  // ...
+};
+</code></pre>
+</div>
+
+<p>When a shape was created, we’d encode its type into some of the unused bits
+in the returned pointer.  Later, given a shape pointer that we wanted to
+call a particular method of, we’d extract its type index from the pointer
+and use it to index into <code class="highlighter-rouge">shapeMethods</code> to find the appropriate function
+pointer.  We’d basically be implementing a vtable manually, handling
+dispatch ourselves.  If that was done for both shapes and primitives, we’d
+save 16 bytes per <code class="highlighter-rouge">Triangle</code>, though following a pretty grungy path to get
+there.</p>
+
+<p>I assume this hack to do virtual function dispatch isn’t novel, but I
+haven’t so far been able to find an online reference to it. There is a
+Wikipedia page on <a href="https://en.wikipedia.org/wiki/Tagged_pointer#Folding_tags_into_the_pointer">tagged
+pointers</a>,
+though that only talks about things like reference counts. Please send me
+an email if you know of a better reference.</p>
+
+<p>With that goofball hack outlined, this series of postings is done for now.
+Huge thanks again to Disney for making this scene available.  It’s been a
+delight to work with it; the gears in my head continue to churn.</p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:isect">
+      <p>pbrt-next ends up tracing more rays for this scene than pbrt-v3 does, which presumably explains the increase in the number of lookups. <a href="#fnref:isect" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:diff">
+      <p>Ray differentials for indirect rays in pbrt-next are computed with the same <a href="https://github.com/mmp/pbrt-v3/blob/4fee8c6e8d4554f97c4a2525411e21b4b6bddac8/src/core/interaction.cpp#L163">hack</a> used in the <a href="https://pbrt.org/texcache.pdf">texture cache extension</a> for pbrt-v3. It seems to work well enough, but doesn’t feel particularly principled. <a href="#fnref:diff" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:rs">
+      <p>This is how <a href="https://github.com/cek/rayshade4/blob/08ea3c0697442e7446442383456644bd915ece36/libray/libobj/geom.h#L57">rayshade handles method dispatch</a>, as is done when one wants the equivalent of virtual methods in C.  rayshade didn’t do anything fancy to eliminate the per-object pointer, though. <a href="#fnref:rs" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

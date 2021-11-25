@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Swallowing the Elephant (part 6): Fool me once...</title>
+  <meta name="description" content="Returning to Disney&#39;s Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Swallowing the Elephant (part 6): Fool me once...</h1>
+    <p class="post-meta">
+      <time datetime="2021-04-02T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 2, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>I’ve been long overdue to update the pbrt version of Disney’s <a href="https://www.disneyanimation.com/resources/moana-island-scene/">amazing
+Moana island
+scene</a> to
+account for the changes in <a href="https://github.com/mmp/pbrt-v4">pbrt-v4</a>’s
+scene description format; I finally got around to it over the past few
+days.  Surprise, surprise, getting it rendering again wasn’t all smooth
+sailing, but Things Were Learned and here we are with another few blog
+posts about the experience. (For context, it might be worthwhile to read
+the <a href="/matt/blog/2018/07/16/moana-island-pbrt-all.html">earlier posts</a> on
+rendering the Moana island in pbrt if you have not already.)</p>
+
+<h3 id="converting-to-pbrt-v4">Converting to pbrt-v4</h3>
+
+<p>The latest version of pbrt provides an <code class="highlighter-rouge">--upgrade</code> flag that does a
+reasonably good job of automatically updating scene description files from
+the previous version of pbrt to work with pbrt-v4.  For most scenes,
+<code class="highlighter-rouge">--upgrade</code> does all that is needed.  For others, a few manual fixes may be
+necessary, though pbrt tries to give guidance—this was ambiguous, so over
+to you, and the like.  For this monster of a scene, a few additional hours
+of manual work with <em>sed</em> and <em>emacs</em> macros were necessary to finish the
+job.</p>
+
+<p>The first renderings of the converted scene weren’t exactly <em>awesome</em>…</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-v4-moana-bad.jpg" />
+<i>Disney's Moana island scene rendered with pbrt-v4, a disastrous
+conversion of the materials, and some issues with incorrect transformations
+(note that those neon yellow leaves not aligned with the tree trunk and
+branches to their left).</i></p>
+
+<p>All of that manual work was due to self-inflicted wounds:</p>
+
+<ul>
+  <li>In pbrt-v3, one could specify a material and then subsequently override
+its parameters with the parameters that are provided with a shape that
+uses that material. We removed this functionality to simplify processing
+the scene description thinking that it was rarely used.  It turns out
+that this capability was used extensively in Disney’s conversion of the
+scene to pbrt’s format.</li>
+  <li>One could redefine named textures in pbrt-v3, while pbrt-v4 prohibits
+this; again, we didn’t think this was widely used and again, guess what,
+it was used extensively in the pbrt-v3 version of the Moana island scene.</li>
+  <li>pbrt-v4 no longer supports the Disney BSDF, which was used for all of the
+objects in this scene, it was necessary to manually map all of the uses of
+it to the most similar BSDFs that are provided in pbrt-v4.<sup id="fnref:bsdf"><a href="#fn:bsdf" class="footnote">1</a></sup></li>
+</ul>
+
+<h3 id="a-reorganization-of-the-parsing-code">A reorganization of the parsing code</h3>
+
+<p>Before looking at pbrt’s performance and memory use, it’s worth discussing
+an important change to pbrt’s implementation since my earlier posts: the
+parts of the system responsible for parsing scene description files and
+converting them into objects suitable for rendering have changed
+substantially in pbrt-v4.  In earlier versions of the system, parsing and
+scene object creation were intermingled.  For example, if the parser saw an
+image texture definition, it would stop to read the texture from disk and
+build MIP maps before it continued.  If an object instance was defined,
+then all of the constituent primitives would be created and a BVH built for
+it before parsing resumed. And so forth…</p>
+
+<p>In pbrt-v4, the parser’s job is more that of deserializing the scene
+description to a
+generic intermediate representation.  For example, it will record the fact
+that some texture of type “imagemap” has been defined and that it has a
+string-valued parameter “filename” with some value associated with it, but
+that’s it—on to snarfing up more tokens from the scene description.  The
+parser is responsible for initializing an instance of the
+<a href="https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L276"><code class="highlighter-rouge">ParsedScene</code></a>
+class; only when parsing is complete is the <code class="highlighter-rouge">ParsedScene</code> converted to the
+optimized scene representation that is used for rendering.  The form of
+<code class="highlighter-rouge">ParsedScene</code> is more or less</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>class ParsedScene {
+  public:
+    std::vector&lt;ShapeEntity&gt; shapes;
+    std::vector&lt;LightEntity&gt; lights;
+    std::map&lt;std::string, SceneEntity&gt; namedMaterials;
+    // ...
+};
+</code></pre>
+</div>
+<p>where, for example,
+<a href="https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L78"><code class="highlighter-rouge">ShapeEntity</code></a>
+records things like the name of the shape (“trianglemesh”, “plymesh”,
+“sphere”, or whatever), its transformation, the material
+associated with it, as well as the parameters that were provided with it
+(e.g., “there’s a <code class="highlighter-rouge">float</code> named ‘radius’ with value 10.”)</p>
+
+<p>The initial motivation for this restructuring was the addition of GPU
+rendering in pbrt-v4; while things like lights, materials, and most
+textures are represented by the same objects for both CPU and GPU, the
+respective geometric representations of the scene differ substantially.
+Thus, it worked well to structure the system so that the parsing code
+generates an intermediate representation that can then be transformed into
+a specific representation used for rendering.</p>
+
+<p>As we will see shortly, this rewrite caused some trouble, though by the
+end, it redeems itself.</p>
+
+<h3 id="fail-fast">Fail fast</h3>
+
+<p>With the scene converted, all was not well.  Where we <a href="/matt/blog/2018/07/15/moana-island-pbrt-4.html">left
+off</a>,
+pbrt-next, the in-progress version of pbrt-v4 from 2.5 years ago, used 41
+GB of RAM when rendering the scene, with an additional spike of about 10 GB
+while the top-level BVH was built.  One might hope that on my current
+system with 64 GB of RAM it would render nicely out of the box.</p>
+
+<p>One might hope…</p>
+
+<p>Rather, pbrt-v4 filled up available RAM and the puny 2 GB of swap before it
+was killed when memory ran out.  I bumped up the size of the swap file to
+64 GB just to see if that would do it, but still had no luck.  Time to turn
+to my old friend <a href="https://valgrind.org/docs/manual/ms-manual.html">massif</a>,
+which tracks memory allocations over the course of a program’s execution.
+I tried rendering a pared down version of the scene with <em>massif</em> to see
+where all of the memory was going.</p>
+
+<p>There wasn’t much nuance in what <em>massif</em> had to report; by far the
+greatest memory consumer was instances of the <code class="highlighter-rouge">InstanceSceneEntity</code>
+structure.  The parser creates one for each object instance in the
+scene; it basically wraps up a transformation matrix and the name of the
+object being instantiated.  The transformation may be fixed or it may be
+specified by a pair of transformations that are interpolated.  Therefore,
+it stores both a <code class="highlighter-rouge">Transform *</code> and an <code class="highlighter-rouge">AnimatedTransform</code>.</p>
+
+<p>Here are the important parts of <a href="https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L197">its
+definition</a>:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>struct InstanceSceneEntity : public SceneEntity {
+    // ...
+    AnimatedTransform renderFromInstanceAnim;
+    const Transform *renderFromInstance;
+};
+</code></pre>
+</div>
+
+<p>The reader with a good memory may now remember that <code class="highlighter-rouge">AnimatedTransform</code> was
+a troublemaker the first time I dug into pbrt-v3’s use of memory with the
+Moana island scene.  (If one has forgotten, <a href="/matt/blog/2018/07/09/moana-island-pbrt-2.html#transformedprimitives-95-wasted-space-really-hurts">see
+here</a>.)
+<code class="highlighter-rouge">AnimatedTransform</code> is not a small structure; in pbrt-v4, each one is 696
+bytes.  In this case, <em>nothing is animated</em> and the <code class="highlighter-rouge">AnimatedTransform</code> is
+unused.</p>
+
+<p>Clearly I had forgotten this pitfall, since there I go again making the
+very same mistake, here now with <code class="highlighter-rouge">InstanceSceneEntity</code>.  For the full Moana
+island scene, a total of 39,270,497 of them are allocated.  At 696 bytes
+for each <code class="highlighter-rouge">AnimatedTransform</code>, that works out to 25.4 GB of unused identity
+matrices and associated baggage.</p>
+
+<p>That was <a href="https://github.com/mmp/pbrt-v4/commit/ab3d89541f9fdb7b6bb22fefd9e7b45ad2d4505c">an easy
+fix</a>
+and with it, the scene successfully rendered on my system here.  Here’s
+an image for sustenance:</p>
+
+<p align="center"><img src="/matt/blog/images/pbrt-v4-moana-good.jpg" /><i>Moana
+island rendered more successfully with pbrt-v4.  This image rendered in
+46m37s at 1920x804 resolution with 2048 samples per pixel on a 32-core AMD
+3970X CPU.</i></p>
+
+<p>However, pbrt still used about 66 GB of memory during rendering, with a
+peak of 82 GB.  Plenty more stinkiness remained.</p>
+
+<h3 id="department-of-redundant-scene-descriptions-department">Department of redundant scene descriptions department</h3>
+
+<p>Another run of <em>massif</em> with the full scene was just as unambiguous about
+where the problem was as the first one was; 27 GB of <code class="highlighter-rouge">vector&lt;double&gt;</code>s
+had been allocated as part of the <code class="highlighter-rouge">ParsedParameter</code> class.
+<code class="highlighter-rouge">ParsedParameter</code> is another part of the new parsing system; it is
+responsible for recording all of the parameter values provided for things
+in the scene description file.  For example, if you specify <code class="highlighter-rouge">"integer
+indices" [ 0 1 2 ]</code> with a triangle mesh, a <code class="highlighter-rouge">ParsedParameter</code> instance
+records that there was this thing with “integer” type, it has the name
+“indices”, and those three values were specified.  This is again part of
+the parser just recording what it sees, but not judging or interpreting.</p>
+
+<p>Here are the relevant parts of its <a href="https://github.com/mmp/pbrt-v4/blob/bbf513a2a691eaf1846ec1499e37c4776bfbbd85/src/pbrt/parser.h#L38">definition</a>:</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>class ParsedParameter {
+  public:
+    std::string type, name;
+    std::vector&lt;double&gt; numbers;
+    std::vector&lt;std::string&gt; strings;
+    std::vector&lt;uint8_t&gt; bools;
+    // ...
+};
+</code></pre>
+</div>
+
+<p>Momentarily leaving aside the use of double precision for <code class="highlighter-rouge">numbers</code>, it
+only took a few minutes thinking to realize that while pbrt-v4 was creating
+the scene representation to use for rendering, it wasn’t freeing up parts
+of the <code class="highlighter-rouge">ParsedScene</code> when it was done with them.  Indeed, all of it was
+still using up memory the whole time rendering proceeded, so there were
+those 27 GB and then more.</p>
+
+<p>With a few changes to free <code class="highlighter-rouge">ParsedScene</code> memory when possible
+<a href="https://github.com/mmp/pbrt-v4/commit/7ca86f2d880f3749af157466ae314f1e068d2cf2">(1)</a>
+<a href="https://github.com/mmp/pbrt-v4/commit/7bcf5832014662cf22cdc6a353d6cd9e48f77477">(2)</a>
+<a href="https://github.com/mmp/pbrt-v4/commit/e5881cbc115ea8c3bf7cb757faa55c95d068d4ae">(3)</a>,
+peak memory use drops by 32 GB to 50 GB, with 32 GB in use at the start of
+rendering.</p>
+
+<h3 id="too-much-precision-because-you-never-know">Too much precision, because you never know</h3>
+
+<p>Returning to the topic of the use of double precision in
+<code class="highlighter-rouge">ParsedParameter::numbers</code>: I used <code class="highlighter-rouge">double</code>s out of of laziness. Although
+pbrt generally uses 32-bit floating point, <code class="highlighter-rouge">double</code> has the nice property
+that it can exactly represent all 32-bit integers. Thus, the parser could
+just be simpleminded and store arrays of numbers, without worrying about
+whether or not they were floats or integers.</p>
+
+<p>I told myself that those <code class="highlighter-rouge">vector</code>s would never get very big.  I figured
+that big triangle meshes would usually come in via PLY files, in which case
+the only use of <code class="highlighter-rouge">ParsedParameter</code> is to store a single filename.  Thus, I
+assumed that those arrays would never use an objectionable amount of
+memory.  That assumption was mostly true, but not true enough: some of the
+trees in the Moana scene are represented by many small independent
+triangle meshes of a few tens or a hundred or so triangles each.
+Individually, these don’t make sense to store as PLY files; there would be
+tens of thousands of them for a single tree.  Thus, they are left as text
+in the scene description. From them, those parameter vectors become large.</p>
+
+<p>With another <a href="https://github.com/mmp/pbrt-v4/commit/c84d8a6a1644bb4ef0314bc9490dbd4bc0565583">simple once you get around to doing it
+change</a>,
+we’re down another 4.5 GB to 45.5 GB peak memory use and now 31 GB in use at
+the start of rendering—10 GB less than before. Victory!</p>
+
+<h3 id="wrap-up">Wrap-up</h3>
+
+<p>It took a few days of digging into regressions, but pbrt-v4 is now even
+better than where it had been 2.5 years ago, memory-wise.  I can’t
+precisely account for that last 10 GB improvement, but would assume that
+most of it is due to switching to tagged pointers to eliminate the virtual
+function pointers in the shape and primitive classes (as <a href="/matt/blog/2018/07/16/moana-island-pbrt-5.html#vtable-hacks">considered
+earlier</a>).
+The size of those classes has seen some further attention in pbrt-v4, and
+it seems to have added up in this case.</p>
+
+<p>Here is an accounting of how memory is used now when rendering begins:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th style="text-align: right">Memory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BVH</td>
+      <td style="text-align: right">13.5 GB</td>
+    </tr>
+    <tr>
+      <td>Transformations</td>
+      <td style="text-align: right">5.5 GB</td>
+    </tr>
+    <tr>
+      <td>Transformation hash table</td>
+      <td style="text-align: right">1 GB</td>
+    </tr>
+    <tr>
+      <td>Primitives</td>
+      <td style="text-align: right">2.5 GB</td>
+    </tr>
+    <tr>
+      <td>Triangles</td>
+      <td style="text-align: right">1.2 GB</td>
+    </tr>
+    <tr>
+      <td>Triangle vertex buffers (P, N, uv, indices)</td>
+      <td style="text-align: right">5.25 GB</td>
+    </tr>
+    <tr>
+      <td>Curves</td>
+      <td style="text-align: right">0.6 GB</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>Next time we’ll dig into runtime performance while parsing the scene, where
+things start in a better place and go fun places from there.</p>
+
+<h3 id="note">note</h3>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:bsdf">
+      <p>About dropping the Disney BSDF: while folks at Disney were working on converting the scene to pbrt’s format a few years ago, I added the Disney BSDF (and support for <a href="https://ptex.us/">Ptex</a> textures) to pbrt-v3 in order to make pbrt-v3 a more hospitable target.  Normally new functionality isn’t added after the book comes out, since the whole idea of the book is to describe the implementation of the renderer, but it was well worth it for this prize of a scene.</p>
+
+      <p>For the fourth edition of the book, we have redesigned the set of materials and BSDFs from scratch and have tried to be more physically principled than
+before.  (Among other things, pbrt’s old kitchen sink <code class="highlighter-rouge">UberMaterial</code> is gone.)  In this context, an artist-friendly BSDF like the Disney one doesn’t fit with the book’s current focus, so we have cut it in the interests of simplifying the system.  (Ptex support remains, at least!) <a href="#fnref:bsdf" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

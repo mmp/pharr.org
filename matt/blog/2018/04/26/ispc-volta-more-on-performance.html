@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The story of ispc: more on optimizations and performance (part 8)</title>
+  <meta name="description" content="A few details of the language design helped a lot with being able to generate good code. Custom optimization passes helped a lot with avoiding unnecessary ga...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2018/04/26/ispc-volta-more-on-performance.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">The story of ispc: more on optimizations and performance (part 8)</h1>
+    <p class="post-meta">
+      <time datetime="2018-04-26T00:00:00-05:00" itemprop="datePublished">
+        
+        Apr 26, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>It wasn’t quite fair to describe volta as a dumb compiler
+<a href="/matt/blog/2018/04/21/ispc-volta-c-and-spmd.html#compiler-optimizations-versus-transformations">earlier</a>; we’ll revisit
+that topic today.</p>
+
+<p>Not only were a number of the language features carefully designed to map
+well to CPU hardware, but a number of custom optimization passes for LLVM
+IR turned out to be important for keeping performance competitive with
+intrinsics.  Many of them were influenced by the early users at Intel and
+their close scrutiny of volta’s assembly output.</p>
+
+<h2 id="uniform">Uniform</h2>
+
+<p>The <code class="highlighter-rouge">uniform</code> qualifier is one of the most important language features for
+performance.</p>
+
+<p><code class="highlighter-rouge">uniform</code> is a type qualifier that describes a value that’s the same across
+all of the SPMD program instances being executed.  It corresponds to a
+scalar value and maps nicely to the CPU, which I’m told supports scalar
+computation as well as SIMD.  The concept has been an easy one for
+programmers to pick up and has a direct mapping to how CPU
+intrinsics programmers structure their code.</p>
+
+<p>Declaring a variable to be <code class="highlighter-rouge">uniform</code> can give two benefits:</p>
+
+<ul>
+  <li>Any control flow based on a uniform value is just like control flow
+in regular programs: all of the SPMD program instances follow the same
+path, and we don’t need to worry about updating the execution mask.</li>
+  <li>Memory access of uniform values is easy to handle and efficient: for
+example, a <code class="highlighter-rouge">uniform</code> read corresponds to a simple scalar load.</li>
+</ul>
+
+<p>My first exposure to the general idea of <code class="highlighter-rouge">uniform</code> came from the RenderMan
+Shading Language (RSL), which turns out to be a SPMD language that operates
+on grids of points to be shaded.  It also has a <code class="highlighter-rouge">uniform</code> keyword,
+signifying a value that is the same for all points.  As far as I know, RSL
+implementations never targeted SIMD CPU hardware, but scalar CPU
+implementations maintained a mask of which points were active and could
+apply <code class="highlighter-rouge">uniform</code> for similar benefits for control flow.  Closing the circle,
+it was fun when Pixar posted a <a href="https://renderman.pixar.com/resources/RenderMan_20/portingRSLtoC.html">note about the benefits of using ispc
+for
+shaders</a>
+a few years ago.</p>
+
+<p>It turns out that RSL had originally been designed for custom SIMD hardware
+in the 1980s, and it also turns out there were precursors to <code class="highlighter-rouge">uniform</code> in
+other SPMD languages of that era that targeted multiprocessors; again, see
+the <a href="/matt/papers/ispc_inpar_2012.pdf">ispc paper</a> for more
+on previous work in this area.</p>
+
+<h2 id="minimizing-masked-instructions">Minimizing masked instructions</h2>
+
+<p>Handling the all details of masked vector computation can cause a fair
+amount of bloat in x86 assembly.  It turned out to be worthwhile to design
+some of volta’s language features to make it possible to foster situations
+where the compiler could determine that all of the program
+instances were active and take advantage of that in code generation.</p>
+
+<p>One example of that is a specialized loop construct that volta provides,
+<code class="highlighter-rouge">foreach</code>.<sup id="fnref:foreach"><a href="#fn:foreach" class="footnote">1</a></sup> It describes a loop over one or more dimensions where
+SPMD program instances are mapped to a given range of values.</p>
+
+<p>We’ll use this short volta function as an example in the following;
+presumably it’s obvious what it does:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>void increment(uniform float ptr[], uniform int count) {
+    foreach (i = 0 ... count) {
+        ptr[i] += 1;
+    }
+}
+</code></pre>
+</div>
+
+<p>Consider now a <code class="highlighter-rouge">foreach</code> loop over 130 values with an 8-wide SIMD target:
+there will be 16 loop iterations where the execution mask is all on that
+take care of the first 128 values.  Then, there will be a single iteration at
+the end with a mixed mask for the ragged extra two elements.  ispc/volta
+generates two versions of the code for the loop body, the first one
+specialized for an all-on mask.</p>
+
+<p>Modern ispc generates this AVX2 assembly for the unmasked iterations, plus
+the extra few instructions to see if another loop iteration is needed and
+then jump to the appropriate place:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>	vaddps	(%rdi,%rdx), %ymm0, %ymm1
+	vmovups	%ymm1, (%rdi,%rdx)
+</code></pre>
+</div>
+
+<p>Just what you’d want, unless you’re the sort of person who’s bothered by a
+possibly-unnecessary use of an unaligned vector store.  Assuming <code class="highlighter-rouge">count</code> is
+large, the vast majority of iterations will just run that code.</p>
+
+<p>There’s a lot more that has to be done in the general case.  Here’s the
+code for the last iteration:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>	vmovd        %eax, %xmm0
+	vpbroadcastd %xmm0, %ymm0
+	vpaddd       LCPI0_1(%rip), %ymm0, %ymm0
+	vmovd        %esi, %xmm1
+	vpbroadcastd %xmm1, %ymm1
+	vpcmpgtd     %ymm0, %ymm1, %ymm0
+	shll         $2, %eax
+	cltq
+	vmaskmovps   (%rdi,%rax), %ymm0, %ymm1
+	vbroadcastss LCPI0_0(%rip), %ymm2
+	vaddps       %ymm2, %ymm1, %ymm1
+	vmaskmovps   %ymm1, %ymm0, (%rdi,%rax)
+</code></pre>
+</div>
+
+<p>The first handful of instructions determine the execution mask, disabling
+the vector lanes that correspond to entries in the array past <code class="highlighter-rouge">count</code>.
+Then it’s necessary to use that mask with a masked load instruction,
+<code class="highlighter-rouge">vmaskmovps</code>, when loading the last values from the array so that we don’t
+accidentally read memory past the end of it. Then there’s the add.  Then
+finally, a masked store when writing the results back so that we don’t
+clobber memory after the array.</p>
+
+<p>Without <code class="highlighter-rouge">foreach</code> and the “all on” optimizations that it enabled, we’d be
+going through a lot of that each time through the loop.  (And the
+intrinsics programmers would rightly roll their eyes and walk away.)</p>
+
+<p>If you know that the number of items you have to process is always a
+multiple of the SIMD width, you can add something like this before the
+loop:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>count &amp;= ~7;
+</code></pre>
+</div>
+
+<p>That’d be no-op in practice, but it’s enough to let the compiler be able to
+figure out that it doesn’t need to emit the second version of the loop body
+if it won’t be needed.<sup id="fnref:comp"><a href="#fn:comp" class="footnote">2</a></sup> (By the “compiler”, I mean LLVM in this case;
+ispc goes ahead and emits IR for both cases but after LLVM’s regular
+optimization passes have done their thing, LLVM’s dead code elimination pass
+takes care of business.)</p>
+
+<p>There are other places beyond <code class="highlighter-rouge">foreach</code> where we can do similar things.
+When an application first calls from C/C++ to volta code, by definition all
+of the program instances are running, so the execution mask can statically
+be determined to be all on until SPMD control flow enters the picture.
+Until then, the same sorts of optimizations can also be applied.</p>
+
+<p>Furthermore, not all’s lost when SPMD control flow starts happening: it can
+be worthwhile to check at runtime whether all of the program instances are
+active.  volta/ispc provides separate control flow keywords that allow the
+programmer to indicate expected-to-be-coherent control flow: <code class="highlighter-rouge">cif</code>, <code class="highlighter-rouge">cfor</code>,
+and so forth.</p>
+
+<p>As an example, when <code class="highlighter-rouge">cif</code> is used, volta/ispc generates code that tests the
+execution mask right after updating it for the effect of the ‘if’ condition.  If
+it’s all on, then we can jump to a specialized code path that starts with the “mask
+all on” assumption. If it’s all off, then we can directly jump until after
+the ‘if’ statement’s body. Otherwise we have to execute the if’s code with regular
+masking, as regular <code class="highlighter-rouge">if</code> does.  There’s obviously a cost from <code class="highlighter-rouge">cif</code> in terms
+of code duplication, but for the cases where all of the program instances
+are in fact active, it can give a meaningful performance benefit.</p>
+
+<p>I felt it was important to make that an explicit language feature, rather
+than not introducing new keywords and trying to figure out reasonable
+heuristics for an optimizer to decide when to add that check and when not
+to.  It’s admittedly a little extra mental overhead for the programmer and
+I’m sure that there are cases where people write ispc code without using
+those that would benefit from them, but again it’s a case where I’d prefer
+that the compiler be straightforward and predictable in the code that it
+generates; another case of focusing on the performance-oriented programmer
+as the most important type of user.</p>
+
+<h2 id="efficient-spmd-loads-and-stores">Efficient SPMD loads and stores</h2>
+
+<p>Loads and stores from SPMD programs running on SIMD hardware are
+“interesting”.  In general, each program instance in the vector may be
+reading from or writing to completely different locations in memory.
+Further, some of them may be inactive, and must not issue reads or writes
+at all in that case.  (We saw a bit of this issue <a href="/matt/blog/2018/04/23/ispc-volta-users-and-ooo.html#ode-to-modern-cpus">earlier when we looked
+at implementing
+scatter</a>.)</p>
+
+<p>In general, we need to issue a gather instruction for a SPMD read and a
+scatter for a write; these allow full flexibility in the memory locations accessed.
+Even if these are available as native instructions (as they are in
+AVX-512), performance is much better if we use vector loads and stores in the
+cases where the memory locations accessed are contiguous—it’s better to
+only use gather and scatter when we really need it.</p>
+
+<p>Unfortunately, we need to make this decision at compile time.  With GPUs
+(as I understand how they work these days), all of this is pretty much a
+run time distinction: the compiler just emits the equivalent of a gather or
+scatter and then the actual performance at run time depends whether the
+locations accessed were coherent in various ways or not.  (Avoiding bank
+conflicts and all that.)  That’s much better, since the locations accessed are
+in general data-dependent and thus their coherence can never be known as
+well at compile-time as at run-time.</p>
+
+<p>That’s not how CPUs work, so we’ll have to do our best in the
+compiler.</p>
+
+<p>The volta front-end doesn’t at all try to be clever about this; other than
+scalar memory accesses through <code class="highlighter-rouge">uniform</code>s, it starts out by just generating
+tentative gathers and scatters for all SPMD reads and writes.  volta declares a
+whole bunch of <code class="highlighter-rouge">pseudo</code> gather and scatter functions in LLVM IR, for
+example:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>declare &lt;WIDTH x float&gt; @__pseudo_gather64_float(&lt;WIDTH x i64&gt;,
+    &lt;WIDTH x MASK&gt;) nounwind readonly
+</code></pre>
+</div>
+
+<p>(<code class="highlighter-rouge">WITDH</code> and <code class="highlighter-rouge">MASK</code> get set to concrete values via a macro expansion step.)</p>
+
+<p>Then, for any SPMD memory read of floats (e.g. loading a SIMD vector’s
+worth of values in that <code class="highlighter-rouge">increment()</code> example above), on a 64-bit target,
+volta emits a call to <code class="highlighter-rouge">__pseudo_gather64_float</code>, providing a unique pointer
+for each SIMD lane as well as the execution mask.</p>
+
+<p>Those pseudo functions are left undefined through early LLVM optimization
+passes.  In time, custom volta optimization passes start trying to improve
+them.  There’s a lot that can be done better:</p>
+
+<ul>
+  <li>If all of the pointers have the same value, volta substitutes a scalar load and
+vector broadcast.</li>
+  <li>If the SPMD instances can be determined to be reading contiguous memory
+locations (as in <code class="highlighter-rouge">increment()</code>), it uses vector load.</li>
+  <li>If a gather truly is necessary, or the compiler can’t be sure, then a gather it is.
+(And then the target-specific IR will either emit a native instruction or
+do the equivalent with a series of instructions.)</li>
+</ul>
+
+<p>I wish all the complexity around doing that wasn’t necessary, but it’s a
+significant performance cliff if a gather or scatter is emitted
+unnecessarily, so it was worth banging on it a lot.  In the end, those
+optimization passes got a lot of attention and came to be pretty robust at
+detecting the appropriate patterns, which I think is the best that could be
+hoped for.</p>
+
+<p>Later on, I spent some time implementing some slightly more sophisticated
+approaches to avoiding gathers for reads that could be better expressed as
+vector loads and shuffles.  Consider this function:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>void reduce(uniform float ptr[], uniform float result[], uniform int count) {
+    foreach (i = 0 ... count) {
+        result[i] = ptr[i/2];
+    }
+}
+</code></pre>
+</div>
+
+<p>On an 8-wide target, it’d be better to issue a 4-wide load and do a vector
+shuffle—much faster than a gather.  For a function like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>void deinterleave(uniform float ptr[], uniform float a[],
+                  uniform float b[], uniform int count) {
+    foreach (i = 0 ... count) {
+        a[i] = ptr[2*i];
+        b[i] = ptr[2*i + 1];
+    }
+}
+</code></pre>
+</div>
+
+<p>an experienced intrinsics programmer would use two vector loads and then
+some shuffles.  Trying that with modern ispc, a gather is emitted; I swear
+those used to be taken care of by that optimization.  Another little thing
+to dig into later.</p>
+
+<p>Anyway, in the end, all this added up to about 6k LOC for <a href="https://github.com/ispc/ispc/blob/master/opt.cpp">custom LLVM
+optimization passes in
+ispc</a>; so maybe the
+compiler wasn’t completely dumb after all.  There isn’t too much deep
+compiler magic in all that, however, which I think makes the output of the
+compiler still fairly predictable.</p>
+
+<p><em>Tomorrow: for an exciting time, make it an open sourcing volta time.</em></p>
+
+<p><a href="/matt/blog/2018/04/27/ispc-volta-open-source.html">Next: The open source release and the end of volta</a></p>
+
+<h2 id="notes">notes</h2>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:foreach">
+      <p>volta’s <code class="highlighter-rouge">foreach</code> was inspired by a related construct in a GPU-targeted language that Mark Lacey, Tim Foley, Jefferson Montgomery, and Geoff Berry were building. <a href="#fnref:foreach" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:comp">
+      <p>A fair criticism would be that we’re starting to head to the land of the programmer doing fiddly things to make the optimizer do what they want.  I think there’s an interesting broader question about how a programmer might cleanly and directly provide the compiler with information about the characteristics of the data that the program will be processing for help in optimization. That wasn’t a problem that I ended up tackling in volta, though. <a href="#fnref:comp" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
