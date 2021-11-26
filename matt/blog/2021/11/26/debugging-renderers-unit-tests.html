@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Debugging Your Renderer (2/n): Unit Tests</title>
+  <meta name="description" content="Returning, now with intention, to write up some thoughts about how to effectively debug a renderer.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Debugging Your Renderer (2/n): Unit Tests</h1>
+    <p class="post-meta">
+      <time datetime="2021-11-26T00:00:00-08:00" itemprop="datePublished">
+        
+        Nov 26, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Here we are, a year and a half after I posted an <a href="/matt/blog/2020/04/26/debugging-intro.html">introduction that was
+full of talk</a> about a
+forthcoming series of blog posts about debugging renderers.  When I posted
+that I already had a text file full of notes and had the idea that I’d get
+through a series of 8 or so posts over the following few weeks.</p>
+
+<p>…and it’s been nothing but crickets after that setup.</p>
+
+<p>There’s no good reason for my poor follow-through, though this series did
+turn into one of those things that got more daunting to return to the
+longer time went by; I felt like the bar kept getting higher and that my
+eventual postings would have to make up for the bait and switch.</p>
+
+<p>Now that I’m at it again, I can’t promise that these posts will make up for
+the wait; in general, you get what you pay for around here.  But let’s
+reset and try getting back into it.</p>
+
+<p>To get back in the right mood, here are a pair of images back from the
+first time I tried to implement Greg Ward’s irradiance caching algorithm
+back when I was in grad school:</p>
+
+<p align="center">
+<img src="/matt/blog/images/irradCacheInfinity.png" width="288" height="192" />
+<img src="/matt/blog/images/irradCache.png" width="288" height="192" />
+</p>
+
+<p>In the left image (which was rendered from right to left for some reason),
+there was a bug that caused energy to grow without bound as the cache was
+populated (no doubt a missing factor of \(1/\pi\) that led to a feedback
+loop).  I always liked how that image went from ok to a little too bright
+to thermonuclear by the time it was halfway through.  The image on the
+right is my eventual success, with a slightly different scene layout.</p>
+
+<h2 id="avoiding-the-bad-place">Avoiding The Bad Place</h2>
+
+<p>There’s nothing fun about an image that starts out ok and then goes bad or
+your renderer crashing after its been running for an hour with a stack
+trace 20 levels deep.  There’s lots to be unhappy about:</p>
+
+<ul>
+  <li>
+    <p>Things are broken, but they’re not utterly broken, which suggests that
+the underlying bug will be subtle and thus difficult to track down.</p>
+  </li>
+  <li>
+    <p>There’s an enormous amount of state to reason about—the scene in all
+its complexity, all of the derived data structures, and everything that
+happened since the start of rendering until things evidently went wrong.
+Any bit of it may hold the problem that led to disaster.</p>
+  </li>
+  <li>
+    <p>More specifically, the actual bug may be in code that ran long before the
+bug became evident; some incorrect value computed earlier that messed
+things up later, possibly in an indirect way.  This is a particular
+challenge with algorithms that reuse earlier results, be it spatially,
+temporally or otherwise.</p>
+  </li>
+  <li>
+    <p>It may be minutes or even hours into rendering before the bug manifests
+itself; each time you think you’ve fixed it, you’ve got to again wait
+that much longer to confirm that you’re right.</p>
+  </li>
+</ul>
+
+<p>Anything you can do to avoid that sad situation reduces the amount of time
+you spend on gnarly debugging problems, and in turn, the more productive
+you’ll be (and the more fun you’ll have, actually implementing fun new
+things rather than trying to make the old things work correctly.)  That
+goal leads to the first principle of renderer debugging:</p>
+
+<blockquote>
+  <p>Try to make it a conventional debugging problem (“given these inputs,
+this function produces this incorrect output”) and not an unbounded “this
+image is wrong and I don’t know why” problem.</p>
+</blockquote>
+
+<p>One of the best ways to have more bugs be in the first category is to
+have a good suite of unit tests. There’s nothing glamorous about writing
+unit tests, at least in the moment, but they can give you a lot in return
+for not too much work.  Not only does failing unit test immediately narrow
+down the source of a bug to the few things that the test exercises, but it
+generally gives you an easier debugging problem than a failure in the
+context of the full renderer.</p>
+
+<h2 id="starting-simple">Starting Simple</h2>
+
+<p>A good unit test is crisp—easy to understand and just testing one thing.
+Writing tests becomes more fun if you embrace that way of going about
+it—it’s easy coding since the whole goal is to not be tricky, with the
+idea that you want to minimize the chance that your test itself has bugs.
+A good testing framework helps by making it easy to add tests; I’ve been
+using <a href="https://github.com/google/googletest">googletest</a> for years, but
+there are plenty of others.</p>
+
+<p>It’s good to start out by testing the most obvious things you can think of.
+That may be counter-intuitive—it’s tempting to start with devious tests
+that poke all the edge cases.  However, if you think about it from the
+perspective of encountering a failing test, then the simpler the test is,
+the easier it is to reason about the correct behavior, and the easier
+debugging will be.  (There is an analogy here to the old joke about the
+<a href="https://en.wikipedia.org/wiki/Streetlight_effect">drunk searching for his car keys under the street
+light</a>.)  Only once the
+basics are covered in your tests is it worth getting more clever.  If your
+simpler tests pass and only the more complex ones fail, then at least you
+can assume that simple stuff is functioning correctly; that may help you
+reason about why the harder cases have gone wrong.</p>
+
+<p>Here is an example of a simple one from pbrt-v4. pbrt provides an
+<a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/parallel.h#L126"><code class="highlighter-rouge">AtomicFloat</code></a>
+class that can atomically add values to a floating-point
+variable.<sup id="fnref:atomicfloat"><a href="#fn:atomicfloat" class="footnote">1</a></sup> This test ensures that <code class="highlighter-rouge">AtomicFloat</code> isn’t utterly
+broken.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>TEST(FloatingPoint, AtomicFloat) {
+    AtomicFloat af(0);
+    Float f = 0.;
+    EXPECT_EQ(f, af);
+
+    af.Add(1.0251);
+    f += 1.0251;
+    EXPECT_EQ(f, af);
+
+    af.Add(2.);
+    f += 2.;
+    EXPECT_EQ(f, af);
+}
+</code></pre>
+</div>
+
+<p>The test is as simple as it could be: it performs a few additions and makes
+sure that the result is the same as if a regular <code class="highlighter-rouge">float</code> had been used.
+It’s hard to imagine that this test would ever fail, but if it
+did, jackpot! We have an easy case to reason about and trace through.</p>
+
+<p>Here’s another example of a not-very-clever test from pbrt-v4. Most
+of the sampling functions there now provide an inversion function that goes
+from sampled values back to the original \([0,1]^n\) sample space.  Thus,
+it’s worth checking that a round-trip brings you back to (more or less)
+where you started.  The following test takes a bunch of random samples <code class="highlighter-rouge">u</code>,
+warps them to directions <code class="highlighter-rouge">dir</code> on the hemisphere, then warps the directions
+back to points <code class="highlighter-rouge">up</code> in the canonical \([0,1]^2\) square, before checking
+the result is pretty much back where it started.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>TEST(Sampling, InvertUniformHemisphere) {
+    for (Point2f u : Uniform2D(1000)) {
+        Vector3f dir = SampleUniformHemisphere(u);
+        Point2f up = InvertUniformHemisphereSample(dir);
+
+        EXPECT_LT(std::abs(u.x - up.x), 1e-3);
+        EXPECT_LT(std::abs(u.y - up.y), 1e-3);
+    }
+}
+</code></pre>
+</div>
+
+<p>There’s not much to that test, but it’s a nice one to have in the bag.
+Once it passes, you can feel pretty good about your
+<code class="highlighter-rouge">InvertUniformHemisphereSample</code> function, at least if you have independent
+confidence that <code class="highlighter-rouge">SampleUniformHemisphere</code> works.  And how long does it take
+to write?  No more than a minute or two.  Once it is passing, you can 
+more confidently make improvements to the implementations of either of
+those functions knowing that this test has a good chance of failing if you
+mess something up.</p>
+
+<p>About succinctness in tests: that <code class="highlighter-rouge">Uniform2D</code> in that test is a <a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling.h#L1075">little
+thing</a>
+I wrote purely to make unit tests more concise.  It’s crafted to be used
+with C++ range-based <code class="highlighter-rouge">for</code> loops and here generates 1000 uniformly
+distributed 2D sample values to be looped over.  It and a handful of other
+sample point generators save a few lines of code in each test that
+otherwise needs a number of random values of some dimensionality and
+pattern.  I’ve found that just about anything that reduces friction when
+writing tests ends up being worthwhile in that each of those things
+generally leads to more tests being written in the end.</p>
+
+<h2 id="the-challenge-of-sampling">The Challenge of Sampling</h2>
+
+<p>One of the challenges in implementing a Monte Carlo renderer is that the
+computation is statistical in nature; sometimes it’s hard to tell if a
+given sample value is incorrect or if it’s a valid outlier.  Bugs often
+only become evident in the aggregate with many samples.  That challenge
+extends to writing unit tests—for example, given a routine to draw
+samples from some distribution, how can we be sure the samples are in fact
+from the expected distribution?</p>
+
+<p>The Right Thing to do is to apply proper statistical tests.  For example,
+<a href="http://rgl.epfl.ch/people/wjakob/">Wenzel</a> has written code that applies a
+\(\chi^2\)-test to pbrt’s <a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/bsdfs_test.cpp#L280">BSDF sampling
+routines</a>.
+Those tests recently helped him chase down and fix <a href="https://github.com/mmp/pbrt-v4/commit/dfa1107459745b4d276c9bbdae73941cb269e077">a tricky bug in pbrt’s
+rough dielectric sampling
+code</a>. Much
+respect for doing it the right way.</p>
+
+<p>My discipline is not always as strong as Wenzel’s, though there are some
+more straightforward alternatives that are also effective.
+For example, pbrt has many little sampling functions that
+draw samples from some distribution.  An easy way to test them is to
+evaluate the underlying function to create a tabularized distribution and
+to confirm that both it and the sampling method to be tested more or less
+generate the same samples with same probabilities.  As an example, here is
+an excerpt from the <a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling_test.cpp#L815">test for sampling a trimmed
+Gaussian</a>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>    auto exp = [&amp;](Float x) { return std::exp(-c * x); };
+    auto values = Sample1DFunction(exp, 32768, 16, 0, xMax);
+    PiecewiseConstant1D distrib(values, 0, xMax);
+
+    for (Float u : Uniform1D(100)) {
+        Float sampledX = SampleTrimmedExponential(u, c, xMax);
+        Float sampledProb = TrimmedExponentialPDF(sampledX, c, xMax);
+
+        Float discreteProb;
+        Float discreteX = distrib.Sample(u, &amp;discreteProb);
+        EXPECT_LT(std::abs(sampledX - discreteX), 1e-2);
+        EXPECT_LT(std::abs(sampledProb - discreteProb), 1e-2);
+</code></pre>
+</div>
+
+<p>The <code class="highlighter-rouge">Sample1DFunction</code> utility routine takes a function and evaluates it in
+a specified number of buckets covering a specified range, returning a
+vector of values. <code class="highlighter-rouge">PiecewiseConstant1D</code> then computes the corresponding
+piecewise-constant 1D distribution.  We then take samples using the exact
+sampling routine and the piecewise-constant routine and ensure that each
+sample value is approximately the same and each returned sample probability
+is close as well.  (This test implicitly depends on both sampling
+approaches warping uniform samples to samples from the function with values
+of <code class="highlighter-rouge">u</code> close to zero at the lower end of the exponential and <code class="highlighter-rouge">u</code> close to
+one at the upper end, which is the case here.)</p>
+
+<p>To be clear: <code class="highlighter-rouge">SampleTrimmedExponential</code> could still be buggy even when that
+test passes.  One might fret about those fairly large <code class="highlighter-rouge">1e-2</code> epsilons used
+for the quality test, for example.  It is possible that the looseness of
+those epsilons might mask something subtly wrong, but we can at least trust
+that the function isn’t completely broken, off by a significant constant
+factor or the like.</p>
+
+<p>Writing this sort of test requires trusting your functions for sampling
+tabularized distributions, but those too have their own tests;
+eventually one can be confident in all of the foundations.  For example,
+<a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling_test.cpp#L216">this
+one</a>
+compares those results to a case where the expected result can be worked
+out by hand and ensures that they match.</p>
+
+<h2 id="preserving-the-evidence">Preserving the Evidence</h2>
+
+<p>Another good use for unit tests is for isolating bugs, both for debugging
+them when they first occur and for ensuring that a subsequent change to the
+system doesn’t inadvertently reintroduce them.</p>
+
+<p>Disney’s <em>Moana Island</em> scene helped surface all sorts of bugs in pbrt;
+many were fairly painful to debug since many were of the form of “render
+for a few hours before the crash happens.” For those, I found it useful to
+turn them into small unit tests as soon as I could narrow down what was
+going wrong.</p>
+
+<p>Here’s one for a ray-triangle intersection that went bad.  We have a
+degenerate triangle (note that the x and z coordinates are all equal), and
+so the intersection test should never return true. But for the specific ray
+here, it once did, and then things went south from there.  Trying potential
+fixes with a small test like this was a nice way to work through the issue
+in the first place—it was easy to try a fix, recompile, and quickly see
+if it worked.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>TEST(Triangle, BadCases) {
+    Transform identity;
+    std::vector&lt;int&gt; indices{ 0, 1, 2 };
+    std::vector&lt;Point3f&gt; p { Point3f(-1113.45459, -79.0496140, -56.2431908),
+                             Point3f(-1113.45459, -87.0922699, -56.2431908),
+                             Point3f(-1113.45459, -79.2090149, -56.2431908) };
+    TriangleMesh mesh(identity, false, indices, p, {}, {}, {}, {});
+    auto tris = Triangle::CreateTriangles(&amp;mesh, Allocator());
+
+    Ray ray(Point3f(-1081.47925, 99.9999542, 87.7701111),
+            Vector3f(-32.1072998, -183.355865, -144.607635), 0.9999);
+
+    EXPECT_FALSE(tris[0].Intersect(ray).has_value());
+}
+</code></pre>
+</div>
+
+<p>One thing to note when extracting failure cases like this is that it’s
+critical to get <a href="https://randomascii.wordpress.com/2013/02/07/float-precision-revisited-nine-digit-float-portability/">every last
+digit</a>
+of floating-point values: if the floats you test with aren’t precisely the
+same as the ones that led to the bug, you may not hit the bug at all in a
+test run.</p>
+
+<h2 id="never-defer-looking-into-a-failing-test">Never Defer Looking into a Failing Test</h2>
+
+<p>A cautionary tale to wrap up: a few months ago a <a href="Https://github.com/mmp/pbrt-v4/issues/177">bug
+report</a> about a failing unit
+test in pbrt-v4 came in.  It had the following summary:</p>
+
+<blockquote>
+  <ul>
+    <li>gcc-8.4 has stuck forever on ZSobolSampler.ValidIndices test</li>
+    <li>gcc-9.3 passed all tests</li>
+    <li>gcc-10.3 gives me the following message (in an eternal cycle) during tests</li>
+  </ul>
+
+  <p><tt>/src/pbrt/samplers_test.cpp:182: Failure</tt><br />
+<tt>Value of: returnedIndices.find(index) == returnedIndices.end()</tt><br />
+<tt>  Actual: false</tt><br />
+<tt>  Expected: true</tt></p>
+</blockquote>
+
+<p>The <code class="highlighter-rouge">ZSobolSampler</code> implements <a href="http://abdallagafar.com/publications/zsampler/">Ahmed and Wonka’s blue noise
+sampler</a>, which is based on
+permuting a set of low-discrepancy samples in a way that improves their
+blue noise characteristics.  pbrt’s <a href="https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/samplers_test.cpp#L167">ZSobolSampler.ValidIndices
+test</a>
+essentially just checks that the permutation is correct by verifying that
+the same sample isn’t returned for two different pixels.  That test had been
+helpful when I first implemented that sampler, but it had been no trouble
+for months when that bug report arrived.</p>
+
+<p>When the bug report came in, I took a quick look at that test and couldn’t
+imagine how it would ever run forever.  No one else had reported anything
+similar and so, to my shame, I assumed it must be a problem with the
+compiler installation on the user’s system or some other one-off error.  I
+didn’t look at it again for almost two months.</p>
+
+<p>When I gave it more attention, I immediately found that I could reproduce
+the bug using those compilers, just as reported.  It was a gnarly bug—one
+that disappeared when I recompiled with debugging symbols and even
+disappeared with an optimized build with debugging symbols.  The bug would
+randomly disappear if I added print statements to log the program’s
+execution.  Eventually I thought to try
+<a href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html">UBSan</a>, and
+it saved the day, identifying this line of code as the problem:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>int p = (MixBits(higherDigits ^ (0x55555555 * dimension)) &gt;&gt; 24) % 24;
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">0x55555555</code> is a signed integer and multiplying by <code class="highlighter-rouge">dimension</code>, which was
+an integer that starts at 0 and goes up from there, quickly led to
+overflow, which is undefined behavior (UB) in C++.  In turn, <em>gcc</em> was
+presumably assuming that there was no UB in the program and optimizing
+accordingly, leading in one case to an infinite loop and in another to a
+bogus sample permutation.</p>
+
+<p>At least the fix was easy—all is fine with an unsigned integer, where
+overflow is allowed and well-defined:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>int p = (MixBits(higherDigits ^ (0x55555555u * dimension)) &gt;&gt; 24) % 24;
+</code></pre>
+</div>
+
+<p>Leaving aside the joys of undefined behavior in C++, it was hard enough to
+chase that bug down with it already narrowed down to a failing test.  If
+the bug had been something like “images are slightly too dark with
+gcc-10.3” (as could conceivably happen with repeated sample values,
+depending on how they were being repeated), it surely would have been an
+even longer and more painful journey. Score +1 for unit tests and -1 for
+me.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We’re not done with testing! With the unit testing lecture over, next time
+it will be on to some thoughts about writing effective assertions and how
+end-to-end tests fit in for testing renderers.</p>
+
+<p>Also, an experiment below: I’ve set up <a href="https://utteranc.es/">utterances</a>
+to allow comments here.  We’ll see how that goes, with fingers crossed.</p>
+
+<h2 id="note">note</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:atomicfloat">
+      <p>That capability isn’t provided by the C++ standard library
+            since floating-point addition is not associative, so
+            different execution orders may give different results.
+            For pbrt’s purposes, that’s not a concern, so <code class="highlighter-rouge">AtomicFloat</code>
+            provides that functionality through atomic compare/exchange
+            operations. <a href="#fnref:atomicfloat" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+
+    <h2 id="discussion">Discussion</h2>
+
+    <script src="https://utteranc.es/client.js"
+            repo="mmp/pharr.org"
+            issue-term="pathname"
+            label="blog-comment"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+  </div>
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

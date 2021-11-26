@@ -88,13 +88,15 @@ blockquote {
   font-style: italic; }
   blockquote > :last-child {
     margin-bottom: 0; }
+  blockquote tt {
+    font-size: 14.4px; }
 
 /**
  * Code formatting
  */
 pre,
 code {
-  font-size: 16.2px;
+  font-size: 14.4px;
   border-radius: 1px;
   background-color: #f0f0f0; }
 

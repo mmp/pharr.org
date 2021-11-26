@@ -1,5 +1,385 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-08-07T08:12:43-05:00</updated><id>https://pharr.org/matt/blog/</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth</title><link href="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth" /><published>2021-08-07T00:00:00-05:00</published><updated>2021-08-07T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html">&lt;p&gt;At the ostensible &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html&quot;&gt;end of these
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-11-26T13:44:09-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Debugging Your Renderer (2/n): Unit Tests</title><link href="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (2/n): Unit Tests" /><published>2021-11-26T00:00:00-08:00</published><updated>2021-11-26T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html">&lt;p&gt;Here we are, a year and a half after I posted an &lt;a href=&quot;/matt/blog/2020/04/26/debugging-intro.html&quot;&gt;introduction that was
+full of talk&lt;/a&gt; about a
+forthcoming series of blog posts about debugging renderers.  When I posted
+that I already had a text file full of notes and had the idea that I’d get
+through a series of 8 or so posts over the following few weeks.&lt;/p&gt;
+
+&lt;p&gt;…and it’s been nothing but crickets after that setup.&lt;/p&gt;
+
+&lt;p&gt;There’s no good reason for my poor follow-through, though this series did
+turn into one of those things that got more daunting to return to the
+longer time went by; I felt like the bar kept getting higher and that my
+eventual postings would have to make up for the bait and switch.&lt;/p&gt;
+
+&lt;p&gt;Now that I’m at it again, I can’t promise that these posts will make up for
+the wait; in general, you get what you pay for around here.  But let’s
+reset and try getting back into it.&lt;/p&gt;
+
+&lt;p&gt;To get back in the right mood, here are a pair of images back from the
+first time I tried to implement Greg Ward’s irradiance caching algorithm
+back when I was in grad school:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;img src=&quot;/matt/blog/images/irradCacheInfinity.png&quot; width=&quot;288&quot; height=&quot;192&quot; /&gt;
+&lt;img src=&quot;/matt/blog/images/irradCache.png&quot; width=&quot;288&quot; height=&quot;192&quot; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;In the left image (which was rendered from right to left for some reason),
+there was a bug that caused energy to grow without bound as the cache was
+populated (no doubt a missing factor of \(1/\pi\) that led to a feedback
+loop).  I always liked how that image went from ok to a little too bright
+to thermonuclear by the time it was halfway through.  The image on the
+right is my eventual success, with a slightly different scene layout.&lt;/p&gt;
+
+&lt;h2 id=&quot;avoiding-the-bad-place&quot;&gt;Avoiding The Bad Place&lt;/h2&gt;
+
+&lt;p&gt;There’s nothing fun about an image that starts out ok and then goes bad or
+your renderer crashing after its been running for an hour with a stack
+trace 20 levels deep.  There’s lots to be unhappy about:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Things are broken, but they’re not utterly broken, which suggests that
+the underlying bug will be subtle and thus difficult to track down.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;There’s an enormous amount of state to reason about—the scene in all
+its complexity, all of the derived data structures, and everything that
+happened since the start of rendering until things evidently went wrong.
+Any bit of it may hold the problem that led to disaster.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;More specifically, the actual bug may be in code that ran long before the
+bug became evident; some incorrect value computed earlier that messed
+things up later, possibly in an indirect way.  This is a particular
+challenge with algorithms that reuse earlier results, be it spatially,
+temporally or otherwise.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;It may be minutes or even hours into rendering before the bug manifests
+itself; each time you think you’ve fixed it, you’ve got to again wait
+that much longer to confirm that you’re right.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Anything you can do to avoid that sad situation reduces the amount of time
+you spend on gnarly debugging problems, and in turn, the more productive
+you’ll be (and the more fun you’ll have, actually implementing fun new
+things rather than trying to make the old things work correctly.)  That
+goal leads to the first principle of renderer debugging:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Try to make it a conventional debugging problem (“given these inputs,
+this function produces this incorrect output”) and not an unbounded “this
+image is wrong and I don’t know why” problem.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;One of the best ways to have more bugs be in the first category is to
+have a good suite of unit tests. There’s nothing glamorous about writing
+unit tests, at least in the moment, but they can give you a lot in return
+for not too much work.  Not only does failing unit test immediately narrow
+down the source of a bug to the few things that the test exercises, but it
+generally gives you an easier debugging problem than a failure in the
+context of the full renderer.&lt;/p&gt;
+
+&lt;h2 id=&quot;starting-simple&quot;&gt;Starting Simple&lt;/h2&gt;
+
+&lt;p&gt;A good unit test is crisp—easy to understand and just testing one thing.
+Writing tests becomes more fun if you embrace that way of going about
+it—it’s easy coding since the whole goal is to not be tricky, with the
+idea that you want to minimize the chance that your test itself has bugs.
+A good testing framework helps by making it easy to add tests; I’ve been
+using &lt;a href=&quot;https://github.com/google/googletest&quot;&gt;googletest&lt;/a&gt; for years, but
+there are plenty of others.&lt;/p&gt;
+
+&lt;p&gt;It’s good to start out by testing the most obvious things you can think of.
+That may be counter-intuitive—it’s tempting to start with devious tests
+that poke all the edge cases.  However, if you think about it from the
+perspective of encountering a failing test, then the simpler the test is,
+the easier it is to reason about the correct behavior, and the easier
+debugging will be.  (There is an analogy here to the old joke about the
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Streetlight_effect&quot;&gt;drunk searching for his car keys under the street
+light&lt;/a&gt;.)  Only once the
+basics are covered in your tests is it worth getting more clever.  If your
+simpler tests pass and only the more complex ones fail, then at least you
+can assume that simple stuff is functioning correctly; that may help you
+reason about why the harder cases have gone wrong.&lt;/p&gt;
+
+&lt;p&gt;Here is an example of a simple one from pbrt-v4. pbrt provides an
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/parallel.h#L126&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;AtomicFloat&lt;/code&gt;&lt;/a&gt;
+class that can atomically add values to a floating-point
+variable.&lt;sup id=&quot;fnref:atomicfloat&quot;&gt;&lt;a href=&quot;#fn:atomicfloat&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; This test ensures that &lt;code class=&quot;highlighter-rouge&quot;&gt;AtomicFloat&lt;/code&gt; isn’t utterly
+broken.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;TEST(FloatingPoint, AtomicFloat) {
+    AtomicFloat af(0);
+    Float f = 0.;
+    EXPECT_EQ(f, af);
+
+    af.Add(1.0251);
+    f += 1.0251;
+    EXPECT_EQ(f, af);
+
+    af.Add(2.);
+    f += 2.;
+    EXPECT_EQ(f, af);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The test is as simple as it could be: it performs a few additions and makes
+sure that the result is the same as if a regular &lt;code class=&quot;highlighter-rouge&quot;&gt;float&lt;/code&gt; had been used.
+It’s hard to imagine that this test would ever fail, but if it
+did, jackpot! We have an easy case to reason about and trace through.&lt;/p&gt;
+
+&lt;p&gt;Here’s another example of a not-very-clever test from pbrt-v4. Most
+of the sampling functions there now provide an inversion function that goes
+from sampled values back to the original \([0,1]^n\) sample space.  Thus,
+it’s worth checking that a round-trip brings you back to (more or less)
+where you started.  The following test takes a bunch of random samples &lt;code class=&quot;highlighter-rouge&quot;&gt;u&lt;/code&gt;,
+warps them to directions &lt;code class=&quot;highlighter-rouge&quot;&gt;dir&lt;/code&gt; on the hemisphere, then warps the directions
+back to points &lt;code class=&quot;highlighter-rouge&quot;&gt;up&lt;/code&gt; in the canonical \([0,1]^2\) square, before checking
+the result is pretty much back where it started.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;TEST(Sampling, InvertUniformHemisphere) {
+    for (Point2f u : Uniform2D(1000)) {
+        Vector3f dir = SampleUniformHemisphere(u);
+        Point2f up = InvertUniformHemisphereSample(dir);
+
+        EXPECT_LT(std::abs(u.x - up.x), 1e-3);
+        EXPECT_LT(std::abs(u.y - up.y), 1e-3);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There’s not much to that test, but it’s a nice one to have in the bag.
+Once it passes, you can feel pretty good about your
+&lt;code class=&quot;highlighter-rouge&quot;&gt;InvertUniformHemisphereSample&lt;/code&gt; function, at least if you have independent
+confidence that &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleUniformHemisphere&lt;/code&gt; works.  And how long does it take
+to write?  No more than a minute or two.  Once it is passing, you can 
+more confidently make improvements to the implementations of either of
+those functions knowing that this test has a good chance of failing if you
+mess something up.&lt;/p&gt;
+
+&lt;p&gt;About succinctness in tests: that &lt;code class=&quot;highlighter-rouge&quot;&gt;Uniform2D&lt;/code&gt; in that test is a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling.h#L1075&quot;&gt;little
+thing&lt;/a&gt;
+I wrote purely to make unit tests more concise.  It’s crafted to be used
+with C++ range-based &lt;code class=&quot;highlighter-rouge&quot;&gt;for&lt;/code&gt; loops and here generates 1000 uniformly
+distributed 2D sample values to be looped over.  It and a handful of other
+sample point generators save a few lines of code in each test that
+otherwise needs a number of random values of some dimensionality and
+pattern.  I’ve found that just about anything that reduces friction when
+writing tests ends up being worthwhile in that each of those things
+generally leads to more tests being written in the end.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-challenge-of-sampling&quot;&gt;The Challenge of Sampling&lt;/h2&gt;
+
+&lt;p&gt;One of the challenges in implementing a Monte Carlo renderer is that the
+computation is statistical in nature; sometimes it’s hard to tell if a
+given sample value is incorrect or if it’s a valid outlier.  Bugs often
+only become evident in the aggregate with many samples.  That challenge
+extends to writing unit tests—for example, given a routine to draw
+samples from some distribution, how can we be sure the samples are in fact
+from the expected distribution?&lt;/p&gt;
+
+&lt;p&gt;The Right Thing to do is to apply proper statistical tests.  For example,
+&lt;a href=&quot;http://rgl.epfl.ch/people/wjakob/&quot;&gt;Wenzel&lt;/a&gt; has written code that applies a
+\(\chi^2\)-test to pbrt’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/bsdfs_test.cpp#L280&quot;&gt;BSDF sampling
+routines&lt;/a&gt;.
+Those tests recently helped him chase down and fix &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/dfa1107459745b4d276c9bbdae73941cb269e077&quot;&gt;a tricky bug in pbrt’s
+rough dielectric sampling
+code&lt;/a&gt;. Much
+respect for doing it the right way.&lt;/p&gt;
+
+&lt;p&gt;My discipline is not always as strong as Wenzel’s, though there are some
+more straightforward alternatives that are also effective.
+For example, pbrt has many little sampling functions that
+draw samples from some distribution.  An easy way to test them is to
+evaluate the underlying function to create a tabularized distribution and
+to confirm that both it and the sampling method to be tested more or less
+generate the same samples with same probabilities.  As an example, here is
+an excerpt from the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling_test.cpp#L815&quot;&gt;test for sampling a trimmed
+Gaussian&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    auto exp = [&amp;amp;](Float x) { return std::exp(-c * x); };
+    auto values = Sample1DFunction(exp, 32768, 16, 0, xMax);
+    PiecewiseConstant1D distrib(values, 0, xMax);
+
+    for (Float u : Uniform1D(100)) {
+        Float sampledX = SampleTrimmedExponential(u, c, xMax);
+        Float sampledProb = TrimmedExponentialPDF(sampledX, c, xMax);
+
+        Float discreteProb;
+        Float discreteX = distrib.Sample(u, &amp;amp;discreteProb);
+        EXPECT_LT(std::abs(sampledX - discreteX), 1e-2);
+        EXPECT_LT(std::abs(sampledProb - discreteProb), 1e-2);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;Sample1DFunction&lt;/code&gt; utility routine takes a function and evaluates it in
+a specified number of buckets covering a specified range, returning a
+vector of values. &lt;code class=&quot;highlighter-rouge&quot;&gt;PiecewiseConstant1D&lt;/code&gt; then computes the corresponding
+piecewise-constant 1D distribution.  We then take samples using the exact
+sampling routine and the piecewise-constant routine and ensure that each
+sample value is approximately the same and each returned sample probability
+is close as well.  (This test implicitly depends on both sampling
+approaches warping uniform samples to samples from the function with values
+of &lt;code class=&quot;highlighter-rouge&quot;&gt;u&lt;/code&gt; close to zero at the lower end of the exponential and &lt;code class=&quot;highlighter-rouge&quot;&gt;u&lt;/code&gt; close to
+one at the upper end, which is the case here.)&lt;/p&gt;
+
+&lt;p&gt;To be clear: &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleTrimmedExponential&lt;/code&gt; could still be buggy even when that
+test passes.  One might fret about those fairly large &lt;code class=&quot;highlighter-rouge&quot;&gt;1e-2&lt;/code&gt; epsilons used
+for the quality test, for example.  It is possible that the looseness of
+those epsilons might mask something subtly wrong, but we can at least trust
+that the function isn’t completely broken, off by a significant constant
+factor or the like.&lt;/p&gt;
+
+&lt;p&gt;Writing this sort of test requires trusting your functions for sampling
+tabularized distributions, but those too have their own tests;
+eventually one can be confident in all of the foundations.  For example,
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/util/sampling_test.cpp#L216&quot;&gt;this
+one&lt;/a&gt;
+compares those results to a case where the expected result can be worked
+out by hand and ensures that they match.&lt;/p&gt;
+
+&lt;h2 id=&quot;preserving-the-evidence&quot;&gt;Preserving the Evidence&lt;/h2&gt;
+
+&lt;p&gt;Another good use for unit tests is for isolating bugs, both for debugging
+them when they first occur and for ensuring that a subsequent change to the
+system doesn’t inadvertently reintroduce them.&lt;/p&gt;
+
+&lt;p&gt;Disney’s &lt;em&gt;Moana Island&lt;/em&gt; scene helped surface all sorts of bugs in pbrt;
+many were fairly painful to debug since many were of the form of “render
+for a few hours before the crash happens.” For those, I found it useful to
+turn them into small unit tests as soon as I could narrow down what was
+going wrong.&lt;/p&gt;
+
+&lt;p&gt;Here’s one for a ray-triangle intersection that went bad.  We have a
+degenerate triangle (note that the x and z coordinates are all equal), and
+so the intersection test should never return true. But for the specific ray
+here, it once did, and then things went south from there.  Trying potential
+fixes with a small test like this was a nice way to work through the issue
+in the first place—it was easy to try a fix, recompile, and quickly see
+if it worked.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;TEST(Triangle, BadCases) {
+    Transform identity;
+    std::vector&amp;lt;int&amp;gt; indices{ 0, 1, 2 };
+    std::vector&amp;lt;Point3f&amp;gt; p { Point3f(-1113.45459, -79.0496140, -56.2431908),
+                             Point3f(-1113.45459, -87.0922699, -56.2431908),
+                             Point3f(-1113.45459, -79.2090149, -56.2431908) };
+    TriangleMesh mesh(identity, false, indices, p, {}, {}, {}, {});
+    auto tris = Triangle::CreateTriangles(&amp;amp;mesh, Allocator());
+
+    Ray ray(Point3f(-1081.47925, 99.9999542, 87.7701111),
+            Vector3f(-32.1072998, -183.355865, -144.607635), 0.9999);
+
+    EXPECT_FALSE(tris[0].Intersect(ray).has_value());
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;One thing to note when extracting failure cases like this is that it’s
+critical to get &lt;a href=&quot;https://randomascii.wordpress.com/2013/02/07/float-precision-revisited-nine-digit-float-portability/&quot;&gt;every last
+digit&lt;/a&gt;
+of floating-point values: if the floats you test with aren’t precisely the
+same as the ones that led to the bug, you may not hit the bug at all in a
+test run.&lt;/p&gt;
+
+&lt;h2 id=&quot;never-defer-looking-into-a-failing-test&quot;&gt;Never Defer Looking into a Failing Test&lt;/h2&gt;
+
+&lt;p&gt;A cautionary tale to wrap up: a few months ago a &lt;a href=&quot;Https://github.com/mmp/pbrt-v4/issues/177&quot;&gt;bug
+report&lt;/a&gt; about a failing unit
+test in pbrt-v4 came in.  It had the following summary:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;ul&gt;
+    &lt;li&gt;gcc-8.4 has stuck forever on ZSobolSampler.ValidIndices test&lt;/li&gt;
+    &lt;li&gt;gcc-9.3 passed all tests&lt;/li&gt;
+    &lt;li&gt;gcc-10.3 gives me the following message (in an eternal cycle) during tests&lt;/li&gt;
+  &lt;/ul&gt;
+
+  &lt;p&gt;&lt;tt&gt;/src/pbrt/samplers_test.cpp:182: Failure&lt;/tt&gt;&lt;br /&gt;
+&lt;tt&gt;Value of: returnedIndices.find(index) == returnedIndices.end()&lt;/tt&gt;&lt;br /&gt;
+&lt;tt&gt;  Actual: false&lt;/tt&gt;&lt;br /&gt;
+&lt;tt&gt;  Expected: true&lt;/tt&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;ZSobolSampler&lt;/code&gt; implements &lt;a href=&quot;http://abdallagafar.com/publications/zsampler/&quot;&gt;Ahmed and Wonka’s blue noise
+sampler&lt;/a&gt;, which is based on
+permuting a set of low-discrepancy samples in a way that improves their
+blue noise characteristics.  pbrt’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/792aaaa08d97dbedf11a3bb23e246b6443d847b4/src/pbrt/samplers_test.cpp#L167&quot;&gt;ZSobolSampler.ValidIndices
+test&lt;/a&gt;
+essentially just checks that the permutation is correct by verifying that
+the same sample isn’t returned for two different pixels.  That test had been
+helpful when I first implemented that sampler, but it had been no trouble
+for months when that bug report arrived.&lt;/p&gt;
+
+&lt;p&gt;When the bug report came in, I took a quick look at that test and couldn’t
+imagine how it would ever run forever.  No one else had reported anything
+similar and so, to my shame, I assumed it must be a problem with the
+compiler installation on the user’s system or some other one-off error.  I
+didn’t look at it again for almost two months.&lt;/p&gt;
+
+&lt;p&gt;When I gave it more attention, I immediately found that I could reproduce
+the bug using those compilers, just as reported.  It was a gnarly bug—one
+that disappeared when I recompiled with debugging symbols and even
+disappeared with an optimized build with debugging symbols.  The bug would
+randomly disappear if I added print statements to log the program’s
+execution.  Eventually I thought to try
+&lt;a href=&quot;https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html&quot;&gt;UBSan&lt;/a&gt;, and
+it saved the day, identifying this line of code as the problem:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;int p = (MixBits(higherDigits ^ (0x55555555 * dimension)) &amp;gt;&amp;gt; 24) % 24;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;0x55555555&lt;/code&gt; is a signed integer and multiplying by &lt;code class=&quot;highlighter-rouge&quot;&gt;dimension&lt;/code&gt;, which was
+an integer that starts at 0 and goes up from there, quickly led to
+overflow, which is undefined behavior (UB) in C++.  In turn, &lt;em&gt;gcc&lt;/em&gt; was
+presumably assuming that there was no UB in the program and optimizing
+accordingly, leading in one case to an infinite loop and in another to a
+bogus sample permutation.&lt;/p&gt;
+
+&lt;p&gt;At least the fix was easy—all is fine with an unsigned integer, where
+overflow is allowed and well-defined:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;int p = (MixBits(higherDigits ^ (0x55555555u * dimension)) &amp;gt;&amp;gt; 24) % 24;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Leaving aside the joys of undefined behavior in C++, it was hard enough to
+chase that bug down with it already narrowed down to a failing test.  If
+the bug had been something like “images are slightly too dark with
+gcc-10.3” (as could conceivably happen with repeated sample values,
+depending on how they were being repeated), it surely would have been an
+even longer and more painful journey. Score +1 for unit tests and -1 for
+me.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;We’re not done with testing! With the unit testing lecture over, next time
+it will be on to some thoughts about writing effective assertions and how
+end-to-end tests fit in for testing renderers.&lt;/p&gt;
+
+&lt;p&gt;Also, an experiment below: I’ve set up &lt;a href=&quot;https://utteranc.es/&quot;&gt;utterances&lt;/a&gt;
+to allow comments here.  We’ll see how that goes, with fingers crossed.&lt;/p&gt;
+
+&lt;h2 id=&quot;note&quot;&gt;note&lt;/h2&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:atomicfloat&quot;&gt;
+      &lt;p&gt;That capability isn’t provided by the C++ standard library
+            since floating-point addition is not associative, so
+            different execution orders may give different results.
+            For pbrt’s purposes, that’s not a concern, so &lt;code class=&quot;highlighter-rouge&quot;&gt;AtomicFloat&lt;/code&gt;
+            provides that functionality through atomic compare/exchange
+            operations. &lt;a href=&quot;#fnref:atomicfloat&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning, now with intention, to write up some thoughts about how to effectively debug a renderer.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth</title><link href="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth" /><published>2021-08-07T00:00:00-07:00</published><updated>2021-08-07T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html">&lt;p&gt;At the ostensible &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html&quot;&gt;end of these
 updates&lt;/a&gt; about
 pbrt-v4’s performance when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana Island
 scene&lt;/a&gt;,
@@ -225,7 +605,7 @@ it’s time to leave things where they lie for now.&lt;/p&gt;
       &lt;p&gt;The road to disastrous performance is paved with “pretty sure” assumptions about a system’s behavior, so that assumption was admittedly not wise. &lt;a href=&quot;#fnref:ps&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">A few concluding notes (this time for real) about the effect of disk bandwidth when preparing to render the Moana Island scene with pbrt-v4.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 11): Once More Unto The Beach</title><link href="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 11): Once More Unto The Beach" /><published>2021-08-01T00:00:00-05:00</published><updated>2021-08-01T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html">&lt;p&gt;There are two perspectives that one might take in assessing how far things
+&lt;/div&gt;</content><author><name></name></author><summary type="html">A few concluding notes (this time for real) about the effect of disk bandwidth when preparing to render the Moana Island scene with pbrt-v4.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 11): Once More Unto The Beach</title><link href="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 11): Once More Unto The Beach" /><published>2021-08-01T00:00:00-07:00</published><updated>2021-08-01T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html">&lt;p&gt;There are two perspectives that one might take in assessing how far things
 have come with pbrt-v4’s performance with &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana Island
 scene&lt;/a&gt;: the
 optimist’s and the pessimist’s.  As far as rendering performance goes, I
@@ -572,7 +952,7 @@ the island scene.&lt;/p&gt;
       &lt;p&gt;As was learned during the initial implementation of this feature. &lt;a href=&quot;#fnref:al&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">More attention to pbrt's performance when getting ready to render Disney's Moana Island scene finally gets us somewhere.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</title><link href="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 10): Rendering on the GPU—Finally" /><published>2021-07-29T00:00:00-05:00</published><updated>2021-07-29T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html">&lt;p&gt;We’re big fans of actually making pictures around here, so avoiding the
+&lt;/div&gt;</content><author><name></name></author><summary type="html">More attention to pbrt's performance when getting ready to render Disney's Moana Island scene finally gets us somewhere.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</title><link href="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 10): Rendering on the GPU—Finally" /><published>2021-07-29T00:00:00-07:00</published><updated>2021-07-29T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html">&lt;p&gt;We’re big fans of actually making pictures around here, so avoiding the
 topic of rendering performance and focusing on performance while getting
 ready for rendering may seem a little off.  A flimsy defense for that is
 “vegetables before dessert”; we must attend to our responsibilities before
@@ -833,7 +1213,7 @@ different with those two differences harmonized.&lt;/p&gt;
 
 &lt;p&gt;Next time we’ll come back to to review where pbrt-v4 stands in the time to
 first pixel department and then end this series, at least for now, with
-some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 9): We Got Instances</title><link href="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 9): We Got Instances" /><published>2021-07-27T00:00:00-05:00</published><updated>2021-07-27T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html">&lt;p&gt;&lt;a href=&quot;/matt/blog/2021/07/25/moana-gpu-part-1.html&quot;&gt;Last time around&lt;/a&gt; we finally
+some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 9): We Got Instances</title><link href="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 9): We Got Instances" /><published>2021-07-27T00:00:00-07:00</published><updated>2021-07-27T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html">&lt;p&gt;&lt;a href=&quot;/matt/blog/2021/07/25/moana-gpu-part-1.html&quot;&gt;Last time around&lt;/a&gt; we finally
 got started digging into &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
 performance with the Moana Island scene using its GPU rendering path.
 Then, as today, the focus was limited to all of the processing that goes on
@@ -1079,7 +1459,7 @@ be read in parallel would likely shave a few more seconds off.&lt;/p&gt;
 
 &lt;p&gt;Next time, we’ll turn to rendering, covering some of the details related to
 getting this scene to render on the GPU in the first place and finally
-looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 8): Meet The GPU</title><link href="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 8): Meet The GPU" /><published>2021-07-25T00:00:00-05:00</published><updated>2021-07-25T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html">&lt;p&gt;It’s been over three months since my &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;last
+looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 8): Meet The GPU</title><link href="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 8): Meet The GPU" /><published>2021-07-25T00:00:00-07:00</published><updated>2021-07-25T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html">&lt;p&gt;It’s been over three months since my &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;last
 post&lt;/a&gt; about rendering Disney’s
 &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Moana Island
 scene&lt;/a&gt; with
@@ -1325,7 +1705,7 @@ instance BVH phase next time around.&lt;/p&gt;
       &lt;p&gt;The GPU’s performance monitoring API reports its results averaged over an unspecified but up-to-one-second amount of previous time whereas the CPU numbers are calculated strictly based on activity in the last 100ms. This leads to some lag in the GPU results that manifests itself in activity sometimes being charged to the wrong stage; an example is “Process instance uses”, which doesn’t actually use the GPU at all. (I also believe that the spike in GPU activity at the start of “Build instance BVHs” should be charged to “Process non-instanced geometry.”) However, rather than futzing with the data, I have reported it as measured. &lt;a href=&quot;#fnref:gpu-lag&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry><entry><title type="html">Swallowing the Elephant (Part 7): Time To First Pixel</title><link href="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 7): Time To First Pixel" /><published>2021-04-11T00:00:00-05:00</published><updated>2021-04-11T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html">&lt;p&gt;With &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html&quot;&gt;memory use under
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry><entry><title type="html">Swallowing the Elephant (Part 7): Time To First Pixel</title><link href="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 7): Time To First Pixel" /><published>2021-04-11T00:00:00-07:00</published><updated>2021-04-11T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html">&lt;p&gt;With &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html&quot;&gt;memory use under
 control&lt;/a&gt;,
 today’s topic will be “time to first pixel” when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana
 Island
@@ -1590,7 +1970,7 @@ sure is worth it, especially for a system with pbrt’s goals.  Therefore,
 we’ll stop there for time to first pixel, at least for the moment.&lt;/p&gt;
 
 &lt;p&gt;To wrap up these updates, next time we’ll look at pbrt-v4’s performance
-rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry><entry><title type="html">Swallowing the Elephant (part 6): Fool me once…</title><link href="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html" rel="alternate" type="text/html" title="Swallowing the Elephant (part 6): Fool me once..." /><published>2021-04-02T00:00:00-05:00</published><updated>2021-04-02T00:00:00-05:00</updated><id>https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">&lt;p&gt;I’ve been long overdue to update the pbrt version of Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;amazing
+rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry><entry><title type="html">Swallowing the Elephant (part 6): Fool me once…</title><link href="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html" rel="alternate" type="text/html" title="Swallowing the Elephant (part 6): Fool me once..." /><published>2021-04-02T00:00:00-07:00</published><updated>2021-04-02T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">&lt;p&gt;I’ve been long overdue to update the pbrt version of Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;amazing
 Moana island
 scene&lt;/a&gt; to
 account for the changes in &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
@@ -1884,7 +2264,7 @@ things start in a better place and go fun places from there.&lt;/p&gt;
 before.  (Among other things, pbrt’s old kitchen sink &lt;code class=&quot;highlighter-rouge&quot;&gt;UberMaterial&lt;/code&gt; is gone.)  In this context, an artist-friendly BSDF like the Disney one doesn’t fit with the book’s current focus, so we have cut it in the interests of simplifying the system.  (Ptex support remains, at least!) &lt;a href=&quot;#fnref:bsdf&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry><entry><title type="html">About That Scene For the Cover…</title><link href="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html" rel="alternate" type="text/html" title="About That Scene For the Cover..." /><published>2021-02-26T00:00:00-06:00</published><updated>2021-02-26T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html">&lt;p&gt;After our recent &lt;a href=&quot;/matt/blog/2021/02/22/pbr-4ed-cover-image.html&quot;&gt;call for scenes for a cover image for the book&lt;/a&gt;,
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry><entry><title type="html">About That Scene For the Cover…</title><link href="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html" rel="alternate" type="text/html" title="About That Scene For the Cover..." /><published>2021-02-26T00:00:00-08:00</published><updated>2021-02-26T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html">&lt;p&gt;After our recent &lt;a href=&quot;/matt/blog/2021/02/22/pbr-4ed-cover-image.html&quot;&gt;call for scenes for a cover image for the book&lt;/a&gt;,
 Wenzel, Greg, and I received an email that said, paraphrased, “You’re
 selling a $100 book and asking artists to work for free to model a scene
 for the cover? All of the artists at my studio are talking about what
@@ -1933,7 +2313,7 @@ payment, please do get in touch with a proposal: it’s &lt;em&gt;authors@pbrt.o
 require a license that allowed us to use and redistribute the scene without
 acknowledging its source.&lt;/p&gt;
 
-&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry><entry><title type="html">Looking For A Scene For the Cover of Physically Based Rendering, 4ed</title><link href="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html" rel="alternate" type="text/html" title="Looking For A Scene For the Cover of Physically Based Rendering, 4ed" /><published>2021-02-22T00:00:00-06:00</published><updated>2021-02-22T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html">&lt;p&gt;&lt;em&gt;(Please see also a &lt;a href=&quot;/matt/blog/2021/02/26/pbrt-cover-image-redux.html&quot;&gt;followup to this post&lt;/a&gt;.)&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry><entry><title type="html">Looking For A Scene For the Cover of Physically Based Rendering, 4ed</title><link href="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html" rel="alternate" type="text/html" title="Looking For A Scene For the Cover of Physically Based Rendering, 4ed" /><published>2021-02-22T00:00:00-08:00</published><updated>2021-02-22T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html">&lt;p&gt;&lt;em&gt;(Please see also a &lt;a href=&quot;/matt/blog/2021/02/26/pbrt-cover-image-redux.html&quot;&gt;followup to this post&lt;/a&gt;.)&lt;/em&gt;.&lt;/p&gt;
 
 &lt;p&gt;Work on the text of 4th edition of Physically Based Rendering: From Theory
 To Implementation is moving along well.  One important detail to attend to
@@ -1982,25 +2362,4 @@ hands has turned out to be an effective way to spur innovation.&lt;/li&gt;
 &lt;p&gt;If you think you may be able to help or have any questions, please email
 Wenzel, Greg, and I at authors@pbrt.org.&lt;/p&gt;
 
-&lt;p&gt;Thanks!&lt;/p&gt;</content><author><name></name></author><summary type="html">In search of something amazing...</summary></entry><entry><title type="html">A Few Words from W. H. Auden</title><link href="https://pharr.org/matt/blog/2021/01/06/auden.html" rel="alternate" type="text/html" title="A Few Words from W. H. Auden" /><published>2021-01-06T00:00:00-06:00</published><updated>2021-01-06T00:00:00-06:00</updated><id>https://pharr.org/matt/blog/2021/01/06/auden</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/01/06/auden.html">&lt;p&gt;I keep a book of Auden’s poems on the table next to my bed.  Now and again I
-settle in with a few minutes of stop all the clocks and the like before I
-go to sleep.&lt;/p&gt;
-
-&lt;p&gt;I have had the book for decades.  It’s a small hardback with “Auden”
-embossed in gold on the front and a woven cloth bookmark that comes fully
-integrated.&lt;/p&gt;
-
-&lt;p&gt;For a few years, I have kept the bookmark fixed at the same place. Even
-though I have it memorized, I have always started with this one, words
-written in 1939:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Epitaph on a Tyrant&lt;/p&gt;
-
-  &lt;p&gt;Perfection, of a kind, was what he was after,&lt;br /&gt;
-And the poetry he invented was easy to understand;&lt;br /&gt;
-He knew human folly like the back of his hand,&lt;br /&gt;
-And was greatly interested in armies and fleets;&lt;br /&gt;
-When he laughed, respectable senators burst with laughter,&lt;br /&gt;
-And when he cried the little children died in the streets.&lt;/p&gt;
-&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Auden delivers, 82 years early.</summary></entry></feed>
+&lt;p&gt;Thanks!&lt;/p&gt;</content><author><name></name></author><summary type="html">In search of something amazing...</summary></entry></feed>
