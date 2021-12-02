@@ -1,5 +1,309 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-11-26T13:44:09-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Debugging Your Renderer (2/n): Unit Tests</title><link href="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (2/n): Unit Tests" /><published>2021-11-26T00:00:00-08:00</published><updated>2021-11-26T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html">&lt;p&gt;Here we are, a year and a half after I posted an &lt;a href=&quot;/matt/blog/2020/04/26/debugging-intro.html&quot;&gt;introduction that was
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-02T06:41:39-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)</title><link href="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html" rel="alternate" type="text/html" title="Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)" /><published>2021-12-02T00:00:00-08:00</published><updated>2021-12-02T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html">&lt;p&gt;Today we’ll keep the discussion to the topic of runtime assertions in
+renderers; next time it’ll be on to end-to-end tests, which will start
+to lead us into a more image-focused view of graphics debugging that will
+keep us busy for a while.&lt;/p&gt;
+
+&lt;p&gt;A principle in the last post on &lt;a href=&quot;/matt/blog/2021/11/26/debugging-renderers-unit-tests.html&quot;&gt;unit testing for
+renderers&lt;/a&gt; was
+the idea that you’d like your debugging problem to be as simple as
+possible; one way to achieve that is if bugs manifest themselves in a way
+other than “some of these pixels don’t look right…”  While there will
+always be plenty of that sort of bug, those are usually a much harder
+debugging problem than a conventional one like “the program printed an
+error and crashed.”  A good set of runtime assertions can be an effective
+way to turn obscure bugs into more obvious ones.&lt;/p&gt;
+
+&lt;p&gt;An assertion is a simple thing: a statement that a condition is always true
+at some point in the execution of a program.  It seems that the original
+idea of them dates to Goldstine and von Neumann in 1947.&lt;sup id=&quot;fnref:firstassert&quot;&gt;&lt;a href=&quot;#fn:firstassert&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; If
+such a statement is ever found to be false, then a fundamental assumption
+underlying the system’s implementation has been violated.  The
+implications—to the performance of the program or to the correctness of
+its output—may be wide-ranging and possibly impossible to recover from.
+Assertions a great way to catch little things early before they turn into
+big things that are only evident much later.&lt;/p&gt;
+
+&lt;p&gt;In contrast to unit tests, which just have to be fast enough to not be
+annoying to run often, assertions must be efficient, since they often run
+in the innermost loops of the renderer.  In return, they have the advantage
+that they can check many more situations than a unit test. It turns
+out that a myriad of unexpected edge cases come up as you trace billions of
+rays in many different scenes.  Yet an assertion that has no chance of
+firing is only a drag on overall performance without offering any value.
+The art is to write the ones that you don’t think will ever fire but yet
+sometimes do so.&lt;/p&gt;
+
+&lt;p&gt;For a well-written general discussion of assertions, see &lt;a href=&quot;https://blog.regehr.org/archives/1091&quot;&gt;John Regehr’s
+blog post on the topic&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-basics&quot;&gt;The Basics&lt;/h2&gt;
+
+&lt;p&gt;While C++ provides an &lt;a href=&quot;https://en.cppreference.com/w/cpp/error/assert&quot;&gt;assert
+macro&lt;/a&gt; in the standard
+library, it has a few shortcomings:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Assertions are either enabled or disabled, via the &lt;code class=&quot;highlighter-rouge&quot;&gt;NDEBUG&lt;/code&gt; macro. Often,
+they are disabled completely for optimized builds, which in turn means that
+they run rarely and do not catch many bugs.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;When an assertion fails, only the text of the assertion (e.g., “x &amp;gt; 0”)
+and its location in the source code is printed without any further
+context.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;pbrt-v4 therefore has its &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/c4cfd6679e436d512bed5b03fed33a1971d8ee6d/src/pbrt/util/check.h#L36&quot;&gt;own set of assertion
+macros&lt;/a&gt;,
+which are also integrated with pbrt’s runtime logging system.  pbrt’s
+assertion macros are based on &lt;a href=&quot;https://github.com/google/glog#check-macros&quot;&gt;those in Google’s glog
+package&lt;/a&gt;.  It includes
+assertions that are always included, even in release builds, and those that
+are only for debug builds, where more costly checks may be acceptable.
+They also provide much more helpful information than &lt;code class=&quot;highlighter-rouge&quot;&gt;assert()&lt;/code&gt; does when
+an assertion fails.&lt;/p&gt;
+
+&lt;p&gt;Beyond a basic Boolean assertion (&lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK()&lt;/code&gt;), there are separate assertions
+for checking equality, inequality, and greater-than/less-than.  For
+example, &lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK_GE()&lt;/code&gt; checks that the first value provided to it is greater
+than or equal to the second.  Here is an example of its use in pbrt:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CHECK_GE(1 - pAbsorb - pScatter, -1e-6);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There’s a bit of context packed into that simple check: we have two
+probabilities, &lt;code class=&quot;highlighter-rouge&quot;&gt;pAbsorb&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;pScatter&lt;/code&gt;, and if you look at the code
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/c4cfd6679e436d512bed5b03fed33a1971d8ee6d/src/pbrt/cpu/integrators.cpp#L999&quot;&gt;before
+it&lt;/a&gt;
+you can see that the light transport algorithm has just computed three probabilities
+where the third, &lt;code class=&quot;highlighter-rouge&quot;&gt;pNull&lt;/code&gt; is &lt;code class=&quot;highlighter-rouge&quot;&gt;1 - pAbsorb - pScatter&lt;/code&gt;.  Thus, the assertion is
+effectively making sure that we are using valid probabilities when
+computing &lt;code class=&quot;highlighter-rouge&quot;&gt;pNull&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;More broadly, that check is in the context of pbrt’s code for sampling
+volumetric scattering.  That code requires that the volumetric
+representation provide a majorant that bounds the density of the volume
+over a region of space.  The &lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK_GE()&lt;/code&gt; then is effectively checking that
+the majorant is a valid bound.  Thus, it’s really a check on the
+validity of the code that computes those bounds, which is &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/c4cfd6679e436d512bed5b03fed33a1971d8ee6d/src/pbrt/media.cpp#L552&quot;&gt;far away in the
+system&lt;/a&gt;
+from where the check is made.&lt;/p&gt;
+
+&lt;p&gt;While that decoupling has the disadvantage that a failing assertion may
+require searching to find the code actually responsible for the bug, the
+advantage is that the check is made at every sample taken in every
+volumetric medium that is provided to pbrt for rendering; it gives the
+majorant computations a thorough workout.  That check has found many bugs
+in that code since it was introduced; there are plenty of corner cases in
+the majorant computations, especially when you’re doing trilinear
+interpolation, which requires considering a larger footprint, and also
+using the nested grid representation of
+&lt;a href=&quot;https://dl.acm.org/doi/fullHtml/10.1145/3450623.3464653&quot;&gt;NanoVDB&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If that assertion fails, pbrt dumps more information than just the text of
+the assertion:&lt;sup id=&quot;fnref:digits&quot;&gt;&lt;a href=&quot;#fn:digits&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 12129819 @     1.252s cpu/integrators.cpp:1004 ]
+    FATAL Check failed: 1 - pAbsorb - pScatter &amp;gt;= -1e-6
+        with 1 - pAbsorb - pScatter = -0.3336507, -1e-6 = -0.000001
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;In addition to the id of the thread in which the assertion failed, we have
+the elapsed time since rendering began (about 1.25 seconds here), the
+location of the assertion in the source code, what was asserted, as well as
+both of the values that were passed to &lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK_GE()&lt;/code&gt;.  Having those values
+immediately at hand is often helpful.  In the best case, one can understand
+the bug immediately, for example by seeing that an edge case that had been
+assumed to be impossible actually happens in practice.  For this one,
+knowing whether the value was slightly outside of the limit or far outside
+of the limit (as it was here) may be a good starting point for further
+investigation.&lt;/p&gt;
+
+&lt;p&gt;A full stack trace then follows; that, too, can give a useful first pointer
+for understanding the issue.  It is especially useful in still getting
+something from bug reports from users when it’s not possible to reproduce a
+bug locally as well as when pbrt is used for assignments in classes.  In
+the latter case, the conversation often goes something like this:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;“pbrt is buggy! It crashes when I call the function to normalize a vector.”&lt;/li&gt;
+  &lt;li&gt;“That’s interesting–what does it print when it crashes?”&lt;/li&gt;
+  &lt;li&gt;(pbrt’s output)&lt;/li&gt;
+  &lt;li&gt;“That’s not a crash; it’s a failing assertion. The problem is that the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;foo()&lt;/code&gt; function that you added there is passing a degenerate vector to
+the vector normalization routine.”&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Given that students often don’t seem to read that output in the first
+place, I’m not sure if any lessons are being learned about the value of
+assertions through that exercise, but you can at least work through that
+cycle much more quickly if it doesn’t require the student to fire up the
+debugger to provide more information.&lt;/p&gt;
+
+&lt;h2 id=&quot;resilience-versus-rigidity&quot;&gt;Resilience Versus Rigidity&lt;/h2&gt;
+
+&lt;p&gt;When an assertion fails, a program generally terminates.  That’s a harsh
+punishment, especially if the program is well into a lengthy computation.
+One can treat failed assertions as exceptions and terminate just part of
+the computation (and maybe just a small part, like a single ray path), or
+one can also try to recover from the failing case and go on.  How to
+approach all this is something of a philosophical question.&lt;/p&gt;
+
+&lt;p&gt;A widely-accepted principle about assertions is that they should not be
+used for error handling: invalid input from the user should never lead to
+an assertion failure but rather should be caught sooner (and a helpful
+error message printed, even if the program then terminates).  An assertion
+failure should only represent an actual bug in the system: a mistake on the
+programmer’s side, not on the user’s, even if something goofy provided by
+the user is what tripped up the program.  That to me seems like an
+unquestionably good principle.&lt;/p&gt;
+
+&lt;p&gt;But even with assertions limited to errors in the implementation, what else
+might one do when one fails?  One might try to recover, patching over the
+underlying issue (for example, forcing the third probability to zero in the
+majorant case), but that approach isn’t fully satisfying.  One issue is that the
+code paths for the error cases will only run rarely, so they won’t be well
+tested—it’s then hard to have confidence in their correctness.&lt;/p&gt;
+
+&lt;p&gt;For a commercial product (or one that is not open source), not annoying
+your users with an unexpected program termination is probably a good idea,
+though I have to say that in my experience the error handling you get is
+often not much better.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/matt/blog/images/illustrator.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;More optimistically, assertion failures represent useful data points.
+Papering over them is ignoring evidence of a deeper issue.  Perhaps your
+code for recovering from the failed assertion is running all the time and
+there’s a massive bug lurking but you have no idea it exists in the first
+place.&lt;/p&gt;
+
+&lt;p&gt;So I have come to believe that the best approach is to be strict, at least
+for a system like pbrt.  Include error handling code to deal with invalid
+user input, add cases as necessary to make your algorithms general-purpose
+and robust, but when things go wrong in a way that you hadn’t thought was
+possible, don’t try to muddle through it—fail if a null vector is to be
+normalized and abort if the majorants are seriously off.  Those sorts of
+unexpected cases merit investigation and resolution.  By making them
+impossible to ignore you reduce the chance of letting something serious
+fester for a long time.  It’s an annoyance in the moment, but it makes the
+system much more robust in the end.&lt;/p&gt;
+
+&lt;h2 id=&quot;track-down-rare-failures&quot;&gt;Track Down Rare Failures(!)&lt;/h2&gt;
+
+&lt;p&gt;About not letting things fester…  One of the reasons I’ve come to the
+rigidity view is an experience I had with the &lt;a href=&quot;https://github.com/mmp/pbrt-v1&quot;&gt;first version of
+pbrt&lt;/a&gt;.  That version was more on the
+resilience side of things, or perhaps it was just negligence.  Over the
+course of rendering the image below it would always print a handful of
+warnings about rays having &lt;a href=&quot;https://en.wikipedia.org/wiki/NaN&quot;&gt;not-a-number
+(NaN)&lt;/a&gt; values in their direction
+vectors.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://www.pbrt.org/gallery/a22.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I expected that something obscure was occasionally going wrong in the
+middle of BSDF sampling but I didn’t dig in for years after first seeing
+those warnings.  Part of my laziness came from the (correct) assumption
+that it would be painful debugging since the warnings didn’t appear until
+rendering had gone on for some time.  The underlying bug didn’t seem
+important to fix since it happened so rarely.&lt;/p&gt;
+
+&lt;p&gt;Eventually I chased it down. As with many difficult bugs, &lt;a href=&quot;https://github.com/mmp/pbrt-v1/commit/024ef868cedb4c6adf9bc5bdbca1e4c759b950c3&quot;&gt;the
+fix&lt;/a&gt;
+was a single-character change: a greater or equals that should have been a
+greater than—“equals” being a case that otherwise led to a division by
+zero.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        // Handle total internal reflection for transmission
+-       if (sint2 &amp;gt; 1.) return 0.;
++       if (sint2 &amp;gt;= 1.) return 0.;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;When I rendered that scene afterward, not only were the warnings gone, but
+the entire rendering computation was \(1.25\times\) faster than it was
+before.  I couldn’t understand why that would be so and spent hours trying
+to figure out what was going on.  At first I assumed the speedup must be
+due to something else, like a different setting for compiler optimizations,
+but I found that it truly was entirely due to that one-character fix.&lt;/p&gt;
+
+&lt;p&gt;Eventually I got to the bottom of it.  Here is where thing were going
+catastrophically wrong—with a few lines of code elided, this is the heart
+of the &lt;a href=&quot;https://github.com/mmp/pbrt-v1/blob/9d361637cafcc9e6d82c2f3440e5f7e7279254df/accelerators/kdtree.cpp#L337&quot;&gt;kd-tree traversal code in
+pbrt-v1&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;int axis = node-&amp;gt;SplitAxis();
+float tplane = (node-&amp;gt;SplitPos() - ray.o[axis]) * invDir[axis];
+// ...
+if (tplane &amp;gt; tmax || tplane &amp;lt;= 0) {
+    // visit first child node next
+} else if (tplane &amp;lt; tmin) {
+    // visit second child node next
+else {
+    // enqueue second child to visit later and visit first child next
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Consider that code with the lens of not-a-number. There are two rules
+to keep in mind: a calculation that includes a NaN will yield a NaN, and
+any comparison that includes a NaN evaluates to false.  (Thus, the fun
+idiom of testing &lt;code class=&quot;highlighter-rouge&quot;&gt;x == x&lt;/code&gt; as a way to check for a NaN.)  Above, &lt;code class=&quot;highlighter-rouge&quot;&gt;tplane&lt;/code&gt; will
+be NaN since the inverse ray direction is NaN.  The condition in the first
+“if” test will be false, since both comparisons include a NaN.  The
+condition in the second “if” test will also be false.  In turn, the third
+case is always taken and &lt;em&gt;every node of the kd-tree will be visited&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Thus, a NaN-direction ray is intersected with each and every primitive in
+the scene.  For a complex scene, that’s a lot of intersection tests and
+thus, the performance impact of just a handful of those rays was
+substantial.  Good times.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Here we are with two posts in a row that are comprised of me arguing for a
+particular way of doing things and then ending with a story about me not
+practicing what I’m preaching.  One could take this to mean that I don’t
+know what I’m talking about, or one could take it to mean that my pain has
+the potential to be your gain.  Either way works for me.&lt;/p&gt;
+
+&lt;p&gt;More generally, I’ve come to learn that if something seems a little stinky
+or uncertain in code, it really is worth stopping to take the time to chase
+down whether there is in fact something wrong.  You have in hand evidence
+of a problem in a particular place in a system—that’s valuable.  If you
+ignore it and there is a bug there, often that bug will later manifest
+itself in a way that’s much more obscure, maybe not evidently connected to
+that part of the system at all.  You end up spending hours chasing it down
+just to discover that if you had investigated the questionable behavior
+when you first encountered it, you’d have fixed the underlying issue much
+earlier and much more easily.&lt;/p&gt;
+
+&lt;h2 id=&quot;notes&quot;&gt;notes&lt;/h2&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:firstassert&quot;&gt;
+      &lt;p&gt;Goldstine and von Neumann. 1948. &lt;a href=&quot;https://www.ias.edu/sites/default/files/library/pdfs/ecp/planningcodingof0103inst.pdf&quot;&gt;Planning and Coding of problems
+for an Electronic Computing
+Instrument&lt;/a&gt;. Technical
+Report, Institute of Advanced Study. &lt;a href=&quot;#fnref:firstassert&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:digits&quot;&gt;
+      &lt;p&gt;To my previous frequent frustration, the &lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK&lt;/code&gt; macros in
+       Google’s glog package do not print floating-point values with
+       their full precision, which leads to error messages like &lt;code class=&quot;highlighter-rouge&quot;&gt;Check
+       failed: x != 0 with x = 0&lt;/code&gt; bring printed when &lt;code class=&quot;highlighter-rouge&quot;&gt;x&lt;/code&gt; is very small
+       but not actually zero.  This is another reason pbrt provides its
+       own &lt;code class=&quot;highlighter-rouge&quot;&gt;CHECK&lt;/code&gt; macros. &lt;a href=&quot;#fnref:digits&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Some notes on productively detecting bugs when they occur during the course of rendering and a cautionary tale about what can happen when you ignore runtime errors.</summary></entry><entry><title type="html">Debugging Your Renderer (2/n): Unit Tests</title><link href="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (2/n): Unit Tests" /><published>2021-11-26T00:00:00-08:00</published><updated>2021-11-26T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/11/26/debugging-renderers-unit-tests.html">&lt;p&gt;Here we are, a year and a half after I posted an &lt;a href=&quot;/matt/blog/2020/04/26/debugging-intro.html&quot;&gt;introduction that was
 full of talk&lt;/a&gt; about a
 forthcoming series of blog posts about debugging renderers.  When I posted
 that I already had a text file full of notes and had the idea that I’d get
@@ -2313,53 +2617,4 @@ payment, please do get in touch with a proposal: it’s &lt;em&gt;authors@pbrt.o
 require a license that allowed us to use and redistribute the scene without
 acknowledging its source.&lt;/p&gt;
 
-&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry><entry><title type="html">Looking For A Scene For the Cover of Physically Based Rendering, 4ed</title><link href="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html" rel="alternate" type="text/html" title="Looking For A Scene For the Cover of Physically Based Rendering, 4ed" /><published>2021-02-22T00:00:00-08:00</published><updated>2021-02-22T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/22/pbr-4ed-cover-image.html">&lt;p&gt;&lt;em&gt;(Please see also a &lt;a href=&quot;/matt/blog/2021/02/26/pbrt-cover-image-redux.html&quot;&gt;followup to this post&lt;/a&gt;.)&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;Work on the text of 4th edition of Physically Based Rendering: From Theory
-To Implementation is moving along well.  One important detail to attend to
-is to find a scene to use on the cover of the book.&lt;/p&gt;
-
-&lt;p&gt;The cover image is an important part of the book.  It has always been
-rendered with pbrt, the renderer that the book describes, and so it sums up
-the value proposition of reading the book: if you study the book’s text,
-you will understand all of the theory and implementation behind rendering
-images like this one.&lt;/p&gt;
-
-&lt;p&gt;For the second edition, we were very fortunate to have Guillermo M. Leal
-Llaguno create the now-classic “San Miguel” scene, and for the third, Timm
-Dapper and Jan-Walter Schliep at Laubwerk made a beautifully complex
-outdoor landscape scene.  These scenes have become computer graphics
-classics, appearing in many subsequent research papers.&lt;/p&gt;
-
-&lt;p&gt;In short:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;We are looking for a new scene, or one that has not been widely seen
-before.&lt;/li&gt;
-  &lt;li&gt;It must be rendered by pbrt, though if you have a nice scene in FBX
-format, we can help convert it to pbrt’s scene format.&lt;/li&gt;
-  &lt;li&gt;You must be willing to allow the scene description to be freely shared
-once the book has been released so that anyone using pbrt can render it
-themselves (e.g., by offering it under a CC-BY license).&lt;/li&gt;
-  &lt;li&gt;We would prefer an interior scene this time (the last three have all been
-outdoors), ideally with multiple interesting viewpoints, a variety of
-objects and materials, and complex lighting.&lt;/li&gt;
-  &lt;li&gt;The more complex the better :-)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;We can offer a few things in return:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Credit (in the book and on the book’s website, etc.) and our own deepest
-thanks.&lt;/li&gt;
-  &lt;li&gt;A few signed copies of the book.&lt;/li&gt;
-  &lt;li&gt;The knowledge that most likely, your scene will help advance the state of
-the art of rendering; pbrt is widely used by researchers to develop new
-algorithms, and putting interesting and challenging scenes in researchers’
-hands has turned out to be an effective way to spur innovation.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;If you think you may be able to help or have any questions, please email
-Wenzel, Greg, and I at authors@pbrt.org.&lt;/p&gt;
-
-&lt;p&gt;Thanks!&lt;/p&gt;</content><author><name></name></author><summary type="html">In search of something amazing...</summary></entry></feed>
+&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry></feed>
