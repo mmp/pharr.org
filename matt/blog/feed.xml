@@ -1,5 +1,482 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-02T06:41:39-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)</title><link href="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html" rel="alternate" type="text/html" title="Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)" /><published>2021-12-02T00:00:00-08:00</published><updated>2021-12-02T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html">&lt;p&gt;Today we’ll keep the discussion to the topic of runtime assertions in
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-19T11:30:35-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Debugging Your Renderer (4/n): End-to-end tests (or, “why did that image change?”)</title><link href="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (4/n): End-to-end tests (or, &quot;why did that image change?&quot;)" /><published>2021-12-19T00:00:00-08:00</published><updated>2021-12-19T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html">&lt;p&gt;Here we are, three posts into the meat of this series, and we’re still on
+the topic of determining if the renderer is buggy in the first place—the
+actual craft of debugging has not yet seen much discussion.  We’re getting
+there—I promise—but I’m going to finish discussing ways of detecting
+bugs before getting into fixing them.&lt;/p&gt;
+
+&lt;p&gt;Beyond unit tests, I’ve also found that having a good set of end-to-end
+rendering tests is of enormous benefit.  In this context, the idea of an
+end-to-end test is simple: you render an image of a scene and then check
+the image to make sure it is correct.&lt;/p&gt;
+
+&lt;p&gt;There’s plenty of nuance in that sentence: which scene?  (And not just one,
+right?)  How do you check whether the output is correct?  Needless to say,
+it’s “many scenes,” and as we’ll see, verifying correctness from an image
+can be as much art as science.  We’ll dig into all of those questions
+today.&lt;/p&gt;
+
+&lt;h2 id=&quot;building-a-library-of-test-scenes&quot;&gt;Building a Library of Test Scenes&lt;/h2&gt;
+
+&lt;p&gt;I’ve been collecting scenes to use for testing pbrt for at least a decade;
+there are upward of 600 of them in the test suite today.  Most of them
+don’t make pretty pictures and some output very low resolution images. Some
+are as small as \(10 \times 10\) pixels—nothing much to look at at all.
+They can be split into a few categories:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Simple scenes with analytic solutions.&lt;/li&gt;
+  &lt;li&gt;Scenes that target a single renderer feature.&lt;/li&gt;
+  &lt;li&gt;Complex(ish) scenes.&lt;/li&gt;
+  &lt;li&gt;Reproduction cases for user-reported bugs.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Each type is valuable.  Take the scenes with analytic
+solutions: one such scene is a diffuse sphere with radius 1, a reflectance
+of 0.5, and a point light with intensity \(\pi\) at its center.  Put a
+camera inside that thing and render it with your path tracer: if your
+pixels don’t all have a value very close to 1 (given sufficient samples),
+you’ve got a bug.  Stop right there, fix it, and be happy you had such an
+easy way to detect something was off.&lt;/p&gt;
+
+&lt;p&gt;You can take that scene and easily make variations of it.  Replace that
+single point light with four point lights with intensities that sum to
+\(\pi\)—that should be all ones as well.  Or Take out the point light
+and make the interior of the sphere emissive with spatially- and
+directionally-uniform radiance of 0.5, leaving the diffuse reflectance at
+0.5.  Once again, you should get pixels that are all 1.  That emissive
+sphere you can make bigger or smaller; it should be all ones if you make a
+variant with a different radius.&lt;/p&gt;
+
+&lt;p&gt;Once you start thinking in terms of scenes where you can work out the
+correct answer, there’s lots more you can do.  You could light a diffuse
+quad with an infinite light source and then again with an emissive sphere
+surrounding it.  You could test your bidirectional algorithms by putting a
+glass where with an index of refraction of 1 around the quad; in principle,
+that should have no effect.&lt;/p&gt;
+
+&lt;p&gt;And then you can also make variants of those variants that exercise all of
+the different sample generation algorithms and light transport algorithms;
+each of those is just a small change to the scene description file, so
+getting up to 600 doesn’t need to go one at a time.&lt;/p&gt;
+
+&lt;p&gt;The analytic scenes rarely fail once you’ve gotten them working the first
+time, but when they do, the debugging problem is a relatively easy
+one—much nicer than “images of the Moana Island scene are too dark when
+the bidirectional path tracer is used.”  For example, for the scene with a
+single point light, every ray should return the same value—at each
+intersection point, the reflected radiance due to direct lighting should be
+0.5 and then the indirect radiance (also 0.5) should be scaled by 0.5.
+(Expand out that series and you get your expected value of 1.)&lt;/p&gt;
+
+&lt;p&gt;Of course, those scenes may all render correctly and you may well still
+find that the Moana Island scene is still too dark with your bidirectional
+path tracer, but you’ve at least carved off the easy-to-fix cases in a way
+that makes them easy to debug.&lt;/p&gt;
+
+&lt;p&gt;For most of the renderer’s capabilities, it’s not too hard to come up with
+a simple scene that targets that feature without exercising too many other
+parts of the renderer.  Those are also useful to have in end-to-end
+tests. As an example, pbrt’s test suite includes a scene comprised of a
+single quad with a high-frequency texture viewed at an oblique angle.  The
+BSDF is diffuse, it’s lit by a directional light, there’s no complex
+visibility or multiple light scattering.  This is it:&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;&lt;img width=&quot;400&quot; height=&quot;400&quot; src=&quot;/matt/blog/images/aa-perspective.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That scene is effectively a test of pbrt’s ray differentials and texture
+filtering code.  If one makes a change to the renderer and then that scene
+goes bad, you can make a good guess about where the bug lies from the
+limited subset of the rendering code that runs in generating it.  In such a
+case, if scenes without textures still render correctly then you have a
+stronger hint, though if those are also broken, then you have a hint that
+texture filtering isn’t your problem.  (Or, that you have multiple
+problems.)&lt;/p&gt;
+
+&lt;p&gt;Sometimes things only go wrong in the presence of complexity; a number of
+scenes culled from the &lt;a href=&quot;https://github.com/mmp/pbrt-v4-scenes&quot;&gt;pbrt-v4-scenes
+distribution&lt;/a&gt; and added to the
+end-to-end tests take care of that.  When those scenes fail, it’s usually
+the case that simpler ones do as well.  If not, it’s often worth trying to
+simplify the more complex scene as much as possible while still hitting the
+bug; that, too, is a source of more test scenes for the future.  (More on
+that topic in a future post as well.)&lt;/p&gt;
+
+&lt;p&gt;Finally, there are the scenes from user bug reports. I add all of those to
+the test suite; not only are they all cases that testing previously wasn’t
+rigorous enough to catch, but there’s no reason to risk the embarrassment
+(on this end) and annoyance (on the bug reporter’s end) of that same bug
+reappearing in the future due to a change to the renderer inadvertently
+reintroducing it.&lt;/p&gt;
+
+&lt;p&gt;There is a time versus coverage trade-off in assembling this collection of
+scenes: the more scenes you have with the more pixels to render and the
+more samples per pixel, the more you’re exercising the renderer.  Yet, the
+more of all of that you have, the longer it takes to run the tests.  If
+running them takes too long, you won’t run them as often as you should.
+I’ve ended up tuning them to be about an hour of single-core CPU time
+(though they run on multiple cores, so it’s just a few minutes of
+wall-clock time).  As you add scenes and the total time to run all of them
+increases, you can judiciously reduce the resolution of some of the tests
+or dial down the sampling rate used when rendering them.&lt;/p&gt;
+
+&lt;h2 id=&quot;does-everything-render-to-completion&quot;&gt;Does Everything Render to Completion?&lt;/h2&gt;
+
+&lt;p&gt;So you have a few tens or hundreds of test scenes and, let’s hope, a script
+to render all of them and save the images.  What now?  Run that script and
+see what happens.&lt;/p&gt;
+
+&lt;p&gt;Most of the corners of the renderer’s code ends up being fairly well
+exercised if you have hundreds of varied scenes designed to exercise
+it.&lt;sup id=&quot;fnref:coverage&quot;&gt;&lt;a href=&quot;#fn:coverage&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; That’s good news for your assertions, as far as giving them
+plenty of variety to assert about.  It’s also encouragement to add more
+assertions; sometimes adding a new assertion and running through all of the
+existing test scenes will unearth a new failure.  You might even add
+expensive assertions for a single run-through of the test scenes to see if
+they find anything, planning to debug if so and to remove them or demote
+them to debug-only assertions when you’re done.&lt;/p&gt;
+
+&lt;p&gt;Finding a failing assertion in that way really is a good thing, even though
+you’ve found more work for yourself.  You’ve got yourself a debugging task
+ahead of you but it’s not completely open ended, and it’s on your own
+terms without the panic of a user reporting a serious bug where you have
+no idea what the cause may be.  It’s also likely with a simpler scene than
+a user would have been rendering if they encountered the bug later.&lt;/p&gt;
+
+&lt;p&gt;Assertions aside, the renderer may crash for some or even all of the
+scenes.  Same deal with that: a crash is not fun, but better to find it
+yourself while running the tests and fix it before your users are bothered
+by it.&lt;/p&gt;
+
+&lt;p&gt;A good collection of test scenes is also good fodder for tools like
+&lt;a href=&quot;https://valgrind.org&quot;&gt;valgrind&lt;/a&gt;,
+&lt;a href=&quot;https://valgrind.org/docs/manual/hg-manual.html&quot;&gt;helgrind&lt;/a&gt;, and assorted
+&lt;a href=&quot;https://clang.llvm.org/docs/AddressSanitizer.html&quot;&gt;sanitizers&lt;/a&gt;.  There’s a
+much better chance of those sorts of tools finding something if you give
+them a variety of rendering computations to examine.  Chasing down any
+errors those report is also something you must do before proceeding when
+you find them: there’s no way to know how much havoc lies in their wake, so
+you might as well fix them once you’re aware of them, lest you spend hours
+chasing down some other bug that turned out to be due to one of those.&lt;/p&gt;
+
+&lt;h2 id=&quot;are-the-images-correct&quot;&gt;Are the Images Correct?&lt;/h2&gt;
+
+&lt;p&gt;If all of the scenes render to completion, now you have a few hundred
+images sitting on disk.  How do you know if each one is correct?&lt;/p&gt;
+
+&lt;p&gt;For pbrt’s test scenes, I maintain a set of “golden” images that provide a
+reference.&lt;sup id=&quot;fnref:gengold&quot;&gt;&lt;a href=&quot;#fn:gengold&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;  The test script then checks the output from the current version
+of the renderer with the golden images.  How tricky could that be?  The
+first hard problem is generating golden images in the first place.  The
+second is determining if a rendered image is correct.  We’ll consider both
+topics in turn.&lt;/p&gt;
+
+&lt;p&gt;Creating an initial set of golden images is a bootstrapping problem.  For
+the scenes with analytic solutions you can manually verify correctness via their
+pixel values, but for the rest it’s not so easy.  I have partially been
+able to sidestep that issue by assuming that the last released version of
+pbrt is bug free and using its output as a starting point.  While pbrt is
+surely not bug free, after it has been out for a few years enough people
+have spent enough time with the code that it’s reasonable to assume it’s in
+pretty good shape.&lt;/p&gt;
+
+&lt;p&gt;For a different renderer, one might try using the output of pbrt or another
+renderer as an initial reference, though that’s tricky business, with
+differences in BSDF models, texture filtering, and details like rendering
+in RGB versus using spectra.  One can at least make sure that one’s
+renderer is in the right ballpark that way, if another renderer is both
+trusted and well-understood and if it’s not too hard to render scenes in
+both it and your own renderer.&lt;/p&gt;
+
+&lt;p&gt;Another option is to gain confidence in candidate golden images via
+experiments.  We’ll come back to this topic in more detail once we get to
+debugging techniques, but to understand the idea, let’s consider that
+texture filtering test from before.  Say that you’ve implemented ray
+differentials and a texture filtering algorithm and can render images that
+aren’t obviously wrong.  Lacking a verified solution, how can you become
+more confident that they are correct?&lt;/p&gt;
+
+&lt;p&gt;You might render the scene with no texture filtering but with many pixel
+samples to get an antialiased image that way.  That’s something to compare
+to.  You know that your implementation won’t match that perfectly, but if
+it’s too far off you might be suspicious of your differentials’
+correctness.  Another useful technique is to explore the parameter space:
+render it once with your implementation, then again with your texture
+filter widths half as wide as you think they should be, then again with
+them twice as wide. You should see aliasing with the narrow filters and
+blurring with the wide ones.  If so, you have some more confidence in your
+implementation, and if not, you have something to dig into further.&lt;/p&gt;
+
+&lt;p&gt;Here are some images that show the results of applying that approach for
+the texture filtering test above; the images are as we would expect.  (The
+images are presented using &lt;a href=&quot;https://jeri.io&quot;&gt;jeri&lt;/a&gt;; click on
+them and hit ‘f’ to go full screen if necessary to see the differences.)&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;aa-comparison&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('aa-comparison'), {
+  title: 'aa-comparison', children: [
+ { title: 'Antialiased', image: '/matt/blog/images/aa-perspective.png' },
+ { title: '2x filter widths', image: '/matt/blog/images/aa-perspective-blurred.png' },
+ { title: '1/2x filter widths', image: '/matt/blog/images/aa-perspective-aliased.png' },
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;At minimum one may decree that the output of the renderer at some point in
+time gives the golden images.  Going forward, any deviation in them should
+be explained, either from fixing a bug or from a well-understood
+improvement to the renderer.&lt;/p&gt;
+
+&lt;h2 id=&quot;when-the-images-should-not-change-at-all&quot;&gt;When the Images Should Not Change at All&lt;/h2&gt;
+
+&lt;p&gt;Given golden images, a change to the renderer, and a run of the end-to-end
+tests, we have a set of new images that may or may not the match the golden
+images.  How one feels about that depends on the sort of change one has
+made.  Here are a few representative cases where not a single pixel of a
+single image should be different:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;em&gt;A pooled memory allocator was introduced to optimize small memory
+allocations.&lt;/em&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;em&gt;An optimized routine for parsing text floating-point values in the scene
+description was adopted.&lt;/em&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;em&gt;The function that loads image texture maps has been parallelized to
+reduce start-up time.&lt;/em&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For all of those cases, there’s no reasonable explanation for why anything
+should change in the final output, yet sometimes you make a change like
+that and find differences.  If it’s major differences, then presumably
+you’ve broken something fundamental; the debugging problem in those cases
+is often not too bad due to the wide impact.  Choose the one of the
+simplest scenes that went astray and take it from there.&lt;/p&gt;
+
+&lt;p&gt;For minor differences, it’s also critical to understand what happened.  It
+can hard to be disciplined about that: if it’s just one pixel in one scene
+out of hundreds of scenes with perhaps billions of pixels changes after you
+replaced the float parser, it’s easy to tell yourself that a single float
+was parsed differently and hey, quite possibly you just fixed a bug you
+didn’t know you had.  Yet something more serious may be lurking; it may
+just be that your tests only hit a buggy case once but other scenes would
+hit it often.  If you don’t understand the root cause, you’re building the
+rest of the system on sand.&lt;/p&gt;
+
+&lt;p&gt;For the case of the float parser, it’d be crucial to track down which float
+(or floats) went astray and why—keep both parsers around, call both for
+each float parsed, and assert that both give the same result.  When they
+disagree, figure out which one was correct.  Your assertion may never fire,
+which would be “interesting” as well; it may be that the pixel change was
+not due to a difference in parsing floats but was due to some other bug
+that was tickled by your changes.  Those sorts of bugs aren’t fun to chase
+down but are equally important to understand when you encounter them.&lt;/p&gt;
+
+&lt;p&gt;Implicit in these imperative statements about no pixels changing has been
+the assumption that the renderer is &lt;em&gt;deterministic&lt;/em&gt;—that rendering the
+same scene gives exactly the same output image.  For now we will take that
+as given.  Making the renderer so is tricky but worthwhile; that will be
+the sole topic of the next post in this series.&lt;/p&gt;
+
+&lt;h2 id=&quot;when-the-images-may-change&quot;&gt;When the Images May Change&lt;/h2&gt;
+
+&lt;p&gt;Whenever changes are made to code involving ray tracing, other geometric
+computations, or light transport algorithms, it’s almost inevitable that
+images will change.  This brings us to the tricky question of “are those
+changes ok, or suggestive that there is a bug?”&lt;/p&gt;
+
+&lt;p&gt;To motivate this case, let’s consider a (real) example: making what is
+believed to be an improvement to the algorithm that makes sure that rays
+leaving bilinear patches do not incorrectly reinstersect the patch.
+Assuming that we had a reasonable algorithm for this previously, we
+would expect very small changes in the images for every scene that has
+bilinear patches in it, but would not expect any big image changes.
+(Though we might hope to have a scene that shows a case where the current
+algorithm is insufficient, in which case we would hope for significant
+and visually evident improvement with it.)&lt;/p&gt;
+
+&lt;p&gt;My testing script uses pbrt’s &lt;em&gt;imgtool&lt;/em&gt; program to compare the output
+images to the golden images.  It prints nothing when they match exactly, so
+if you’ve just changed the float parser, you might run the end-to-end
+tests, wait for them to finish, and move along happily if nothing is
+reported.  When there is a discrepancy, &lt;em&gt;imgtool&lt;/em&gt;’s output is like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/matt/blog/images/blp-imgtool.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That output is carefully crafted. The three lines in turn:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;The news: the images are different.&lt;/li&gt;
+  &lt;li&gt;The pathnames of the two images, relative to the current
+directory. These are there alone and together on a line so that it’s
+easy to triple click that line to select it, then type the name of an
+image viewer in the shell, paste the selection, hit return, and then view the two
+images.&lt;/li&gt;
+  &lt;li&gt;Numerical details about the images and how they differ.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Those details include the average value of all of the pixels in each image,
+their percentage difference, and their mean squared difference.
+Often those numbers alone are enough to indicate what’s going on.
+If we saw something like the above for all of the test scenes that had
+bilinear patches in them (minuscule differences in average pixel values and
+MSE), we could be fairly confident that all was well.  It would still be
+worth a quick glance at a few of the images, but there would be no need to
+view all of them to feel good about the change.&lt;/p&gt;
+
+&lt;p&gt;With that workflow in mind, &lt;em&gt;imgtool&lt;/em&gt; offers some color in its output to
+make it easier to see higher levels of error.  Here’s what it said about
+another scene after I made that change:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/matt/blog/images/splash-imgtool.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That red text says “this seems a little high”, and indeed it is so—here
+are the corresponding images:&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;bad-splash&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('bad-splash'), {
+  title: 'bad-splash', children: [
+ { title: 'Test Image', image: '/matt/blog/images/run-splash.pbrt.png' },
+ { title: 'Golden Image', image: '/matt/blog/images/golden-splash.pbrt.png' },
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Something funny is happening at the boundary of the liquid at the top of
+the cup; it is evident that one of two images must be wrong, though it
+isn’t obvious which one is.  Time to start debugging.&lt;/p&gt;
+
+&lt;h2 id=&quot;using-statistics-to-your-advantage&quot;&gt;Using Statistics to Your Advantage&lt;/h2&gt;
+
+&lt;p&gt;For the bilinear patch intersection example, the image statistics are
+useful for giving a good first indicator of “all is well”, “something may
+be fishy here”, or “things are Not Good.”  That is plenty useful, but when
+one is making changes to Monte Carlo sampling code, those numbers have even
+greater value.  Consider improving a BRDF importance sampling routine 
+to better match the BRDF.  In that case, we hope for significant
+image changes for the better thanks to lower error.  How do we distinguish
+between an improvement in error and an incorrect result?&lt;/p&gt;
+
+&lt;p&gt;Just looking at the images may not be enough.  Consider these three images
+of the San Miguel scene where the first is the baseline reference and the
+others correspond to two different changes to the renderer, one correct and
+one buggy.  It’s not evident from just looking at the images which one
+is wrong.&lt;/p&gt;
+
+&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
+&lt;div id=&quot;sanmiguel&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;script&gt;
+Jeri.renderViewer(document.getElementById('sanmiguel'), {
+  title: 'sanmiguel', children: [
+ { title: 'Reference', image: '/matt/blog/images/sanmiguel-ref.exr' },
+ { title: 'Change A', image: '/matt/blog/images/sanmiguel-a.exr' },
+ { title: 'Change B', image: '/matt/blog/images/sanmiguel-b.exr' },
+ ]});
+&lt;/script&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;However, &lt;em&gt;imgtool&lt;/em&gt; has something interesting to report: the average pixel
+value of “Change A” is 0.17% higher than the reference image, but the
+average pixel value of “Change B” is 4.03% higher.  In the context of
+unbiased Monte Carlo, a 4% change is most definitely a sign of something
+going wrong.&lt;/p&gt;
+
+&lt;p&gt;One way to think about why this is so is that if you’re using unbiased
+Monte Carlo algorithms, rendering images of thousands of pixels, each with
+tens of samples, then you have hundreds of thousands or even millions of
+sample values that feed into that average.  If you have changed your
+importance sampling routines (and your estimators don’t have ridiculously
+high variance), then those average image values should be well locked
+in if both “before” and “after” are bug-free.&lt;/p&gt;
+
+&lt;p&gt;That idea also explains why that San Miguel test has a fairly low sampling
+rate—just 16 samples per pixel.  You often don’t need to render the whole
+image to convergence to tell if the Monte Carlo bits have gone wrong; the
+statistics over all of the pixels often tell the tale.&lt;/p&gt;
+
+&lt;p&gt;But how do you know how much of a change is acceptable?  Is that 0.17%
+something to worry about?  In practice, it depends; the answer depends on
+how many samples you’re taking and how much variance there is in your
+estimators.  For pbrt’s tests, I’ve learned to have a sense of what’s
+expected, but that’s admittedly imprecise.  A much better way would be to
+follow the ideas presented in Kartic Subr and Jim Arvo’s &lt;a href=&quot;http://www0.cs.ucl.ac.uk/staff/K.Subr/research.html#HypothesisMCEstimators&quot;&gt;paper on
+applying proper statistical tests to these
+tasks&lt;/a&gt;.
+They show not only the right way to decide if two images have the same
+mean, accounting for the number of samples taken in setting a threshold,
+but also showing how to robustly determine the answer to questions like
+“does image a have lower variance than image b?”&lt;/p&gt;
+
+&lt;p&gt;For all of these evaluations of images, it’s crucial that images are stored
+in floating point, not clamped, and without any tone mapping or gamma
+correction.  When you’re making images for people to look at, you’re more
+than welcome to use 8-bit PNGs and run your pixels through the ACES curve
+for a “filmic” look.  For the purposes of end-to-end tests, maintaining
+good old linear values with their full dynamic range is the only thing that
+allows you to reason about what’s going on with them statistically.&lt;/p&gt;
+
+&lt;p&gt;Finally, even if the numbers look good, it’s still important to view the
+images, or at least all of those ones with the greatest reported
+differences.  A shortcoming of those image-wide statistics is that they
+don’t indicate whether the error has some unsightly structure to it that is
+sneaking under the radar.  One way to better automate that test would be to
+also use a perceptual error metric like
+&lt;a href=&quot;https://research.nvidia.com/publication/2020-07_FLIP&quot;&gt;ꟻlip&lt;/a&gt;, though
+that requires high-quality reference images, which pbrt’s end-to-end tests
+currently avoid in the interests of running more quickly.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;This has turned into a longer post than I intended and there’s still plenty
+more to say, especially about the tricky problem of having two rendered
+images and trying to figure out what their differences signify.  We will
+most certainly come back to that in following posts since it is frequently
+integral to the renderer debugging process.&lt;/p&gt;
+
+&lt;p&gt;The best thing about having a good set of tests—both unit and
+end-to-end—is being able to iterate on code with confidence.  You can
+refactor swaths of the system, you can cleanup things that are a little
+grungy, and if the tests are clear, you can feel confident about committing
+those changes.  Sometimes you can try out speculative ideas—things where
+you’re not sure if the idea is right—and quickly gather some empirical
+data about whether the idea works or not.  If those indicators are
+promising and you pursue your idea you should still find better ways to
+validate it, but I’ve found that a quick yes/no can be a helpful guide.&lt;/p&gt;
+
+&lt;p&gt;Next time we’ll go into the details of making a renderer deterministic,
+which is one of the foundations of everything discussed today.  That post
+will certainly be less to digest than this one was.&lt;/p&gt;
+
+&lt;h1 id=&quot;notes&quot;&gt;notes&lt;/h1&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:coverage&quot;&gt;
+      &lt;p&gt;The Right Thing to do would be to use a tool that measures code
+         coverage, see which parts of the renderer never or rarely run
+         given your test scenes, and to introduce new scenes
+         intentionally to exercise that code.  Admittedly, I have not
+         yet found that discipline for pbrt. &lt;a href=&quot;#fnref:coverage&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:gengold&quot;&gt;
+      &lt;p&gt;Note that the golden images must be generated from scratch for
+        each operating system and compiler used, as differences in
+        details like precision in the system math library usually leads
+        to minor image differences across different systems. &lt;a href=&quot;#fnref:gengold&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Still in the thick of the task of detecting the presence of bugs in a renderer in the first place, this time the focus is on the value of a large suite of test scenes. Soon soon we will turn to what to do about all of these bugs when we find them.</summary></entry><entry><title type="html">Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)</title><link href="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html" rel="alternate" type="text/html" title="Debugging Your Renderer (3/n): Assertions (and on not sweeping things under the rug)" /><published>2021-12-02T00:00:00-08:00</published><updated>2021-12-02T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/02/debugging-renderers-assertions.html">&lt;p&gt;Today we’ll keep the discussion to the topic of runtime assertions in
 renderers; next time it’ll be on to end-to-end tests, which will start
 to lead us into a more image-focused view of graphics debugging that will
 keep us busy for a while.&lt;/p&gt;
@@ -667,9 +1144,6 @@ me.&lt;/p&gt;
 &lt;p&gt;We’re not done with testing! With the unit testing lecture over, next time
 it will be on to some thoughts about writing effective assertions and how
 end-to-end tests fit in for testing renderers.&lt;/p&gt;
-
-&lt;p&gt;Also, an experiment below: I’ve set up &lt;a href=&quot;https://utteranc.es/&quot;&gt;utterances&lt;/a&gt;
-to allow comments here.  We’ll see how that goes, with fingers crossed.&lt;/p&gt;
 
 &lt;h2 id=&quot;note&quot;&gt;note&lt;/h2&gt;
 &lt;div class=&quot;footnotes&quot;&gt;
@@ -2568,53 +3042,4 @@ things start in a better place and go fun places from there.&lt;/p&gt;
 before.  (Among other things, pbrt’s old kitchen sink &lt;code class=&quot;highlighter-rouge&quot;&gt;UberMaterial&lt;/code&gt; is gone.)  In this context, an artist-friendly BSDF like the Disney one doesn’t fit with the book’s current focus, so we have cut it in the interests of simplifying the system.  (Ptex support remains, at least!) &lt;a href=&quot;#fnref:bsdf&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry><entry><title type="html">About That Scene For the Cover…</title><link href="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html" rel="alternate" type="text/html" title="About That Scene For the Cover..." /><published>2021-02-26T00:00:00-08:00</published><updated>2021-02-26T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/02/26/pbrt-cover-image-redux.html">&lt;p&gt;After our recent &lt;a href=&quot;/matt/blog/2021/02/22/pbr-4ed-cover-image.html&quot;&gt;call for scenes for a cover image for the book&lt;/a&gt;,
-Wenzel, Greg, and I received an email that said, paraphrased, “You’re
-selling a $100 book and asking artists to work for free to model a scene
-for the cover? All of the artists at my studio are talking about what
-terrible people you all are for trying to exploit us while you get rich
-from your expensive book.”&lt;/p&gt;
-
-&lt;p&gt;This is a fair topic to bring up, and so I figured that a broader response
-would be worthwhile.&lt;/p&gt;
-
-&lt;p&gt;First, I get the sentiment and I understand that artists are often asked to
-work for free “for the exposure” or whatever.  (Ask me sometime about
-acquaintances who have killer app ideas and just need someone to code it up
-for free.)  If you’re working in 3D modeling and see no particular value to
-this particular book, that’s fine, though I might ask you to see what the
-folks who write your renderer think of it.&lt;/p&gt;
-
-&lt;p&gt;There is not much money to be made in academic publishing.  After the
-distributor takes their cut and then the publisher, there’s around 15% of
-the cover price left for the authors.  We have three of them, and then
-there are a variety of expenses (e.g., hosting the &lt;a href=&quot;http://pbr-book.org&quot;&gt;free online version of
-the book&lt;/a&gt; runs about $1,500 a year, since we use
-Google Cloud to serve it, ensuring low latency and high bandwidth for
-people all around the world.)  When it’s all said and done, it’s net a few
-thousand dollars a year left for each of us.  Dollars per hour, serving
-fast food would be more profitable.&lt;/p&gt;
-
-&lt;p&gt;We have always been happy to pay for the efforts of professionals in the
-production of the book—layout, copyediting, proofreading, indexing, and
-the line art figures are all done by professionals, and that is money very
-well spent as far as the quality of the final result, which matters more to
-us much more than those costs.  Our time spent on the book is in the
-service of education, disseminating knowledge, and doing our part to try to
-improve the state of the art in rendering.  Having fewer of those few
-thousand dollars to do that more effectively? It’s a no brainer.&lt;/p&gt;
-
-&lt;p&gt;In the past, some excellent 3D artists have been happy to offer scenes for
-the book cover in exchange for the distinction of being known for having
-created those scenes.  We would nevertheless happily pay an artist for
-their efforts in creating a scene for the cover of the 4th edition.  The
-value of an excellent scene would be more than worth it.&lt;/p&gt;
-
-&lt;p&gt;If you think you could model something amazing for us and would do so for
-payment, please do get in touch with a proposal: it’s &lt;em&gt;authors@pbrt.org&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;The trade-off for payment would be in credit, and in this case we would
-require a license that allowed us to use and redistribute the scene without
-acknowledging its source.&lt;/p&gt;
-
-&lt;p&gt;Fair enough?&lt;/p&gt;</content><author><name></name></author><summary type="html">Additional words about the economics of academic book publishing, and an offer for compensation.</summary></entry></feed>
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry></feed>
