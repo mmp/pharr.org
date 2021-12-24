@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Debugging Your Renderer (5/n): Rendering Deterministically</title>
+  <meta name="description" content="Making a renderer fully deterministic—the same input always giving exactly the same output—has a few tricky corners that were never all addressed in pbrt unt...">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Debugging Your Renderer (5/n): Rendering Deterministically</h1>
+    <p class="post-meta">
+      <time datetime="2021-12-24T00:00:00-08:00" itemprop="datePublished">
+        
+        Dec 24, 2021
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Deterministic program execution has a lot going for it.  For most programs,
+it’s the natural way of being: for any particular input, the program
+generates the same output.  Determinism makes debugging much easier, as it
+saves you from having to re-run the system repeatedly to trigger a bug that
+only happens sometimes, and it’s great for end-to-end tests, since you can
+safely make strict assertions about cases where the program’s output should
+remain absolutely unchanged (e.g., that <a href="/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html#when-the-images-should-not-change-at-all">float parser
+example</a>).</p>
+
+<p>However, deterministic execution doesn’t always come naturally when you’re
+rendering, especially when you’re rendering in parallel.  Today’s post will
+go into some of the ways that deterministic execution can be lost, talk
+about how to maintain determinism, and then finish with some further
+discussion of its benefits.</p>
+
+<h2 id="the-basics">The Basics</h2>
+
+<p>To start, let’s settle on a more precise definition of deterministic
+rendering than “same input gives same output.”  It is too much to ask for
+bit accuracy in output across machines; not only will we encounter
+different standard math libraries with different levels of precision, but
+there are a number of corners of C++ that allow for things like variation
+in <a href="https://en.cppreference.com/w/cpp/language/eval_order">order of
+evaluation</a> across
+compilers that can lead to innocuous differences in output.</p>
+
+<p>Therefore, we’ll define the observable effect of determinism as: <em>on a
+particular system with a particular compiler, repeatedly running the
+renderer on the same input always produces the same value at every pixel</em>.
+Implicit in that definition is that the same computations are performed to
+compute each pixel’s value, though not necessarily in the same order.  That
+definition is plenty for our needs; the benefits from nailing it down
+further almost certainly wouldn’t be worth the trouble.</p>
+
+<p>A render running on a single core should naturally achieve that goal.  If
+it does not, fixing that is the first order of business.  Most likely it’s
+an uninitialized memory access, other memory corruption, or code somewhere
+that randomly seeds a random number generator based on something that
+varies like the process id or current time.  (I won’t say more about fixing
+those sorts of problems here, as it’s all rendering-independent and is
+regular everyday debugging.)</p>
+
+<p>Rendering in parallel is when things get more complicated.  Indeed, none of
+the versions of pbrt before the latest,
+<a href="https://github.com/mmp/pbrt-v4">pbrt-v4</a>, was deterministic.  That was
+always a minor annoyance when debugging and testing the system, though I
+honestly didn’t realize what a productivity drag it was until determinism
+was achieved.</p>
+
+<h2 id="consistent-samples">Consistent Samples</h2>
+
+<p>For rendering to be deterministic, the Monte Carlo sampling routines must
+use exactly the same random sample points at every sample taken in every
+pixel.  If they are not, then determinism is lost from the start, since
+different rays will be traced each time due to slightly different rays
+leaving the camera, different sampling decisions will be made at
+intersections, and so forth.  One might assume that deterministic is the
+natural way of being for the
+<a href="https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/Sampling_Interface#BasicSamplerInterface">Sampler</a>s
+that generate those points, but that was not so prior to pbrt-v4.  There
+were two issues: the placement of low discrepancy point sets and carried
+state in samplers that led to nondeterminism with multithreading.</p>
+
+<p>When using low discrepancy point sets like Halton points, pbrt-v3 aligns
+the origin of the points with the upper left pixel of the image.  That’s
+normally \((0,0)\), but then if the user specifies a crop window to
+render just part of the image the low discrepancy points all shift in
+compensation.  That was always a bother for debugging since you couldn’t
+narrow in on a problem pixel without perturbing all of the samples and
+often no longer hitting the bug.  That detail was easy enough to fix given
+attention to it.</p>
+
+<p>The other issue came from the fact that each thread maintains its own
+<code class="highlighter-rouge">Sampler</code> instance.  This way samplers can maintain state that depends on
+the current pixel and pixel sample (e.g., an offset into the Halton
+sequence).  Many samplers also use pseudorandom number generators (RNGs) in
+their work; those, too, are per-sampler state.  (For example, the
+stratified sampler uses a RNG to jitter sample locations and low
+discrepancy samplers use RNGs for randomization via scrambling.)</p>
+
+<p>In pbrt-v3, those per-sampler RNGs are seeded once at system startup time
+and then chug along, generating random numbers as requested.  Because
+threads are dynamically assigned to work on regions of the image, they may
+not work on the same pixels over multiple runs.  In turn, the values that a
+RNG returns at a pixel both depends on which thread was assigned that pixel
+as well as how many random numbers it had supplied previously for other
+pixels.</p>
+
+<p>The fix was easy: reseed the RNG before generating sample points at a
+particular pixel sample.  The <code class="highlighter-rouge">Sampler</code> interface includes a
+<code class="highlighter-rouge">StartPixelSample()</code> method that is called before samples are requested at
+a given pixel sample, so it’s just a few lines of code to put those RNGs in
+a known state.  Here’s that method in <code class="highlighter-rouge">IndependentSampler</code>, which generates
+uniform independent samples without any further nuance:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">StartPixelSample</span><span class="p">(</span><span class="n">Point2i</span> <span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sampleIndex</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dimension</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">rng</span><span class="p">.</span><span class="n">SetSequence</span><span class="p">(</span><span class="n">Hash</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">seed</span><span class="p">));</span>
+    <span class="n">rng</span><span class="p">.</span><span class="n">Advance</span><span class="p">(</span><span class="n">sampleIndex</span> <span class="o">*</span> <span class="mi">65536ull</span> <span class="o">+</span> <span class="n">dimension</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>There are two things to note in <code class="highlighter-rouge">StartPixelSample()</code>’s implementation.
+First, pbrt uses the <a href="https://www.pcg-random.org/index.html">PCG</a> RNG,
+which allows the specification of both a particular sequence of
+pseudorandom values as well as an offset into that sequence.  Thus, we
+choose a sequence according to the pixel coordinates and then offset into
+it according to the index of the sample being taken in the pixel.</p>
+
+<p>The other thing to mention there is <code class="highlighter-rouge">Hash()</code>, which has been useful all
+over the place in pbrt-v4.  Here is its signature:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span> <span class="kt">uint64_t</span> <span class="n">Hash</span><span class="p">(</span><span class="n">Args</span><span class="p">...</span> <span class="n">args</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>You can pass a bunch of values or objects straight away to it and it
+marshals them up and passes them to
+<a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a> to hash
+them.<sup id="fnref:padding"><a href="#fn:padding" class="footnote">1</a></sup> In its use in the <code class="highlighter-rouge">IndependentSampler</code>, we also allow the
+user to specify a seed for random number generation; <code class="highlighter-rouge">Hash()</code> makes
+it simple to mush that together with the current pixel coordinates to
+choose a pseudorandom sequence for the current pixel.</p>
+
+<p>There is, needless to say, a short <a href="https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/samplers_test.cpp#L15">unit
+test</a>
+that ensures all of the samplers consistently generate the same sample values.</p>
+
+<h2 id="other-moments-of-randomness">Other Moments of Randomness</h2>
+
+<p>Samplers were much of the trouble in bringing pbrt-v4 into the land of
+deterministic output, though two other places in the system that made
+random decisions without the involvement of a sampler needed attention.</p>
+
+<p>First was a <a href="https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/cpu/primitive.cpp#L57">stochastic alpha
+test</a>,
+deep in the primitive intersection code.  For shapes that have an alpha
+texture assigned to them, we’d like to ignore any intersections where the
+alpha texture is zero and randomly accept ones with fractional alpha with
+probability according to their alpha value.  The sampler isn’t available in
+the ray intersection routines and keeping a persistent RNG in that code has
+obvious problems, so here is what we do instead:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">Float</span> <span class="n">a</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">.</span><span class="n">Evaluate</span><span class="p">(</span><span class="n">si</span><span class="o">-&gt;</span><span class="n">intr</span><span class="p">);</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Possibly ignore intersection based on stochastic alpha test
+</span>    <span class="n">Float</span> <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="mf">1.</span><span class="n">f</span> <span class="o">:</span> <span class="n">HashFloat</span><span class="p">(</span><span class="n">ray</span><span class="p">.</span><span class="n">o</span><span class="p">,</span> <span class="n">ray</span><span class="p">.</span><span class="n">d</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Ignore this intersection and trace a new ray
+</span>        <span class="p">[...]</span>
+</code></pre>
+</div>
+
+<p>Given a less-than-one alpha value, a call to <code class="highlighter-rouge">HashFloat()</code> gives a uniform
+random floating-point value between 0 and 1.  It’s a buddy of <code class="highlighter-rouge">Hash()</code> and
+is also happy to take whichever-all values you pass it to turn into a
+random floating-point value.  (Above, it’s the ray origin and direction.)</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">Float</span> <span class="n">HashFloat</span><span class="p">(</span><span class="n">Args</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kt">uint32_t</span><span class="p">(</span><span class="n">Hash</span><span class="p">(</span><span class="n">args</span><span class="p">...))</span> <span class="o">*</span> <span class="mh">0x1</span><span class="n">p</span><span class="o">-</span><span class="mi">32</span><span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Thus, the results are deterministic for any given ray.</p>
+
+<p>The second case was in pbrt-v4’s <code class="highlighter-rouge">LayeredBxDF</code> class, which implements <a href="https://shuangz.com/projects/layered-sa18/">Guo
+et al.’s algorithm</a> for
+stochastic evaluation and sampling of the BRDFs of layered materials.  That
+needs an unbounded number of independent random samples, so we instantiate
+an RNG for each evaluation, but <a href="https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/bxdfs.h#L513">seed it via the incident and outgoing
+directions</a>.
+Thus again, for any pair of directions passed to the BRDF evaluation
+method, the same set of random samples will be generated and the returned
+value will be deterministic.</p>
+
+<h2 id="consistent-pixel-sums">Consistent Pixel Sums</h2>
+
+<p>With what we have so far, the same rays will be traced each
+time the renderer runs and in turn, if an assertion fires along the
+way, it will do so consistently.  That’s a big benefit for debugging, but
+we have not yet achieved deterministic output, which is important for
+making end-to-end tests maximally useful.</p>
+
+<p>The remaining challenge lies in summing sample values to compute each
+pixel’s final value. Because floating-point addition is not associative, if
+the image samples that contribute to a pixel are not accumulated carefully
+the order of summation may be different across different runs of the
+program and so the output may change.  That was a problem in pbrt-v3 due to
+how it computed final pixel values: there, the image is decomposed into
+rectangular regions that are assigned to threads and threads generate samples
+within their regions, updating the pixels that each sample contributes to.</p>
+
+<p>This figure illustrates the problem with that, showing all of the samples
+that contribute to a particular output pixel (black dot):</p>
+
+<p><img src="/matt/blog/images/thread pixel sampling.svg" height="400" /></p>
+
+<p>We have two threads responsible for adjacent \(4 \times 4\) pixel regions of the
+image (thick boxes).  For an output image pixel near the boundary of the
+two regions that has a reconstruction filter that is wider than the pixel
+spacing (shaded circle), some of the samples that contribute will be taken
+by thread 1 (orange dots) and some will come from samples taken by thread 2
+(blue dot).  Because the threads are independent, the filtered sample
+values are not accumulated in a deterministic order and thus, the final
+pixel value is not deterministic.</p>
+
+<p>pbrt-v4 addresses this issue by adopting Ernst et al.’s <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.183.3579&amp;rep=rep1&amp;type=pdf">filter importance
+sampling</a>
+approach.  Independent samples are taken for each output pixel, with no
+sample sharing with other pixels.  If only a single thread works on a pixel
+at a time, then the samples for each output pixel are naturally generated
+in a consistent order, giving a consistent sum.  (Filter importance
+sampling has a number of additional advantages that are detailed in the
+paper, including better preservation of the benefits of high-quality
+sampling patterns.)  With that tuned up, we (almost) have deterministic
+output.</p>
+
+<h2 id="those-pesky-splats">Those Pesky Splats</h2>
+
+<p>One more thing… pbrt-v4’s output is not quite deterministic if a light
+transport algorithm that traces paths starting from the light sources is
+being used.  In that case, light path vertices are splatted into the image
+at whichever pixel they are visible; if multiple threads end up splatting
+into the same pixel, then we are back to nondeterminism from unordered
+floating-point addition.</p>
+
+<p>This issue could be addressed by having each thread splat into its own
+image and then summing the images at the end, though that would incur a
+cost in memory use that scales with the number of threads.  Alternatively,
+we might use fixed-point rather than floating-point to store those pixel
+values.  For now that issue is unaddressed; it rarely causes any trouble,
+especially since those splatted values are accumulated in double precision
+and generally converted all the way down to half-float precision for
+storage.  Most of the time that loss of precision hides any sloppy sums.</p>
+
+<h2 id="the-joys-of---debugstart">The Joys of --debugstart</h2>
+
+<p>The greatest benefit of deterministic rendering has been the ability to
+quickly iterate on bugs: you can add some logging code or more assertions,
+recompile, and re-render, confident that the new code will see the same
+inputs as triggered the bug.  Given samplers that give exactly the same
+samples at each pixel also means that you can speed things up by just
+rendering a crop window or even a single pixel as you’re chasing a bug.</p>
+
+<p>Even better, it was easy to go even further and add support for retracing
+just a single offending ray path.  pbrt-v4 has a <code class="highlighter-rouge">CheckCallbackScope</code> class
+that uses RAII to register a callback function that will run if an
+assertion fails or if the renderer crashes.  Here is how it is used in most
+of pbrt’s CPU integrators:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">thread_local</span> <span class="n">Point2i</span> <span class="n">threadPixel</span><span class="p">;</span>
+<span class="k">thread_local</span> <span class="kt">int</span> <span class="n">threadSampleIndex</span><span class="p">;</span>
+
+<span class="n">CheckCallbackScope</span> <span class="nf">_</span><span class="p">([</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">"Rendering failed at pixel (%d, %d) sample %d. Debug with "</span>
+                        <span class="s">"</span><span class="se">\"</span><span class="s">--debugstart %d,%d,%d</span><span class="se">\"\n</span><span class="s">"</span><span class="p">,</span>
+                        <span class="n">threadPixel</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">threadPixel</span><span class="p">.</span><span class="n">y</span><span class="p">,</span> <span class="n">threadSampleIndex</span><span class="p">,</span>
+                        <span class="n">threadPixel</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">threadPixel</span><span class="p">.</span><span class="n">y</span><span class="p">,</span> <span class="n">threadSampleIndex</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+</div>
+
+<p>As rendering proceeds, each thread keeps its thread-local <code class="highlighter-rouge">threadPixel</code> and
+<code class="highlighter-rouge">threadSampleIndex</code> variables up to date and if the renderer aborts due to
+an error, you get a message like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Rendering failed at pixel (915, 249) sample 83. Debug with "--debugstart 915,249,83"
+</code></pre>
+</div>
+
+<p>at the bottom of the crash output.  If you then rerun pbrt passing it that
+<code class="highlighter-rouge">--debugstart</code> option, a <a href="https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/cpu/integrators.cpp#L68">specialized code
+path</a>
+traces just that single ray path in the main thread of execution.  That
+gives a simpler debugging context than launching a bunch of threads and
+waiting for the bug to hit again; it’s delightfully helpful for bugs that
+otherwise only happen after a substantial amount of time has gone by.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We’ve made it past “detecting rendering bugs” and have made our way to
+“reliably replicating those bugs.”  Next time will be a few thoughts about
+performance bugs before we get into actual debugging techniques.</p>
+
+<h2 id="note">note</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:padding">
+      <p>The attentive reader of <a href="https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/util/hash.h#L121">the <code class="highlighter-rouge">Hash()</code> implementation</a> will note that if a struct or class that
+        has padding between elements is passed to it, the
+        results may be nondeterministic since it hashes their in-memory contents
+        directly. It would be nice to use a C++ SFINAE trick to get a
+        compilation error in that case, but I’m not aware of a way to
+        detect that at compile time. <a href="#fnref:padding" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

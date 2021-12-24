@@ -1,5 +1,302 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-19T11:30:35-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Debugging Your Renderer (4/n): End-to-end tests (or, “why did that image change?”)</title><link href="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (4/n): End-to-end tests (or, &quot;why did that image change?&quot;)" /><published>2021-12-19T00:00:00-08:00</published><updated>2021-12-19T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html">&lt;p&gt;Here we are, three posts into the meat of this series, and we’re still on
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-24T08:29:28-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Debugging Your Renderer (5/n): Rendering Deterministically</title><link href="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html" rel="alternate" type="text/html" title="Debugging Your Renderer (5/n): Rendering Deterministically" /><published>2021-12-24T00:00:00-08:00</published><updated>2021-12-24T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html">&lt;p&gt;Deterministic program execution has a lot going for it.  For most programs,
+it’s the natural way of being: for any particular input, the program
+generates the same output.  Determinism makes debugging much easier, as it
+saves you from having to re-run the system repeatedly to trigger a bug that
+only happens sometimes, and it’s great for end-to-end tests, since you can
+safely make strict assertions about cases where the program’s output should
+remain absolutely unchanged (e.g., that &lt;a href=&quot;/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html#when-the-images-should-not-change-at-all&quot;&gt;float parser
+example&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;However, deterministic execution doesn’t always come naturally when you’re
+rendering, especially when you’re rendering in parallel.  Today’s post will
+go into some of the ways that deterministic execution can be lost, talk
+about how to maintain determinism, and then finish with some further
+discussion of its benefits.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-basics&quot;&gt;The Basics&lt;/h2&gt;
+
+&lt;p&gt;To start, let’s settle on a more precise definition of deterministic
+rendering than “same input gives same output.”  It is too much to ask for
+bit accuracy in output across machines; not only will we encounter
+different standard math libraries with different levels of precision, but
+there are a number of corners of C++ that allow for things like variation
+in &lt;a href=&quot;https://en.cppreference.com/w/cpp/language/eval_order&quot;&gt;order of
+evaluation&lt;/a&gt; across
+compilers that can lead to innocuous differences in output.&lt;/p&gt;
+
+&lt;p&gt;Therefore, we’ll define the observable effect of determinism as: &lt;em&gt;on a
+particular system with a particular compiler, repeatedly running the
+renderer on the same input always produces the same value at every pixel&lt;/em&gt;.
+Implicit in that definition is that the same computations are performed to
+compute each pixel’s value, though not necessarily in the same order.  That
+definition is plenty for our needs; the benefits from nailing it down
+further almost certainly wouldn’t be worth the trouble.&lt;/p&gt;
+
+&lt;p&gt;A render running on a single core should naturally achieve that goal.  If
+it does not, fixing that is the first order of business.  Most likely it’s
+an uninitialized memory access, other memory corruption, or code somewhere
+that randomly seeds a random number generator based on something that
+varies like the process id or current time.  (I won’t say more about fixing
+those sorts of problems here, as it’s all rendering-independent and is
+regular everyday debugging.)&lt;/p&gt;
+
+&lt;p&gt;Rendering in parallel is when things get more complicated.  Indeed, none of
+the versions of pbrt before the latest,
+&lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;, was deterministic.  That was
+always a minor annoyance when debugging and testing the system, though I
+honestly didn’t realize what a productivity drag it was until determinism
+was achieved.&lt;/p&gt;
+
+&lt;h2 id=&quot;consistent-samples&quot;&gt;Consistent Samples&lt;/h2&gt;
+
+&lt;p&gt;For rendering to be deterministic, the Monte Carlo sampling routines must
+use exactly the same random sample points at every sample taken in every
+pixel.  If they are not, then determinism is lost from the start, since
+different rays will be traced each time due to slightly different rays
+leaving the camera, different sampling decisions will be made at
+intersections, and so forth.  One might assume that deterministic is the
+natural way of being for the
+&lt;a href=&quot;https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/Sampling_Interface#BasicSamplerInterface&quot;&gt;Sampler&lt;/a&gt;s
+that generate those points, but that was not so prior to pbrt-v4.  There
+were two issues: the placement of low discrepancy point sets and carried
+state in samplers that led to nondeterminism with multithreading.&lt;/p&gt;
+
+&lt;p&gt;When using low discrepancy point sets like Halton points, pbrt-v3 aligns
+the origin of the points with the upper left pixel of the image.  That’s
+normally \((0,0)\), but then if the user specifies a crop window to
+render just part of the image the low discrepancy points all shift in
+compensation.  That was always a bother for debugging since you couldn’t
+narrow in on a problem pixel without perturbing all of the samples and
+often no longer hitting the bug.  That detail was easy enough to fix given
+attention to it.&lt;/p&gt;
+
+&lt;p&gt;The other issue came from the fact that each thread maintains its own
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Sampler&lt;/code&gt; instance.  This way samplers can maintain state that depends on
+the current pixel and pixel sample (e.g., an offset into the Halton
+sequence).  Many samplers also use pseudorandom number generators (RNGs) in
+their work; those, too, are per-sampler state.  (For example, the
+stratified sampler uses a RNG to jitter sample locations and low
+discrepancy samplers use RNGs for randomization via scrambling.)&lt;/p&gt;
+
+&lt;p&gt;In pbrt-v3, those per-sampler RNGs are seeded once at system startup time
+and then chug along, generating random numbers as requested.  Because
+threads are dynamically assigned to work on regions of the image, they may
+not work on the same pixels over multiple runs.  In turn, the values that a
+RNG returns at a pixel both depends on which thread was assigned that pixel
+as well as how many random numbers it had supplied previously for other
+pixels.&lt;/p&gt;
+
+&lt;p&gt;The fix was easy: reseed the RNG before generating sample points at a
+particular pixel sample.  The &lt;code class=&quot;highlighter-rouge&quot;&gt;Sampler&lt;/code&gt; interface includes a
+&lt;code class=&quot;highlighter-rouge&quot;&gt;StartPixelSample()&lt;/code&gt; method that is called before samples are requested at
+a given pixel sample, so it’s just a few lines of code to put those RNGs in
+a known state.  Here’s that method in &lt;code class=&quot;highlighter-rouge&quot;&gt;IndependentSampler&lt;/code&gt;, which generates
+uniform independent samples without any further nuance:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;StartPixelSample&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Point2i&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sampleIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dimension&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;rng&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SetSequence&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Hash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;rng&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Advance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sampleIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;65536ull&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dimension&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There are two things to note in &lt;code class=&quot;highlighter-rouge&quot;&gt;StartPixelSample()&lt;/code&gt;’s implementation.
+First, pbrt uses the &lt;a href=&quot;https://www.pcg-random.org/index.html&quot;&gt;PCG&lt;/a&gt; RNG,
+which allows the specification of both a particular sequence of
+pseudorandom values as well as an offset into that sequence.  Thus, we
+choose a sequence according to the pixel coordinates and then offset into
+it according to the index of the sample being taken in the pixel.&lt;/p&gt;
+
+&lt;p&gt;The other thing to mention there is &lt;code class=&quot;highlighter-rouge&quot;&gt;Hash()&lt;/code&gt;, which has been useful all
+over the place in pbrt-v4.  Here is its signature:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;template&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;typename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Args&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Hash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;You can pass a bunch of values or objects straight away to it and it
+marshals them up and passes them to
+&lt;a href=&quot;https://en.wikipedia.org/wiki/MurmurHash&quot;&gt;MurmurHash&lt;/a&gt; to hash
+them.&lt;sup id=&quot;fnref:padding&quot;&gt;&lt;a href=&quot;#fn:padding&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; In its use in the &lt;code class=&quot;highlighter-rouge&quot;&gt;IndependentSampler&lt;/code&gt;, we also allow the
+user to specify a seed for random number generation; &lt;code class=&quot;highlighter-rouge&quot;&gt;Hash()&lt;/code&gt; makes
+it simple to mush that together with the current pixel coordinates to
+choose a pseudorandom sequence for the current pixel.&lt;/p&gt;
+
+&lt;p&gt;There is, needless to say, a short &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/samplers_test.cpp#L15&quot;&gt;unit
+test&lt;/a&gt;
+that ensures all of the samplers consistently generate the same sample values.&lt;/p&gt;
+
+&lt;h2 id=&quot;other-moments-of-randomness&quot;&gt;Other Moments of Randomness&lt;/h2&gt;
+
+&lt;p&gt;Samplers were much of the trouble in bringing pbrt-v4 into the land of
+deterministic output, though two other places in the system that made
+random decisions without the involvement of a sampler needed attention.&lt;/p&gt;
+
+&lt;p&gt;First was a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/cpu/primitive.cpp#L57&quot;&gt;stochastic alpha
+test&lt;/a&gt;,
+deep in the primitive intersection code.  For shapes that have an alpha
+texture assigned to them, we’d like to ignore any intersections where the
+alpha texture is zero and randomly accept ones with fractional alpha with
+probability according to their alpha value.  The sampler isn’t available in
+the ray intersection routines and keeping a persistent RNG in that code has
+obvious problems, so here is what we do instead:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alpha&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Evaluate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;si&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;intr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Possibly ignore intersection based on stochastic alpha test
+&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;Float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;u&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HashFloat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ray&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;u&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Ignore this intersection and trace a new ray
+&lt;/span&gt;        &lt;span class=&quot;p&quot;&gt;[...]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Given a less-than-one alpha value, a call to &lt;code class=&quot;highlighter-rouge&quot;&gt;HashFloat()&lt;/code&gt; gives a uniform
+random floating-point value between 0 and 1.  It’s a buddy of &lt;code class=&quot;highlighter-rouge&quot;&gt;Hash()&lt;/code&gt; and
+is also happy to take whichever-all values you pass it to turn into a
+random floating-point value.  (Above, it’s the ray origin and direction.)&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;template&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;typename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Args&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HashFloat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Hash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;...))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x1&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Thus, the results are deterministic for any given ray.&lt;/p&gt;
+
+&lt;p&gt;The second case was in pbrt-v4’s &lt;code class=&quot;highlighter-rouge&quot;&gt;LayeredBxDF&lt;/code&gt; class, which implements &lt;a href=&quot;https://shuangz.com/projects/layered-sa18/&quot;&gt;Guo
+et al.’s algorithm&lt;/a&gt; for
+stochastic evaluation and sampling of the BRDFs of layered materials.  That
+needs an unbounded number of independent random samples, so we instantiate
+an RNG for each evaluation, but &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/bxdfs.h#L513&quot;&gt;seed it via the incident and outgoing
+directions&lt;/a&gt;.
+Thus again, for any pair of directions passed to the BRDF evaluation
+method, the same set of random samples will be generated and the returned
+value will be deterministic.&lt;/p&gt;
+
+&lt;h2 id=&quot;consistent-pixel-sums&quot;&gt;Consistent Pixel Sums&lt;/h2&gt;
+
+&lt;p&gt;With what we have so far, the same rays will be traced each
+time the renderer runs and in turn, if an assertion fires along the
+way, it will do so consistently.  That’s a big benefit for debugging, but
+we have not yet achieved deterministic output, which is important for
+making end-to-end tests maximally useful.&lt;/p&gt;
+
+&lt;p&gt;The remaining challenge lies in summing sample values to compute each
+pixel’s final value. Because floating-point addition is not associative, if
+the image samples that contribute to a pixel are not accumulated carefully
+the order of summation may be different across different runs of the
+program and so the output may change.  That was a problem in pbrt-v3 due to
+how it computed final pixel values: there, the image is decomposed into
+rectangular regions that are assigned to threads and threads generate samples
+within their regions, updating the pixels that each sample contributes to.&lt;/p&gt;
+
+&lt;p&gt;This figure illustrates the problem with that, showing all of the samples
+that contribute to a particular output pixel (black dot):&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/matt/blog/images/thread pixel sampling.svg&quot; height=&quot;400&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We have two threads responsible for adjacent \(4 \times 4\) pixel regions of the
+image (thick boxes).  For an output image pixel near the boundary of the
+two regions that has a reconstruction filter that is wider than the pixel
+spacing (shaded circle), some of the samples that contribute will be taken
+by thread 1 (orange dots) and some will come from samples taken by thread 2
+(blue dot).  Because the threads are independent, the filtered sample
+values are not accumulated in a deterministic order and thus, the final
+pixel value is not deterministic.&lt;/p&gt;
+
+&lt;p&gt;pbrt-v4 addresses this issue by adopting Ernst et al.’s &lt;a href=&quot;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.183.3579&amp;amp;rep=rep1&amp;amp;type=pdf&quot;&gt;filter importance
+sampling&lt;/a&gt;
+approach.  Independent samples are taken for each output pixel, with no
+sample sharing with other pixels.  If only a single thread works on a pixel
+at a time, then the samples for each output pixel are naturally generated
+in a consistent order, giving a consistent sum.  (Filter importance
+sampling has a number of additional advantages that are detailed in the
+paper, including better preservation of the benefits of high-quality
+sampling patterns.)  With that tuned up, we (almost) have deterministic
+output.&lt;/p&gt;
+
+&lt;h2 id=&quot;those-pesky-splats&quot;&gt;Those Pesky Splats&lt;/h2&gt;
+
+&lt;p&gt;One more thing… pbrt-v4’s output is not quite deterministic if a light
+transport algorithm that traces paths starting from the light sources is
+being used.  In that case, light path vertices are splatted into the image
+at whichever pixel they are visible; if multiple threads end up splatting
+into the same pixel, then we are back to nondeterminism from unordered
+floating-point addition.&lt;/p&gt;
+
+&lt;p&gt;This issue could be addressed by having each thread splat into its own
+image and then summing the images at the end, though that would incur a
+cost in memory use that scales with the number of threads.  Alternatively,
+we might use fixed-point rather than floating-point to store those pixel
+values.  For now that issue is unaddressed; it rarely causes any trouble,
+especially since those splatted values are accumulated in double precision
+and generally converted all the way down to half-float precision for
+storage.  Most of the time that loss of precision hides any sloppy sums.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-joys-of---debugstart&quot;&gt;The Joys of --debugstart&lt;/h2&gt;
+
+&lt;p&gt;The greatest benefit of deterministic rendering has been the ability to
+quickly iterate on bugs: you can add some logging code or more assertions,
+recompile, and re-render, confident that the new code will see the same
+inputs as triggered the bug.  Given samplers that give exactly the same
+samples at each pixel also means that you can speed things up by just
+rendering a crop window or even a single pixel as you’re chasing a bug.&lt;/p&gt;
+
+&lt;p&gt;Even better, it was easy to go even further and add support for retracing
+just a single offending ray path.  pbrt-v4 has a &lt;code class=&quot;highlighter-rouge&quot;&gt;CheckCallbackScope&lt;/code&gt; class
+that uses RAII to register a callback function that will run if an
+assertion fails or if the renderer crashes.  Here is how it is used in most
+of pbrt’s CPU integrators:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;thread_local&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Point2i&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadPixel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;thread_local&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadSampleIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;CheckCallbackScope&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;StringPrintf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Rendering failed at pixel (%d, %d) sample %d. Debug with &quot;&lt;/span&gt;
+                        &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;--debugstart %d,%d,%d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                        &lt;span class=&quot;n&quot;&gt;threadPixel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadPixel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadSampleIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                        &lt;span class=&quot;n&quot;&gt;threadPixel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadPixel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;threadSampleIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;As rendering proceeds, each thread keeps its thread-local &lt;code class=&quot;highlighter-rouge&quot;&gt;threadPixel&lt;/code&gt; and
+&lt;code class=&quot;highlighter-rouge&quot;&gt;threadSampleIndex&lt;/code&gt; variables up to date and if the renderer aborts due to
+an error, you get a message like:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Rendering failed at pixel (915, 249) sample 83. Debug with &quot;--debugstart 915,249,83&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;at the bottom of the crash output.  If you then rerun pbrt passing it that
+&lt;code class=&quot;highlighter-rouge&quot;&gt;--debugstart&lt;/code&gt; option, a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/cpu/integrators.cpp#L68&quot;&gt;specialized code
+path&lt;/a&gt;
+traces just that single ray path in the main thread of execution.  That
+gives a simpler debugging context than launching a bunch of threads and
+waiting for the bug to hit again; it’s delightfully helpful for bugs that
+otherwise only happen after a substantial amount of time has gone by.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;We’ve made it past “detecting rendering bugs” and have made our way to
+“reliably replicating those bugs.”  Next time will be a few thoughts about
+performance bugs before we get into actual debugging techniques.&lt;/p&gt;
+
+&lt;h2 id=&quot;note&quot;&gt;note&lt;/h2&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:padding&quot;&gt;
+      &lt;p&gt;The attentive reader of &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/64c0a5cc0b29d6c6ffdacc53f93bc714e047e3b0/src/pbrt/util/hash.h#L121&quot;&gt;the &lt;code class=&quot;highlighter-rouge&quot;&gt;Hash()&lt;/code&gt; implementation&lt;/a&gt; will note that if a struct or class that
+        has padding between elements is passed to it, the
+        results may be nondeterministic since it hashes their in-memory contents
+        directly. It would be nice to use a C++ SFINAE trick to get a
+        compilation error in that case, but I’m not aware of a way to
+        detect that at compile time. &lt;a href=&quot;#fnref:padding&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Making a renderer fully deterministic—the same input always giving exactly the same output—has a few tricky corners that were never all addressed in pbrt until the latest version. Achieving that determinism has all sorts of benefits for testing and debugging.</summary></entry><entry><title type="html">Debugging Your Renderer (4/n): End-to-end tests (or, “why did that image change?”)</title><link href="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html" rel="alternate" type="text/html" title="Debugging Your Renderer (4/n): End-to-end tests (or, &quot;why did that image change?&quot;)" /><published>2021-12-19T00:00:00-08:00</published><updated>2021-12-19T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/19/debugging-renderers-end-to-end-tests.html">&lt;p&gt;Here we are, three posts into the meat of this series, and we’re still on
 the topic of determining if the renderer is buggy in the first place—the
 actual craft of debugging has not yet seen much discussion.  We’re getting
 there—I promise—but I’m going to finish discussing ways of detecting
@@ -2748,298 +3045,4 @@ sure is worth it, especially for a system with pbrt’s goals.  Therefore,
 we’ll stop there for time to first pixel, at least for the moment.&lt;/p&gt;
 
 &lt;p&gt;To wrap up these updates, next time we’ll look at pbrt-v4’s performance
-rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry><entry><title type="html">Swallowing the Elephant (part 6): Fool me once…</title><link href="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html" rel="alternate" type="text/html" title="Swallowing the Elephant (part 6): Fool me once..." /><published>2021-04-02T00:00:00-07:00</published><updated>2021-04-02T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html">&lt;p&gt;I’ve been long overdue to update the pbrt version of Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;amazing
-Moana island
-scene&lt;/a&gt; to
-account for the changes in &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
-scene description format; I finally got around to it over the past few
-days.  Surprise, surprise, getting it rendering again wasn’t all smooth
-sailing, but Things Were Learned and here we are with another few blog
-posts about the experience. (For context, it might be worthwhile to read
-the &lt;a href=&quot;/matt/blog/2018/07/16/moana-island-pbrt-all.html&quot;&gt;earlier posts&lt;/a&gt; on
-rendering the Moana island in pbrt if you have not already.)&lt;/p&gt;
-
-&lt;h3 id=&quot;converting-to-pbrt-v4&quot;&gt;Converting to pbrt-v4&lt;/h3&gt;
-
-&lt;p&gt;The latest version of pbrt provides an &lt;code class=&quot;highlighter-rouge&quot;&gt;--upgrade&lt;/code&gt; flag that does a
-reasonably good job of automatically updating scene description files from
-the previous version of pbrt to work with pbrt-v4.  For most scenes,
-&lt;code class=&quot;highlighter-rouge&quot;&gt;--upgrade&lt;/code&gt; does all that is needed.  For others, a few manual fixes may be
-necessary, though pbrt tries to give guidance—this was ambiguous, so over
-to you, and the like.  For this monster of a scene, a few additional hours
-of manual work with &lt;em&gt;sed&lt;/em&gt; and &lt;em&gt;emacs&lt;/em&gt; macros were necessary to finish the
-job.&lt;/p&gt;
-
-&lt;p&gt;The first renderings of the converted scene weren’t exactly &lt;em&gt;awesome&lt;/em&gt;…&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-bad.jpg&quot; /&gt;
-&lt;i&gt;Disney's Moana island scene rendered with pbrt-v4, a disastrous
-conversion of the materials, and some issues with incorrect transformations
-(note that those neon yellow leaves not aligned with the tree trunk and
-branches to their left).&lt;/i&gt;&lt;/p&gt;
-
-&lt;p&gt;All of that manual work was due to self-inflicted wounds:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;In pbrt-v3, one could specify a material and then subsequently override
-its parameters with the parameters that are provided with a shape that
-uses that material. We removed this functionality to simplify processing
-the scene description thinking that it was rarely used.  It turns out
-that this capability was used extensively in Disney’s conversion of the
-scene to pbrt’s format.&lt;/li&gt;
-  &lt;li&gt;One could redefine named textures in pbrt-v3, while pbrt-v4 prohibits
-this; again, we didn’t think this was widely used and again, guess what,
-it was used extensively in the pbrt-v3 version of the Moana island scene.&lt;/li&gt;
-  &lt;li&gt;pbrt-v4 no longer supports the Disney BSDF, which was used for all of the
-objects in this scene, it was necessary to manually map all of the uses of
-it to the most similar BSDFs that are provided in pbrt-v4.&lt;sup id=&quot;fnref:bsdf&quot;&gt;&lt;a href=&quot;#fn:bsdf&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;a-reorganization-of-the-parsing-code&quot;&gt;A reorganization of the parsing code&lt;/h3&gt;
-
-&lt;p&gt;Before looking at pbrt’s performance and memory use, it’s worth discussing
-an important change to pbrt’s implementation since my earlier posts: the
-parts of the system responsible for parsing scene description files and
-converting them into objects suitable for rendering have changed
-substantially in pbrt-v4.  In earlier versions of the system, parsing and
-scene object creation were intermingled.  For example, if the parser saw an
-image texture definition, it would stop to read the texture from disk and
-build MIP maps before it continued.  If an object instance was defined,
-then all of the constituent primitives would be created and a BVH built for
-it before parsing resumed. And so forth…&lt;/p&gt;
-
-&lt;p&gt;In pbrt-v4, the parser’s job is more that of deserializing the scene
-description to a
-generic intermediate representation.  For example, it will record the fact
-that some texture of type “imagemap” has been defined and that it has a
-string-valued parameter “filename” with some value associated with it, but
-that’s it—on to snarfing up more tokens from the scene description.  The
-parser is responsible for initializing an instance of the
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L276&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt;&lt;/a&gt;
-class; only when parsing is complete is the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; converted to the
-optimized scene representation that is used for rendering.  The form of
-&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; is more or less&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class ParsedScene {
-  public:
-    std::vector&amp;lt;ShapeEntity&amp;gt; shapes;
-    std::vector&amp;lt;LightEntity&amp;gt; lights;
-    std::map&amp;lt;std::string, SceneEntity&amp;gt; namedMaterials;
-    // ...
-};
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;where, for example,
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L78&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ShapeEntity&lt;/code&gt;&lt;/a&gt;
-records things like the name of the shape (“trianglemesh”, “plymesh”,
-“sphere”, or whatever), its transformation, the material
-associated with it, as well as the parameters that were provided with it
-(e.g., “there’s a &lt;code class=&quot;highlighter-rouge&quot;&gt;float&lt;/code&gt; named ‘radius’ with value 10.”)&lt;/p&gt;
-
-&lt;p&gt;The initial motivation for this restructuring was the addition of GPU
-rendering in pbrt-v4; while things like lights, materials, and most
-textures are represented by the same objects for both CPU and GPU, the
-respective geometric representations of the scene differ substantially.
-Thus, it worked well to structure the system so that the parsing code
-generates an intermediate representation that can then be transformed into
-a specific representation used for rendering.&lt;/p&gt;
-
-&lt;p&gt;As we will see shortly, this rewrite caused some trouble, though by the
-end, it redeems itself.&lt;/p&gt;
-
-&lt;h3 id=&quot;fail-fast&quot;&gt;Fail fast&lt;/h3&gt;
-
-&lt;p&gt;With the scene converted, all was not well.  Where we &lt;a href=&quot;/matt/blog/2018/07/15/moana-island-pbrt-4.html&quot;&gt;left
-off&lt;/a&gt;,
-pbrt-next, the in-progress version of pbrt-v4 from 2.5 years ago, used 41
-GB of RAM when rendering the scene, with an additional spike of about 10 GB
-while the top-level BVH was built.  One might hope that on my current
-system with 64 GB of RAM it would render nicely out of the box.&lt;/p&gt;
-
-&lt;p&gt;One might hope…&lt;/p&gt;
-
-&lt;p&gt;Rather, pbrt-v4 filled up available RAM and the puny 2 GB of swap before it
-was killed when memory ran out.  I bumped up the size of the swap file to
-64 GB just to see if that would do it, but still had no luck.  Time to turn
-to my old friend &lt;a href=&quot;https://valgrind.org/docs/manual/ms-manual.html&quot;&gt;massif&lt;/a&gt;,
-which tracks memory allocations over the course of a program’s execution.
-I tried rendering a pared down version of the scene with &lt;em&gt;massif&lt;/em&gt; to see
-where all of the memory was going.&lt;/p&gt;
-
-&lt;p&gt;There wasn’t much nuance in what &lt;em&gt;massif&lt;/em&gt; had to report; by far the
-greatest memory consumer was instances of the &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt;
-structure.  The parser creates one for each object instance in the
-scene; it basically wraps up a transformation matrix and the name of the
-object being instantiated.  The transformation may be fixed or it may be
-specified by a pair of transformations that are interpolated.  Therefore,
-it stores both a &lt;code class=&quot;highlighter-rouge&quot;&gt;Transform *&lt;/code&gt; and an &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Here are the important parts of &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/be20df83cf160c5a713c82cd9cd244e020b64f0a/src/pbrt/parsedscene.h#L197&quot;&gt;its
-definition&lt;/a&gt;:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;struct InstanceSceneEntity : public SceneEntity {
-    // ...
-    AnimatedTransform renderFromInstanceAnim;
-    const Transform *renderFromInstance;
-};
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;The reader with a good memory may now remember that &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; was
-a troublemaker the first time I dug into pbrt-v3’s use of memory with the
-Moana island scene.  (If one has forgotten, &lt;a href=&quot;/matt/blog/2018/07/09/moana-island-pbrt-2.html#transformedprimitives-95-wasted-space-really-hurts&quot;&gt;see
-here&lt;/a&gt;.)
-&lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; is not a small structure; in pbrt-v4, each one is 696
-bytes.  In this case, &lt;em&gt;nothing is animated&lt;/em&gt; and the &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt; is
-unused.&lt;/p&gt;
-
-&lt;p&gt;Clearly I had forgotten this pitfall, since there I go again making the
-very same mistake, here now with &lt;code class=&quot;highlighter-rouge&quot;&gt;InstanceSceneEntity&lt;/code&gt;.  For the full Moana
-island scene, a total of 39,270,497 of them are allocated.  At 696 bytes
-for each &lt;code class=&quot;highlighter-rouge&quot;&gt;AnimatedTransform&lt;/code&gt;, that works out to 25.4 GB of unused identity
-matrices and associated baggage.&lt;/p&gt;
-
-&lt;p&gt;That was &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/ab3d89541f9fdb7b6bb22fefd9e7b45ad2d4505c&quot;&gt;an easy
-fix&lt;/a&gt;
-and with it, the scene successfully rendered on my system here.  Here’s
-an image for sustenance:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-good.jpg&quot; /&gt;&lt;i&gt;Moana
-island rendered more successfully with pbrt-v4.  This image rendered in
-46m37s at 1920x804 resolution with 2048 samples per pixel on a 32-core AMD
-3970X CPU.&lt;/i&gt;&lt;/p&gt;
-
-&lt;p&gt;However, pbrt still used about 66 GB of memory during rendering, with a
-peak of 82 GB.  Plenty more stinkiness remained.&lt;/p&gt;
-
-&lt;h3 id=&quot;department-of-redundant-scene-descriptions-department&quot;&gt;Department of redundant scene descriptions department&lt;/h3&gt;
-
-&lt;p&gt;Another run of &lt;em&gt;massif&lt;/em&gt; with the full scene was just as unambiguous about
-where the problem was as the first one was; 27 GB of &lt;code class=&quot;highlighter-rouge&quot;&gt;vector&amp;lt;double&amp;gt;&lt;/code&gt;s
-had been allocated as part of the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; class.
-&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; is another part of the new parsing system; it is
-responsible for recording all of the parameter values provided for things
-in the scene description file.  For example, if you specify &lt;code class=&quot;highlighter-rouge&quot;&gt;&quot;integer
-indices&quot; [ 0 1 2 ]&lt;/code&gt; with a triangle mesh, a &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; instance
-records that there was this thing with “integer” type, it has the name
-“indices”, and those three values were specified.  This is again part of
-the parser just recording what it sees, but not judging or interpreting.&lt;/p&gt;
-
-&lt;p&gt;Here are the relevant parts of its &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/bbf513a2a691eaf1846ec1499e37c4776bfbbd85/src/pbrt/parser.h#L38&quot;&gt;definition&lt;/a&gt;:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;class ParsedParameter {
-  public:
-    std::string type, name;
-    std::vector&amp;lt;double&amp;gt; numbers;
-    std::vector&amp;lt;std::string&amp;gt; strings;
-    std::vector&amp;lt;uint8_t&amp;gt; bools;
-    // ...
-};
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;Momentarily leaving aside the use of double precision for &lt;code class=&quot;highlighter-rouge&quot;&gt;numbers&lt;/code&gt;, it
-only took a few minutes thinking to realize that while pbrt-v4 was creating
-the scene representation to use for rendering, it wasn’t freeing up parts
-of the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; when it was done with them.  Indeed, all of it was
-still using up memory the whole time rendering proceeded, so there were
-those 27 GB and then more.&lt;/p&gt;
-
-&lt;p&gt;With a few changes to free &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; memory when possible
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/7ca86f2d880f3749af157466ae314f1e068d2cf2&quot;&gt;(1)&lt;/a&gt;
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/7bcf5832014662cf22cdc6a353d6cd9e48f77477&quot;&gt;(2)&lt;/a&gt;
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/e5881cbc115ea8c3bf7cb757faa55c95d068d4ae&quot;&gt;(3)&lt;/a&gt;,
-peak memory use drops by 32 GB to 50 GB, with 32 GB in use at the start of
-rendering.&lt;/p&gt;
-
-&lt;h3 id=&quot;too-much-precision-because-you-never-know&quot;&gt;Too much precision, because you never know&lt;/h3&gt;
-
-&lt;p&gt;Returning to the topic of the use of double precision in
-&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter::numbers&lt;/code&gt;: I used &lt;code class=&quot;highlighter-rouge&quot;&gt;double&lt;/code&gt;s out of of laziness. Although
-pbrt generally uses 32-bit floating point, &lt;code class=&quot;highlighter-rouge&quot;&gt;double&lt;/code&gt; has the nice property
-that it can exactly represent all 32-bit integers. Thus, the parser could
-just be simpleminded and store arrays of numbers, without worrying about
-whether or not they were floats or integers.&lt;/p&gt;
-
-&lt;p&gt;I told myself that those &lt;code class=&quot;highlighter-rouge&quot;&gt;vector&lt;/code&gt;s would never get very big.  I figured
-that big triangle meshes would usually come in via PLY files, in which case
-the only use of &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedParameter&lt;/code&gt; is to store a single filename.  Thus, I
-assumed that those arrays would never use an objectionable amount of
-memory.  That assumption was mostly true, but not true enough: some of the
-trees in the Moana scene are represented by many small independent
-triangle meshes of a few tens or a hundred or so triangles each.
-Individually, these don’t make sense to store as PLY files; there would be
-tens of thousands of them for a single tree.  Thus, they are left as text
-in the scene description. From them, those parameter vectors become large.&lt;/p&gt;
-
-&lt;p&gt;With another &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/c84d8a6a1644bb4ef0314bc9490dbd4bc0565583&quot;&gt;simple once you get around to doing it
-change&lt;/a&gt;,
-we’re down another 4.5 GB to 45.5 GB peak memory use and now 31 GB in use at
-the start of rendering—10 GB less than before. Victory!&lt;/p&gt;
-
-&lt;h3 id=&quot;wrap-up&quot;&gt;Wrap-up&lt;/h3&gt;
-
-&lt;p&gt;It took a few days of digging into regressions, but pbrt-v4 is now even
-better than where it had been 2.5 years ago, memory-wise.  I can’t
-precisely account for that last 10 GB improvement, but would assume that
-most of it is due to switching to tagged pointers to eliminate the virtual
-function pointers in the shape and primitive classes (as &lt;a href=&quot;/matt/blog/2018/07/16/moana-island-pbrt-5.html#vtable-hacks&quot;&gt;considered
-earlier&lt;/a&gt;).
-The size of those classes has seen some further attention in pbrt-v4, and
-it seems to have added up in this case.&lt;/p&gt;
-
-&lt;p&gt;Here is an accounting of how memory is used now when rendering begins:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;Memory&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;BVH&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13.5 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Transformations&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5.5 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Transformation hash table&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Primitives&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2.5 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Triangles&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1.2 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Triangle vertex buffers (P, N, uv, indices)&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5.25 GB&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;Curves&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;0.6 GB&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;Next time we’ll dig into runtime performance while parsing the scene, where
-things start in a better place and go fun places from there.&lt;/p&gt;
-
-&lt;h3 id=&quot;note&quot;&gt;note&lt;/h3&gt;
-
-&lt;div class=&quot;footnotes&quot;&gt;
-  &lt;ol&gt;
-    &lt;li id=&quot;fn:bsdf&quot;&gt;
-      &lt;p&gt;About dropping the Disney BSDF: while folks at Disney were working on converting the scene to pbrt’s format a few years ago, I added the Disney BSDF (and support for &lt;a href=&quot;https://ptex.us/&quot;&gt;Ptex&lt;/a&gt; textures) to pbrt-v3 in order to make pbrt-v3 a more hospitable target.  Normally new functionality isn’t added after the book comes out, since the whole idea of the book is to describe the implementation of the renderer, but it was well worth it for this prize of a scene.&lt;/p&gt;
-
-      &lt;p&gt;For the fourth edition of the book, we have redesigned the set of materials and BSDFs from scratch and have tried to be more physically principled than
-before.  (Among other things, pbrt’s old kitchen sink &lt;code class=&quot;highlighter-rouge&quot;&gt;UberMaterial&lt;/code&gt; is gone.)  In this context, an artist-friendly BSDF like the Disney one doesn’t fit with the book’s current focus, so we have cut it in the interests of simplifying the system.  (Ptex support remains, at least!) &lt;a href=&quot;#fnref:bsdf&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-    &lt;/li&gt;
-  &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning to Disney's Moana island scene with the latest version of pbrt, pbrt-v4. Just like the first time around, performance was not at first impressive.</summary></entry></feed>
+rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry></feed>
