@@ -1,5 +1,208 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2021-12-24T08:29:28-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Debugging Your Renderer (5/n): Rendering Deterministically</title><link href="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html" rel="alternate" type="text/html" title="Debugging Your Renderer (5/n): Rendering Deterministically" /><published>2021-12-24T00:00:00-08:00</published><updated>2021-12-24T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html">&lt;p&gt;Deterministic program execution has a lot going for it.  For most programs,
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-01-05T10:03:31-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Update: Some Analysis of Physically Based Rendering’s Bibliography</title><link href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html" rel="alternate" type="text/html" title="Update: Some Analysis of Physically Based Rendering's Bibliography" /><published>2022-01-05T00:00:00-08:00</published><updated>2022-01-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">&lt;style&gt;
+    table {
+        font-size: 90%;
+    }
+&lt;/style&gt;
+
+&lt;p&gt;It’s just over a year ago now that I posted an &lt;a href=&quot;/matt/blog/2020/12/26/pbr-bibliography-1-3ed.html&quot;&gt;analysis of citation counts
+in the bibliographies of the first three editions of &lt;em&gt;Physically Based
+Rendering&lt;/em&gt;&lt;/a&gt;.  Back then
+I promised an update with statistics for the forthcoming fourth
+edition “in the next few weeks.”  That turns out to have been rather
+optimistic, but here we now are with results finally available.&lt;/p&gt;
+
+&lt;p&gt;The fact that these results are ready means that we’re done fiddling with
+the text; we will shortly be handing it over to the publisher so that the
+book production process can begin.  We have switched to &lt;a href=&quot;https://mitpress.mit.edu&quot;&gt;MIT
+Press&lt;/a&gt; for the fourth edition and it’s been a
+fine experience working with them so far; we’re optimistic that our
+interests are all well aligned in producing a quality book, much more so
+than with the previous corporate conglomerate that shall not be
+named.
+Happily, MIT Press has agreed that we can continue to post a free edition
+of the book online.  (The current plan is for that to be made available
+roughly six months after the print edition hits the shelves.)  However,
+that brings us to our first point of drama in this bibliographical vanity
+contest: the online edition will be a superset of the print edition and so
+there are differences between their bibliographies.&lt;/p&gt;
+
+&lt;p&gt;The differences between the two versions are due to the amount of new
+content that we wrote for the fourth edition; all in all, it would be about
+1,600 printed pages.  That’s too much for a single volume, at least if one
+wants paper that isn’t newspaper-thin and a binding that won’t fall apart.
+Thus, Wenzel and I went through the exercise of rejiggering the book into a
+1,200 page version for print while maintaining the full text for the online
+edition.  In deciding what would be online-only, we looked for content that
+was mostly independent of the rest of the book and was little-changed from
+the third edition.  As examples, both the &lt;a href=&quot;https://pbr-book.org/3ed-2018/Camera_Models/Realistic_Cameras&quot;&gt;section on realistic camera
+models&lt;/a&gt; and
+the &lt;a href=&quot;https://pbr-book.org/3ed-2018/Light_Transport_III_Bidirectional_Methods&quot;&gt;chapter on bidirectional light
+transport&lt;/a&gt;
+will not be there in the print edition this time.&lt;/p&gt;
+
+&lt;p&gt;The print edition still includes citations and discussion of previous work
+for topics that are not included in its text, though not as much of it as
+in the online edition—it doesn’t make sense to go into as much depth in
+the citations when the text doesn’t deeply discuss the corresponding
+topics.  Therefore, here I will report the results for both the print and
+online editions. No doubt there will be years of arguments to come about
+which is the more proper measure—one might argue that the online
+edition’s bibliography is the canonical one, as it reflects what would be
+printed if physical limitations didn’t intrude, or one might argue for the
+print edition in that those citations earned consumption of actual paper
+and not just electrons.  We will leave that question to be resolved by
+future historians of computer graphics.&lt;/p&gt;
+
+&lt;p&gt;Finally, a few notes on methodology: as before, the following is a simple
+count of how often each name appears in the bibliography.  Editing a book
+or a conference proceedings doesn’t count, but otherwise every citation is
+counted equally—from a single-author SIGGRAPH paper to a blog post.  The
+citations include work through SIGGRAPH 2020 but nothing published
+subsequently.  Yes, SIGGRAPH Asia papers are now out, but we had to draw a
+line somewhere in order to get that thing out the door.&lt;/p&gt;
+
+&lt;p&gt;As before, many caveats are in order about how arbitrary a measure this is.
+Another to mention today is the impact of the fine series of Eurographics
+State of the Art Reports (STARs), twelve of which appear in the fourth
+edition’s bibliography.  For topics that are not central to the book (e.g.,
+texture synthesis), we will often cite a STAR and only a few additional
+publications rather than comprehensively survey previous work.  Thus, there
+is an irony in successfully developing a new area of research to the point
+that it merits a STAR: in our bibliographic measure, a lengthy publication
+record may end up collapsed into a STAR and a few additional citations,
+putting one lower than one would have been otherwise.&lt;/p&gt;
+
+&lt;!--
+Raw data was generated using the following:
+
+```bash
+$ grep -v bibitem biblio.tex | 
+  fgrep -v &quot;(Ed.)&quot; | fgrep -v &quot;(Eds.)&quot; |
+  sed -e &quot;s/~/ /g&quot; -e 's/\\//g' -e 's/{//g' -e 's/}//g' -e &quot;s/'//g&quot; |
+  tr -c '[:alnum:]' '[\n*]' |
+  sort | uniq -c |
+  sort -nr
+```
+
+Line by line: the `\bibitem` lines are removed (since those include some
+names and we don't want to double-count them), lines that include editor
+names are removed, various TeX-isms and accents are stripped out, words are
+printed one per line, lines are sorted and their frequency counted, and the
+final result is sorted by frequency.  I then went through the output,
+disregarding things like that &quot;Carlo&quot; person who seems to keep showing up
+in the bibliography, and culling the actual names.
+--&gt;
+
+&lt;p&gt;With that, here are the results for all four editions—author last names
+with citation counts:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;1st (2004)&lt;/th&gt;
+      &lt;th&gt;2nd (2010)&lt;/th&gt;
+      &lt;th&gt;3rd (2016)&lt;/th&gt;
+      &lt;th&gt;4th (print, 2022)&lt;/th&gt;
+      &lt;th&gt;4th (online, 2022)&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Greenberg (26)&lt;/td&gt;
+      &lt;td&gt;Jensen (31)&lt;/td&gt;
+      &lt;td&gt;Jensen (33)&lt;/td&gt;
+      &lt;td&gt;Jarosz,&lt;br /&gt;Jensen (35)&lt;/td&gt;
+      &lt;td&gt;Jarosz,&lt;br /&gt;Jensen (40)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Shirley (25)&lt;/td&gt;
+      &lt;td&gt;Shirley (29)&lt;/td&gt;
+      &lt;td&gt;Shirley (31)&lt;/td&gt;
+      &lt;td&gt;Ramamoorthi (32) &lt;/td&gt;
+      &lt;td&gt;Ramamoorthi (38)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Hanrahan (22)&lt;/td&gt;
+      &lt;td&gt;Greenberg,&lt;br /&gt;Hanrahan (27)&lt;/td&gt;
+      &lt;td&gt;Keller (27)&lt;/td&gt;
+      &lt;td&gt;Keller,&lt;br /&gt;Shirley (31)&lt;/td&gt;
+      &lt;td&gt;Hanika (36)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Jensen (16)&lt;/td&gt;
+      &lt;td&gt;Ramamoorthi (23) &lt;/td&gt;
+      &lt;td&gt;Wald (25)&lt;/td&gt;
+      &lt;td&gt;Hanika,&lt;br /&gt;Jakob (30)&lt;/td&gt;
+      &lt;td&gt;Dachsbacher (33)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Arvo (14)&lt;/td&gt;
+      &lt;td&gt;Wald (18)&lt;/td&gt;
+      &lt;td&gt;Greenberg,&lt;br /&gt;Hanrahan (24)&lt;/td&gt;
+      &lt;td&gt;Wald (29)&lt;/td&gt;
+      &lt;td&gt;Jakob,&lt;br /&gt;Shirley (32)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Mitchell (13) &lt;/td&gt;
+      &lt;td&gt;Keller (17)&lt;/td&gt;
+      &lt;td&gt;Slusallek (21)&lt;/td&gt;
+      &lt;td&gt;Slusallek (27)&lt;/td&gt;
+      &lt;td&gt;Keller (31)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Keller (12)&lt;/td&gt;
+      &lt;td&gt;Arvo,&lt;br /&gt;Seidel,&lt;br /&gt;Slusallek (16)&lt;/td&gt;
+      &lt;td&gt;Marschner,&lt;br /&gt; Ramamoorthi (19) &lt;/td&gt;
+      &lt;td&gt;Dachsbacher,&lt;br /&gt;Marschner (26)&lt;/td&gt;
+      &lt;td&gt;Křivànek,&lt;br /&gt;Wald (30)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Heckbert,&lt;br /&gt; Torrance (10)&lt;/td&gt;
+      &lt;td&gt;Mitchell (13)&lt;/td&gt;
+      &lt;td&gt;Arvo,&lt;br /&gt;Seidel (17)&lt;/td&gt;
+      &lt;td&gt;Křivànek (25)&lt;/td&gt;
+      &lt;td&gt;Marschner,&lt;br /&gt;Slusallek (27)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Cook,&lt;br /&gt;Kajiya,&lt;br /&gt;Levoy,&lt;br /&gt;Pattanaik,&lt;br /&gt;Ward (8)&lt;/td&gt;
+      &lt;td&gt;Pattanaik,&lt;br /&gt; Torrance,&lt;br /&gt; Walter (12)&lt;/td&gt;
+      &lt;td&gt;Jarosz (16)&lt;/td&gt;
+      &lt;td&gt;Hanrahan,&lt;br /&gt;Novák (23)&lt;/td&gt;
+      &lt;td&gt;Hachisuka (25)&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;We can see that Henrik continues his reign, though he now shares
+the top spot with Wojciech Jarosz, who had not a single appearance in the
+first edition’s bibliography.  The smallest of lexicographical
+differences—“a” before “e”—puts Wojciech first in the alphabetical
+ordering.  Fittingly, Wojciech was Henrik’s Ph.D. student, so I have to
+assume that for Henrik the bitterness of sharing the glory is balanced by
+the sweetness of a former student’s achievement.&lt;/p&gt;
+
+&lt;p&gt;Other than Henrik, Alex Keller and Pete Shirley are the only others who
+made the list for all four editions, though Pat Hanrahan also has that
+distinction if one neglects the online 4th edition.  (Surely Pat will therefore
+be out there arguing vigorously that the print edition is canonical.)&lt;/p&gt;
+
+&lt;p&gt;Ravi Ramamoorthi has displaced Pete Shirley from his long-held number two
+position, though just by a hair, at least in the print edition.  Johannes
+Hanika has also rocketed up in the standings, making an especially quick
+climb given that he was not cited in either the first or the second
+editions.  Carsten Dachsbacher has also climbed rapidly, starting from one
+citation in the first edition, two in the second, and 10 in the third.
+Finally and fittingly, Jaroslav Křivànek is up there in the latest edition
+as well.&lt;/p&gt;
+
+&lt;p&gt;There you have it. I must admit my disappointment at seeing that the top
+two spots had the same names for both versions of the fourth edition—all
+the less potential controversy over which version is the canonical one,
+though there’s enough motion farther down the list that one might hope for
+some sparks in the future.&lt;/p&gt;</content><author><name></name></author><summary type="html">Ending a year of suspense, the numbers are finally in for the fourth edition.</summary></entry><entry><title type="html">Debugging Your Renderer (5/n): Rendering Deterministically</title><link href="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html" rel="alternate" type="text/html" title="Debugging Your Renderer (5/n): Rendering Deterministically" /><published>2021-12-24T00:00:00-08:00</published><updated>2021-12-24T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/12/24/debugging-renderers-rendering-deterministically.html">&lt;p&gt;Deterministic program execution has a lot going for it.  For most programs,
 it’s the natural way of being: for any particular input, the program
 generates the same output.  Determinism makes debugging much easier, as it
 saves you from having to re-run the system repeatedly to trigger a bug that
@@ -2780,269 +2983,4 @@ instance BVH phase next time around.&lt;/p&gt;
       &lt;p&gt;The GPU’s performance monitoring API reports its results averaged over an unspecified but up-to-one-second amount of previous time whereas the CPU numbers are calculated strictly based on activity in the last 100ms. This leads to some lag in the GPU results that manifests itself in activity sometimes being charged to the wrong stage; an example is “Process instance uses”, which doesn’t actually use the GPU at all. (I also believe that the spike in GPU activity at the start of “Build instance BVHs” should be charged to “Process non-instanced geometry.”) However, rather than futzing with the data, I have reported it as measured. &lt;a href=&quot;#fnref:gpu-lag&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry><entry><title type="html">Swallowing the Elephant (Part 7): Time To First Pixel</title><link href="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 7): Time To First Pixel" /><published>2021-04-11T00:00:00-07:00</published><updated>2021-04-11T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/04/11/moana-time-to-first-pixel.html">&lt;p&gt;With &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html&quot;&gt;memory use under
-control&lt;/a&gt;,
-today’s topic will be “time to first pixel” when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana
-Island
-scene&lt;/a&gt; with
-pbrt—that is, how much time goes by between launching the renderer and
-the start of actual rendering.  This measure covers all of the costs of
-system startup, including parsing the scene, creating lights, shapes, and
-textures, and building acceleration structures.&lt;/p&gt;
-
-&lt;p&gt;Time to first pixel is a useful metric in that it is often the main
-constraint on iteration time: have a bug in a ray intersection routine and
-want to see if your fix took care of it?  Moved a light and want to see how
-the image looks?  Time to first pixel is a big part of how quickly you get
-those answers.&lt;/p&gt;
-
-&lt;p&gt;Before we dig into the numbers, here is another view of the Moana Island
-scene rendered with pbrt-v4:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-beach.jpg&quot; alt=&quot;Moana Island beach view rendered with pbrt-v4&quot; /&gt;
-&lt;i&gt;Moana Island beach view rendered with pbrt-v4. Rendering time at 1920x804 resolution with 1,024 samples per pixel was 63m58s on a 64 core AMD 3970X CPU.&lt;/i&gt;
-&lt;/p&gt;
-
-&lt;h3 id=&quot;foundations&quot;&gt;Foundations&lt;/h3&gt;
-
-&lt;p&gt;The starting point was pretty ugly when I was first given access to the
-Moana Island scene 2.5 years ago: &lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html#first-renderings&quot;&gt;pbrt-v3’s time to first pixel was
-34m58s&lt;/a&gt;,
-which is nothing short of horrific.  By the end of my efforts then, it was
-&lt;a href=&quot;/matt/blog/2018/08/03/moana-reader-mail.html#parsing-floats-revisited&quot;&gt;down to
-9m18s&lt;/a&gt;,
-a 3.76x improvement.  At the time, that felt pretty good.  This is, after
-all, a scene that exhibits the complexity of what is present in film
-production today (or at least, what was present 5 or so years ago when
-&lt;em&gt;Moana&lt;/em&gt; was made), and so it is to be expected that there will be some work
-to be done before it’s ready to render.&lt;/p&gt;
-
-&lt;p&gt;To get started, I measured time to first pixel with the latest version of
-pbrt-v4 using a single thread–it was 6m50s.  Good news at the start for
-once!  Here is a table that summarizes these timings and the respective
-speedups:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt; &lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;Time&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;Speedup&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;pbrt-v3 (original)&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2098s&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1x&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;pbrt-next (2.5 years ago)&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;558s&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3.76x&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;pbrt-v4 (starting point today)&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;410s&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5.12x&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;Where did that unexpected performance improvement come from?  Part of it is
-that I ran the pbrt-v4 test on a modern CPU, while the earlier
-measurements were on a Google Compute Engine instance with what is now a 5
-or so year old CPU.  Thus, the latest measurement benefited from a higher
-CPU clock rate and a few years of microarchitectural improvements.&lt;/p&gt;
-
-&lt;p&gt;Another factor is an improvement to the surface area heuristic cost
-computation in pbrt’s BVH construction algorithm.  In pbrt-v3 it used an
-&lt;a href=&quot;https://github.com/mmp/pbrt-v3/blob/aaa552a4b9cbf9dccb71450f47b268e0ed6370e2/src/accelerators/bvh.cpp#L336&quot;&gt;O(n^2)
-algorithm&lt;/a&gt;,
-while it’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L296&quot;&gt;an O(n) algorithm&lt;/a&gt;  in
-pbrt-v4.
-In my defense, n in this case is fixed at 12, which saves me from the
-full infamy of
-&lt;a href=&quot;https://randomascii.wordpress.com/2019/12/08/on2-again-now-in-wmi/&quot;&gt;Dawson’s&lt;/a&gt;
-&lt;a href=&quot;https://randomascii.wordpress.com/2021/02/16/arranging-invisible-icons-in-quadratic-time/&quot;&gt;law&lt;/a&gt;,
-though it’s still pretty indefensible.  Anyway, if I remember correctly,
-improving that in pbrt-v4 roughly doubled the performance of BVH
-construction, so that was surely part of it.&lt;/p&gt;
-
-&lt;p&gt;For a starting point, here is a plot of CPU utilization over time with
-single-threaded pbrt-v4 with the Moana island scene.  The horizontal axis
-is time in seconds and the vertical is CPU utilization, measured with
-respect to the 64 threads offered by an AMD 3970X CPU.  There’s not a lot
-to see vertically, but the graph gives us a baseline and also shows where
-the time is going: mostly parsing and BVH construction, both for instances
-and for the top-level BVH.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-1thread.svg&quot; alt=&quot;CPU utilization with one thread&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;(For this and following graphs, I’ve put light and texture creation into a
-single category, since it’s about 8 seconds for both of them, most of those
-spent reading the PNG for the environment light source.)&lt;/p&gt;
-
-&lt;h3 id=&quot;about-all-those-idle-threads&quot;&gt;About all those idle threads…&lt;/h3&gt;
-
-&lt;p&gt;Over the past year, I had already spent some time working on reducing
-pbrt-v4’s time to first pixel.  That work was largely motivated by pbrt’s
-GPU rendering path: it wasn’t unusual to spend more time loading the scene
-description than rendering it with the GPU.  Optimizing startup was thence
-the most effective way to speed up rendering—Amdahl’s law strikes again.&lt;/p&gt;
-
-&lt;p&gt;That work was easier to do with pbrt-v4’s &lt;a href=&quot;/matt/blog/2021/04/02/moana-island-pbrt-fool-me-once.html#a-reorganization-of-the-parsing-code&quot;&gt;redesign of the scene parsing
-code&lt;/a&gt;:
-once the high-level &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; object is initialized, various
-opportunities for parallelism are easily harvested.  With pbrt-v3, parsing
-the scene description was intermingled with creating the scene data
-structures, so there was less opportunity for extracting parallelism and
-all of the work until the start of rendering was single-threaded.&lt;/p&gt;
-
-&lt;p&gt;With pbrt-v4, it’s &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/parsedscene.cpp#L907&quot;&gt;easy to parallelize loading
-textures&lt;/a&gt;
-when parameters for all of the ones to be loaded are at hand in a single
-&lt;code class=&quot;highlighter-rouge&quot;&gt;vector&lt;/code&gt;.  Shapes are &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L125&quot;&gt;created in parallel as
-well&lt;/a&gt;.
-In practice, this means that if meshes are provided in PLY format files,
-those can be loaded in parallel.  Finally, the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/render.cpp#L276&quot;&gt;BVHs for object
-instances&lt;/a&gt;
-are created in parallel, since they’re all independent.  This is all
-opportunistic parallelism—&lt;i&gt;for&lt;/i&gt; loops over independent items that can be
-processed concurrently.  It doesn’t scale well if there are only a few
-items to loop over and it’s susceptible to load imbalance, but it’s
-something, and something’s worth taking if it’s easy to do so.&lt;/p&gt;
-
-&lt;p&gt;The BVH construction code has also been &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/b44bc261e52accffc1eb8b0da9a804d38319538d/src/pbrt/cpu/aggregates.cpp#L366&quot;&gt;(slightly)
-parallelized&lt;/a&gt;:
-sub-trees are built in parallel when there are many primitives.  This isn’t
-the state of the art in parallel BVH construction, but it, too, is
-something.&lt;/p&gt;
-
-&lt;p&gt;Given those improvements and 64 threads, pbrt-v4 does better; here is a
-graph of CPU usage over time until rendering begins.  Note that this graph
-has the same scale as the earlier one, so we can directly see how much time
-to first pixel has been reduced—it’s about 115 seconds less.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-64threads.svg&quot; alt=&quot;CPU utilization with 64 threads&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The big wins come from instance BVH construction and creating the final
-top-level scene-wide BVH, which are sped up by factors of 4.2x and 2.4x,
-respectively.  Neither is an exemplar of ideal parallel speedup, but again,
-it’s not bad for not much work.&lt;/p&gt;
-
-&lt;h3 id=&quot;parsing-in-parallel&quot;&gt;Parsing in parallel&lt;/h3&gt;
-
-&lt;p&gt;It is evident from that graph that parsing performance must be improved in
-order to make a meaningful further reduction in time to first pixel—with
-BVH construction performance improved, parsing is about 5/6 of the total
-time.  After a bit of thought, I realized that pbrt-v4’s new approach to
-parsing and scene construction also offered the opportunity to parse the
-scene description in parallel.&lt;/p&gt;
-
-&lt;p&gt;For context, pbrt has always offered an &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; directive in its scene
-description files; it corresponds to &lt;code class=&quot;highlighter-rouge&quot;&gt;#include&lt;/code&gt; in C/C++ and is
-semantically the same as expanding the text of the file inline at the point
-where it is included.  This is a handy capability to have, but it
-effectively requires serial processing of included files.  For example, if
-one first &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;s a file that has&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Material &quot;conductor&quot;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;and then &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;s a file that has&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Shape &quot;trianglemesh&quot; ...
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;then the triangle mesh will have the “conductor” material applied to it.&lt;/p&gt;
-
-&lt;p&gt;While one could perhaps imagine a more sophisticated implementation of
-&lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; that allowed parsing files in parallel and then patching things
-up afterward, I decided to add a new directive, &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.  It’s the same
-idea as &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt;—parse the given file and then add the stuff described in
-it to the scene description—but its semantics are different.  While it
-inherits the current graphics state—the current material, transformation
-matrix, and so forth—at the start of its parsing, changes to the graphics
-state do not persist afterward.  However, the shapes, lights, object
-instances, and participating media that are specified in the file are added
-to the scene.  In practice, most uses of &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; can be replaced with an
-&lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Thanks to the &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; representation, we can &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L749&quot;&gt;kick off a new thread
-to
-parse&lt;/a&gt;
-each &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;ed file , have it &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L448&quot;&gt;initialize a separate
-&lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt;&lt;/a&gt;,
-and then &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parsedscene.cpp#L461&quot;&gt;merge that one
-in&lt;/a&gt;
-with the main &lt;code class=&quot;highlighter-rouge&quot;&gt;ParsedScene&lt;/code&gt; &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/e643f698589562e44e36721f5893ba97249a71ef/src/pbrt/parser.cpp#L981&quot;&gt;when the thread has finished
-parsing&lt;/a&gt;.
-It’s a hundred or so lines of code in the end.&lt;/p&gt;
-
-&lt;p&gt;Turning to the Moana scene, Disney’s original pbrt conversion of it has a
-top-level file, &lt;code class=&quot;highlighter-rouge&quot;&gt;island.pbrt&lt;/code&gt;, that then has 20 &lt;code class=&quot;highlighter-rouge&quot;&gt;Include&lt;/code&gt; statements
-for the main parts of the scene: the geometry of the mountains, the ocean
-surface, the beach dunes, the various hero trees, and so forth.  All of
-those can safely be brought in using &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;With that simple change, parsing is 3.5x faster and time to first pixel is
-down to 123 seconds. Progress!&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-import-top.svg&quot; alt=&quot;CPU utilization with top-level Import statements&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Parsing time has greatly improved, though for most of that phase only four
-threads are running, trailing down to a single thread for the last few
-seconds.  We have a good old load imbalance, where most of the imported
-files are parsed quickly but then getting through the four heaviest ones is
-the bottleneck.&lt;/p&gt;
-
-&lt;p&gt;Each of those four has a ~5GB pbrt file to be parsed along the way.  I went
-ahead and manually split each of those into 10 or so smaller files that are
-themselves loaded via &lt;code class=&quot;highlighter-rouge&quot;&gt;Import&lt;/code&gt;.  With that, parsing has sped up by a total
-of 6.1x and we’re down to 97 seconds of time to first pixel.  If 64 threads
-are giving a 6.1x speedup, one might think that fewer cores might do well.
-It is so: with 16 cores, it’s 124 seconds to first pixel, and with 8, it’s
-149.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-import-deep.svg&quot; alt=&quot;CPU utilization with multiple levels of Import statements&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The second half of the parsing phase is still just a few CPU cores chugging
-along, but I ran out of motivation to keep manually splitting up the big
-files; that’s the sort of thing that would ideally be done automatically by
-an exporter anyway.&lt;/p&gt;
-
-&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
-
-&lt;p&gt;As we wrap up now, pbrt-v4 is 21.6x faster in time to first pixel for the
-Moana Island scene than pbrt-v3 was originally and 4.2x faster than it was
-where things stood at the start of this write-up, all of that additional
-improvement due to parallelism.  That’s satisfying progress, and I have to
-admit that seeing 30 threads all simultaneously working on parsing the
-scene description is a thrill; I wouldn’t have expected any parallelism in
-that phase a few weeks ago.&lt;/p&gt;
-
-&lt;p&gt;That said, even in the final graph there’s a lot more area above the curve
-where CPUs are idle than there is below where they’re getting things done.
-Eyeballing it, I’d guess that if the 64 CPU threads were used to their full
-capabilities, it might be possible to have a 20 second time to first pixel.&lt;/p&gt;
-
-&lt;p&gt;Getting to that point would require much more complexity in pbrt’s
-implementation, however: it would likely end up kicking off work as soon as
-it was available (“start creating this light in a separate thread”, etc.).
-Having all of the object creation happening concurrently with parsing would
-also introduce the risks of ugly bugs due to race conditions, which I’m not
-sure is worth it, especially for a system with pbrt’s goals.  Therefore,
-we’ll stop there for time to first pixel, at least for the moment.&lt;/p&gt;
-
-&lt;p&gt;To wrap up these updates, next time we’ll look at pbrt-v4’s performance
-rendering this scene, focusing on the GPU rendering path.&lt;/p&gt;</content><author><name></name></author><summary type="html">Digging into where all the time goes when parsing the Moana Island scene and getting ready to start rendering it.</summary></entry></feed>
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry></feed>

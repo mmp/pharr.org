@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Update: Some Analysis of Physically Based Rendering&#39;s Bibliography</title>
+  <meta name="description" content="Ending a year of suspense, the numbers are finally in for the fourth edition.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Update: Some Analysis of Physically Based Rendering&#39;s Bibliography</h1>
+    <p class="post-meta">
+      <time datetime="2022-01-05T00:00:00-08:00" itemprop="datePublished">
+        
+        Jan 5, 2022
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <style>
+    table {
+        font-size: 90%;
+    }
+</style>
+
+<p>It’s just over a year ago now that I posted an <a href="/matt/blog/2020/12/26/pbr-bibliography-1-3ed.html">analysis of citation counts
+in the bibliographies of the first three editions of <em>Physically Based
+Rendering</em></a>.  Back then
+I promised an update with statistics for the forthcoming fourth
+edition “in the next few weeks.”  That turns out to have been rather
+optimistic, but here we now are with results finally available.</p>
+
+<p>The fact that these results are ready means that we’re done fiddling with
+the text; we will shortly be handing it over to the publisher so that the
+book production process can begin.  We have switched to <a href="https://mitpress.mit.edu">MIT
+Press</a> for the fourth edition and it’s been a
+fine experience working with them so far; we’re optimistic that our
+interests are all well aligned in producing a quality book, much more so
+than with the previous corporate conglomerate that shall not be
+named.
+Happily, MIT Press has agreed that we can continue to post a free edition
+of the book online.  (The current plan is for that to be made available
+roughly six months after the print edition hits the shelves.)  However,
+that brings us to our first point of drama in this bibliographical vanity
+contest: the online edition will be a superset of the print edition and so
+there are differences between their bibliographies.</p>
+
+<p>The differences between the two versions are due to the amount of new
+content that we wrote for the fourth edition; all in all, it would be about
+1,600 printed pages.  That’s too much for a single volume, at least if one
+wants paper that isn’t newspaper-thin and a binding that won’t fall apart.
+Thus, Wenzel and I went through the exercise of rejiggering the book into a
+1,200 page version for print while maintaining the full text for the online
+edition.  In deciding what would be online-only, we looked for content that
+was mostly independent of the rest of the book and was little-changed from
+the third edition.  As examples, both the <a href="https://pbr-book.org/3ed-2018/Camera_Models/Realistic_Cameras">section on realistic camera
+models</a> and
+the <a href="https://pbr-book.org/3ed-2018/Light_Transport_III_Bidirectional_Methods">chapter on bidirectional light
+transport</a>
+will not be there in the print edition this time.</p>
+
+<p>The print edition still includes citations and discussion of previous work
+for topics that are not included in its text, though not as much of it as
+in the online edition—it doesn’t make sense to go into as much depth in
+the citations when the text doesn’t deeply discuss the corresponding
+topics.  Therefore, here I will report the results for both the print and
+online editions. No doubt there will be years of arguments to come about
+which is the more proper measure—one might argue that the online
+edition’s bibliography is the canonical one, as it reflects what would be
+printed if physical limitations didn’t intrude, or one might argue for the
+print edition in that those citations earned consumption of actual paper
+and not just electrons.  We will leave that question to be resolved by
+future historians of computer graphics.</p>
+
+<p>Finally, a few notes on methodology: as before, the following is a simple
+count of how often each name appears in the bibliography.  Editing a book
+or a conference proceedings doesn’t count, but otherwise every citation is
+counted equally—from a single-author SIGGRAPH paper to a blog post.  The
+citations include work through SIGGRAPH 2020 but nothing published
+subsequently.  Yes, SIGGRAPH Asia papers are now out, but we had to draw a
+line somewhere in order to get that thing out the door.</p>
+
+<p>As before, many caveats are in order about how arbitrary a measure this is.
+Another to mention today is the impact of the fine series of Eurographics
+State of the Art Reports (STARs), twelve of which appear in the fourth
+edition’s bibliography.  For topics that are not central to the book (e.g.,
+texture synthesis), we will often cite a STAR and only a few additional
+publications rather than comprehensively survey previous work.  Thus, there
+is an irony in successfully developing a new area of research to the point
+that it merits a STAR: in our bibliographic measure, a lengthy publication
+record may end up collapsed into a STAR and a few additional citations,
+putting one lower than one would have been otherwise.</p>
+
+<!--
+Raw data was generated using the following:
+
+```bash
+$ grep -v bibitem biblio.tex | 
+  fgrep -v "(Ed.)" | fgrep -v "(Eds.)" |
+  sed -e "s/~/ /g" -e 's/\\//g' -e 's/{//g' -e 's/}//g' -e "s/'//g" |
+  tr -c '[:alnum:]' '[\n*]' |
+  sort | uniq -c |
+  sort -nr
+```
+
+Line by line: the `\bibitem` lines are removed (since those include some
+names and we don't want to double-count them), lines that include editor
+names are removed, various TeX-isms and accents are stripped out, words are
+printed one per line, lines are sorted and their frequency counted, and the
+final result is sorted by frequency.  I then went through the output,
+disregarding things like that "Carlo" person who seems to keep showing up
+in the bibliography, and culling the actual names.
+-->
+
+<p>With that, here are the results for all four editions—author last names
+with citation counts:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>1st (2004)</th>
+      <th>2nd (2010)</th>
+      <th>3rd (2016)</th>
+      <th>4th (print, 2022)</th>
+      <th>4th (online, 2022)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Greenberg (26)</td>
+      <td>Jensen (31)</td>
+      <td>Jensen (33)</td>
+      <td>Jarosz,<br />Jensen (35)</td>
+      <td>Jarosz,<br />Jensen (40)</td>
+    </tr>
+    <tr>
+      <td>Shirley (25)</td>
+      <td>Shirley (29)</td>
+      <td>Shirley (31)</td>
+      <td>Ramamoorthi (32) </td>
+      <td>Ramamoorthi (38)</td>
+    </tr>
+    <tr>
+      <td>Hanrahan (22)</td>
+      <td>Greenberg,<br />Hanrahan (27)</td>
+      <td>Keller (27)</td>
+      <td>Keller,<br />Shirley (31)</td>
+      <td>Hanika (36)</td>
+    </tr>
+    <tr>
+      <td>Jensen (16)</td>
+      <td>Ramamoorthi (23) </td>
+      <td>Wald (25)</td>
+      <td>Hanika,<br />Jakob (30)</td>
+      <td>Dachsbacher (33)</td>
+    </tr>
+    <tr>
+      <td>Arvo (14)</td>
+      <td>Wald (18)</td>
+      <td>Greenberg,<br />Hanrahan (24)</td>
+      <td>Wald (29)</td>
+      <td>Jakob,<br />Shirley (32)</td>
+    </tr>
+    <tr>
+      <td>Mitchell (13) </td>
+      <td>Keller (17)</td>
+      <td>Slusallek (21)</td>
+      <td>Slusallek (27)</td>
+      <td>Keller (31)</td>
+    </tr>
+    <tr>
+      <td>Keller (12)</td>
+      <td>Arvo,<br />Seidel,<br />Slusallek (16)</td>
+      <td>Marschner,<br /> Ramamoorthi (19) </td>
+      <td>Dachsbacher,<br />Marschner (26)</td>
+      <td>Křivànek,<br />Wald (30)</td>
+    </tr>
+    <tr>
+      <td>Heckbert,<br /> Torrance (10)</td>
+      <td>Mitchell (13)</td>
+      <td>Arvo,<br />Seidel (17)</td>
+      <td>Křivànek (25)</td>
+      <td>Marschner,<br />Slusallek (27)</td>
+    </tr>
+    <tr>
+      <td>Cook,<br />Kajiya,<br />Levoy,<br />Pattanaik,<br />Ward (8)</td>
+      <td>Pattanaik,<br /> Torrance,<br /> Walter (12)</td>
+      <td>Jarosz (16)</td>
+      <td>Hanrahan,<br />Novák (23)</td>
+      <td>Hachisuka (25)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+
+<p>We can see that Henrik continues his reign, though he now shares
+the top spot with Wojciech Jarosz, who had not a single appearance in the
+first edition’s bibliography.  The smallest of lexicographical
+differences—“a” before “e”—puts Wojciech first in the alphabetical
+ordering.  Fittingly, Wojciech was Henrik’s Ph.D. student, so I have to
+assume that for Henrik the bitterness of sharing the glory is balanced by
+the sweetness of a former student’s achievement.</p>
+
+<p>Other than Henrik, Alex Keller and Pete Shirley are the only others who
+made the list for all four editions, though Pat Hanrahan also has that
+distinction if one neglects the online 4th edition.  (Surely Pat will therefore
+be out there arguing vigorously that the print edition is canonical.)</p>
+
+<p>Ravi Ramamoorthi has displaced Pete Shirley from his long-held number two
+position, though just by a hair, at least in the print edition.  Johannes
+Hanika has also rocketed up in the standings, making an especially quick
+climb given that he was not cited in either the first or the second
+editions.  Carsten Dachsbacher has also climbed rapidly, starting from one
+citation in the first edition, two in the second, and 10 in the third.
+Finally and fittingly, Jaroslav Křivànek is up there in the latest edition
+as well.</p>
+
+<p>There you have it. I must admit my disappointment at seeing that the top
+two spots had the same names for both versions of the fourth edition—all
+the less potential controversy over which version is the canonical one,
+though there’s enough motion farther down the list that one might hope for
+some sparks in the future.</p>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
