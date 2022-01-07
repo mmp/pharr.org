@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-01-05T10:03:31-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-01-07T07:07:43-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
 </subtitle><entry><title type="html">Update: Some Analysis of Physically Based Rendering’s Bibliography</title><link href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html" rel="alternate" type="text/html" title="Update: Some Analysis of Physically Based Rendering's Bibliography" /><published>2022-01-05T00:00:00-08:00</published><updated>2022-01-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">&lt;style&gt;
     table {
         font-size: 90%;
@@ -176,7 +176,7 @@ with citation counts:&lt;/p&gt;
 
 &lt;p&gt;&lt;br /&gt;&lt;/p&gt;
 
-&lt;p&gt;We can see that Henrik continues his reign, though he now shares
+&lt;p&gt;Henrik continues his reign, though he now shares
 the top spot with Wojciech Jarosz, who had not a single appearance in the
 first edition’s bibliography.  The smallest of lexicographical
 differences—“a” before “e”—puts Wojciech first in the alphabetical
@@ -443,7 +443,7 @@ storage.  Most of the time that loss of precision hides any sloppy sums.&lt;/p&g
 &lt;p&gt;The greatest benefit of deterministic rendering has been the ability to
 quickly iterate on bugs: you can add some logging code or more assertions,
 recompile, and re-render, confident that the new code will see the same
-inputs as triggered the bug.  Given samplers that give exactly the same
+inputs as triggered the bug.  Samplers that give exactly the same
 samples at each pixel also means that you can speed things up by just
 rendering a crop window or even a single pixel as you’re chasing a bug.&lt;/p&gt;
 
