@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-01-07T07:07:43-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-02-28T06:17:33-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
 </subtitle><entry><title type="html">Update: Some Analysis of Physically Based Rendering’s Bibliography</title><link href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html" rel="alternate" type="text/html" title="Update: Some Analysis of Physically Based Rendering's Bibliography" /><published>2022-01-05T00:00:00-08:00</published><updated>2022-01-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">&lt;style&gt;
     table {
         font-size: 90%;
@@ -58,7 +58,7 @@ future historians of computer graphics.&lt;/p&gt;
 count of how often each name appears in the bibliography.  Editing a book
 or a conference proceedings doesn’t count, but otherwise every citation is
 counted equally—from a single-author SIGGRAPH paper to a blog post.  The
-citations include work through SIGGRAPH 2020 but nothing published
+citations include work through SIGGRAPH 2021 but nothing published
 subsequently.  Yes, SIGGRAPH Asia papers are now out, but we had to draw a
 line somewhere in order to get that thing out the door.&lt;/p&gt;
 
