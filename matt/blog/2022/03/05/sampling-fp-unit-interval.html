@@ -198,8 +198,8 @@ interval corresponds to sampling a geometric distribution with
 \(p=1/2\).  There’s thus an easy iterative algorithm to select an
 interval: one can first randomly choose to generate the sample within
 \([1/2, 1)\) with probability \(1/2\).  Otherwise, sample within
-\([1/4,1/2)\) with probability \(1/2\) and so forth; then bottom out
-when you hit the denorms.  Given an interval, the exponent follows and a
+\([1/4,1/2)\) with probability \(1/2\) and so forth; bottom out
+if you hit the denorms.  Given an interval, the exponent follows and a
 sample within an interval can be found by uniformly sampling a significand,
 since values within a given interval are equally-spaced.</p>
 
