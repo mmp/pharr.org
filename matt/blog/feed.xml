@@ -1,5 +1,232 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-02-28T06:17:33-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Update: Some Analysis of Physically Based Rendering’s Bibliography</title><link href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html" rel="alternate" type="text/html" title="Update: Some Analysis of Physically Based Rendering's Bibliography" /><published>2022-01-05T00:00:00-08:00</published><updated>2022-01-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">&lt;style&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-05T14:50:25-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Sampling in Floating Point (1/3): The Unit Interval</title><link href="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html" rel="alternate" type="text/html" title="Sampling in Floating Point (1/3): The Unit Interval" /><published>2022-03-05T00:00:00-08:00</published><updated>2022-03-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html">&lt;p&gt;&lt;em&gt;(The following assumes basic familiarity with the IEEE floating point
+representation—sign, power of two exponent, and significand—but 
+not necessarily expert-level understanding of it.)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Taking samples from various distributions is at the heart of rendering;
+perhaps most importantly, it allows us to use importance sampling when
+performing Monte Carlo integration, which gives us a powerful tool to
+reduce error.  The associated sampling algorithms are generally derived
+assuming that real numbers are afoot but are then implemented using
+floating-point math on computers.  For sampling, the differences between
+reals and floats usually doesn’t cause any problems, though if you look
+closely enough there are a few interesting subtleties.  We’ll start this
+short series on that topic today with what seems like should be the
+simplest of problems: uniformly sampling a floating-point value between
+zero and one.&lt;/p&gt;
+
+&lt;h2 id=&quot;uniform-floats-by-dividing-by-an-integer&quot;&gt;Uniform Floats by Dividing by an Integer&lt;/h2&gt;
+
+&lt;p&gt;Just about anywhere you look, from &lt;em&gt;Stack Overflow&lt;/em&gt; to all four editions of
+&lt;em&gt;Physically Based Rendering&lt;/em&gt;, you’ll be told that it’s easy to sample a
+uniform floating-point value in \([0,1)\): just generate a random \(n\)
+bit unsigned integer and divide by \(2^{n}\).  Given real numbers, that’s
+fine—the largest value your integer can take is \(2^n-1\) and dividing
+by \(2^n\) gives a value that’s strictly less than one.&lt;sup id=&quot;fnref:mult&quot;&gt;&lt;a href=&quot;#fn:mult&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; With
+32-bit floats (as we will exclusively consider today), there’s a nit: say that
+\(n=32\) (as is used in pbrt).  After floating point rounding, one will
+find that
+\[
+\frac{2^{32} - 1}{2^{32}} \rightarrow 1;
+\]
+so much for that non-inclusive upper bound.
+The problem is that the spacing between the floats right below 1 is
+\(2^{-24}\).  Because \(2^{-32}\) is much less than half that, \(1-2^{-32}\)
+rounds to 1.  Even worse, all 128 floating-point values in \([2^{32}-128,
+2^{32}-1]\) round to 1.&lt;/p&gt;
+
+&lt;p&gt;pbrt &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/fd3c25bf1062ab9a790a9ab5fbd4e84d813c2316/src/pbrt/util/rng.h#L129&quot;&gt;works around that
+problem&lt;/a&gt;
+by bumping any such 1s down to \(1-2^{-24}\), the last representable
+float before 1. That gets things back to \([0,1)\) but it’s a stinkiness
+in the code that in retrospect should have led to the algorithm used being
+given more attention.&lt;/p&gt;
+
+&lt;p&gt;One way to avoid this issue and many of the following is to set \(n=24\),
+in which case all values after division are valid float32 values and no
+rounding is required.&lt;sup id=&quot;fnref:petrik&quot;&gt;&lt;a href=&quot;#fn:petrik&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt; However, that gives slightly more than 16
+million unique values; that’s a fair number of them, but there are actually
+a total of 1,065,353,216 float32 values in \([0,1)\)—nearly a quarter
+of all possible 32-bit floats.  Under that lens, those 16 million seem
+rather few.&lt;/p&gt;
+
+&lt;p&gt;How much better do we do with \(n=32\)?  Although we start out with over
+4 billion distinct integer values, if you divide each by \(2^{-32}\) to
+generate samples in \([0,1)\) and count how many float32s are generated,
+it turns out that those four billion yield only 83,886,081 distinct
+floating-point values, or 7.87% of all of the possible ones between zero
+and one.  Not only do we have multiple integer values mapping to the same
+floating-point value all the way from \(2^{-8}=0.00390625\) to 1, but
+between 0 and \(2^{-9}=0.001953125\), the spacing between floats is less
+than \(2^{-32}\) and many floating-point values are never generated.&lt;/p&gt;
+
+&lt;p&gt;There’s another problem that comes with the choice of
+\(n&amp;gt;24\), nicely explained in the paper &lt;a href=&quot;https://hal.archives-ouvertes.fr/hal-02427338&quot;&gt;&lt;em&gt;Generating Random
+Floating-Point Numbers by Dividing Integers: A Case
+Study&lt;/em&gt;&lt;/a&gt;, by &lt;a href=&quot;https://frederic.goualard.net&quot;&gt;Frédéric
+Goualard&lt;/a&gt;.  When the usual
+round-to-nearest-even is applied after dividing by \(2^{32}\), a systemic
+bias is introduced in the final values, clearly shown in that paper with
+examples that use low floating-point precision.  Thus, it’s not just “we’re
+not making the most of what we’ve been given”, but it’s “the distribution
+isn’t actually uniform.”&lt;/p&gt;
+
+&lt;p&gt;The rounding problem is still evident with float32s and \(n=32\) bits; if
+we consider all \(2^{32}\) floating-point values, we would expect for
+example that all floats in \([0.5,1)\) would be generated the same number
+of times.  (Indeed, we would expect 256 of each since we have \(2^{32}\)
+values, the float32 spacing in that interval is \(2^{-24}\), and
+\(2^{32} \cdot 2^{-24} = 256\).)  However, if we count them up, it turns
+out that alternating floating-point values are generated 255 times and 257
+times, all the way from 0.5 to 1.  That happens in many other intervals,
+becoming its worst in the interval \([0.00390625, 0.0078125)\) where
+alternating values are generated one and three times.&lt;sup id=&quot;fnref:rounding&quot;&gt;&lt;a href=&quot;#fn:rounding&quot; class=&quot;footnote&quot;&gt;3&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;Depending on one’s application, all of these issues may be no problem in
+practice, and I wouldn’t make the argument that they are likely to cause
+errors in rendered images.  Most of the time \(n=24\) and not worrying
+about it is probably fine.  Yet IEEE has given us all that precision and it
+seems wasteful not to make use of it, if it isn’t too much trouble to do
+so…&lt;/p&gt;
+
+&lt;h2 id=&quot;uniform-floats-by-sampling-a-geometric-distribution&quot;&gt;Uniform Floats by Sampling a Geometric Distribution&lt;/h2&gt;
+
+&lt;p&gt;What might be done about these problems?  A remarkably elegant and
+efficient solution dates to 1974 with Walker’s paper &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;&lt;em&gt;Fast Generation of
+Uniformly Distributed Pseudorandom Numbers with Floating-Point
+Representation&lt;/em&gt;&lt;/a&gt;,
+which is based on the following observation (expressed here in terms of modern
+IEEE float32s):&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;In the interval \([1/2, 1)\), there are exactly \(2^{23}\)
+equally-spaced numbers that can be represented
+in float32.&lt;/li&gt;
+  &lt;li&gt;In the interval \([1/4, 1/2)\), there are exactly \(2^{23}\)
+equally-spaced numbers that can be represented
+in float32.&lt;/li&gt;
+  &lt;li&gt;In the interval \([1/8, 1/4)\), there are exactly \(2^{23}\)
+equally-spaced numbers that can be represented
+in float32.&lt;/li&gt;
+  &lt;li&gt;And so on…&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We would like an algorithm that can generate all of those numbers but does
+so in a way that gives a uniform distribution over \([0,1)\).  Walker
+observed that this can be done in two steps: first by choosing an interval
+with probability according to its width, and then by sampling uniformly
+within its interval. (This algorithm is sometimes credited to Downey, who
+seems to have independently derived it in an &lt;a href=&quot;https://allendowney.com/research/rand/downey07randfloat.pdf&quot;&gt;unfinished
+paper&lt;/a&gt; from
+2007.)&lt;/p&gt;
+
+&lt;p&gt;Because each interval’s width is half that of the one above it, sampling an
+interval corresponds to sampling a geometric distribution with
+\(p=1/2\).  There’s thus an easy iterative algorithm to select an
+interval: one can first randomly choose to generate the sample within
+\([1/2, 1)\) with probability \(1/2\).  Otherwise, sample within
+\([1/4,1/2)\) with probability \(1/2\) and so forth; then bottom out
+when you hit the denorms.  Given an interval, the exponent follows and a
+sample within an interval can be found by uniformly sampling a significand,
+since values within a given interval are equally-spaced.&lt;/p&gt;
+
+&lt;p&gt;Choosing an interval in that way takes only two iterations in expectation,
+but the worst case requires many more.  The associated execution divergence
+is especially undesirable for processors like GPUs.  Walker had another
+trick up his sleeve, however:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Pseudorandom integer numbers with a truncated geometric distribution may
+be obtained by counting consecutive 1s or 0s in a binary random number,
+drawn from a set having a uniform frequency distribution.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;In other words, generate a random binary integer and, say, count the number
+of leading zero bits.  Use that count to choose an interval, where zero
+leading zero bits has you sampling in \([1/2,1)\), one leading zero bit
+puts you in \([1/4,1/2)\), and so forth.  Given an index \(i\) into the
+intervals that starts at 0, the exponent is then \(-1 - i\).  Modern
+processors offer bit counting instructions that yield such counts, so this
+algorithm can be implemented very efficiently.&lt;/p&gt;
+
+&lt;h2 id=&quot;from-theory-to-implementation&quot;&gt;From Theory to Implementation&lt;/h2&gt;
+
+&lt;p&gt;With float32, the floating-point exponent factors over the \([0,1)\)
+interval go from \(2^{-1}\) down to \(2^{-126}\) before the denorms
+start.  Thus, 128 random bits may be required to choose the interval.
+However, those intervals start becoming so small that one’s commitment to
+possibly sampling every possible float might start to waver; the odds of
+making it to one of the tiny ones becomes vanishingly small.&lt;/p&gt;
+
+&lt;p&gt;A &lt;a href=&quot;http://marc-b-reynolds.github.io/distribution/2017/01/17/DenseFloat.html&quot;&gt;blog
+post&lt;/a&gt;
+by Marc Reynolds has all sorts of good insights on the efficient
+implementation of this algorithm.  (More generally, &lt;a href=&quot;http://marc-b-reynolds.github.io&quot;&gt;Marc’s
+blog&lt;/a&gt; is full of great sampling and
+floating-point content; highly recommended.)  He considers multiple
+approaches (for example, successively generating as many random 32-bit
+values as needed) and ends with a &lt;a href=&quot;http://marc-b-reynolds.github.io/distribution/2017/01/17/DenseFloat.html#the-parts-im-not-tell-you&quot;&gt;pragmatic
+compromise&lt;/a&gt;
+that takes a single 64-bit random value, uses 41 bits to choose the
+exponent, and uses the remaining 23 bits to sample the significand.  The
+remaining \([0,2^{-40})\) interval is sampled uniformly.  As long as an
+efficient count leading zeros instruction is used, it’s only slightly more
+work than multiplying by \(2^{-32}\) and clamping; in practice, most of
+the extra expense comes from needing to generate a 64-bit pseudorandom
+value rather than just a 32-bit one.&lt;/p&gt;
+
+&lt;!--
+// Given uniform 64-bit integer 'u' return a uniform float on [0,1)
+// * the interval [2^-40, 1) is dense (all representable values produced)
+// * the interval [0, 2^-40) is equidistantly (2^-64) populated
+
+float rng_pdense_f32(uint64_t u)
+{
+  uint32_t z = lzc_64(u);                   // change to (u|1) for intel pre LZCNT hardware
+
+  if (z &lt;= 40) {
+    uint32_t e = 126-z;                     // compute the biased exponent
+    uint32_t m = ((uint32_t)u) &amp; 0x7fffff;  // explict significand bits
+    return f32_from_bits(e&lt;&lt;23|m);          // construct the binary32
+  }
+  
+  // The probabilty of reaching here is 2^-40. There are as many points
+  // on this subinterval as the standard equidistance method produces
+  // across the entire output range.
+
+return 0x1.0p-64f*(float)((uint32_t)u);
+}
+--&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Unless you’re bottlenecked on sample generation, it’s worth considering
+using an efficient implementation of Walker’s algorithm to generate
+uniform random floating-point numbers over \([0,1)\).  It’s not much more
+computation than the usual, it makes the most of what floating point
+offers, and it eliminates a minor source of bias.  Plus, you get to
+exercise the bit counting instructions and feel like that much more of a
+hacker.&lt;/p&gt;
+
+&lt;p&gt;Next time we’ll look at uniformly sampling intervals of floating point
+numbers beyond \([0,1)\).  After that, on to how low-discrepancy sampling
+interacts with some of the topics that came up today as well as some
+discussion about avoiding an unnecessary waste of precision when sampling
+exponential functions.&lt;/p&gt;
+
+&lt;h3 id=&quot;notes&quot;&gt;notes&lt;/h3&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:mult&quot;&gt;
+      &lt;p&gt;In practice, one multiplies by \(2^{-32}\) since dividing by a power of two and multiplying by its reciprocal give the same result  with IEEE floats. &lt;a href=&quot;#fnref:mult&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:petrik&quot;&gt;
+      &lt;p&gt;If I remember correctly, Petrik Clarberg explained the superiority of \(n=24\) over \(n=32\) in this context to me a few years ago; it’s a point that I underappreciated at the time. &lt;a href=&quot;#fnref:petrik&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:rounding&quot;&gt;
+      &lt;p&gt;On a processor where changing the rounding mode is inexpensive, it is probably a good idea to select rounding down in this case. For example, in CUDA, the multiplication by \(2^{-32}\) might be performed using &lt;code class=&quot;highlighter-rouge&quot;&gt;__fmul_rd()&lt;/code&gt;. &lt;a href=&quot;#fnref:rounding&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Sampling algorithms can be subtle and tricky, as can be computations that are performed using floating-point arithmetic. This post starts a short series on that topic, starting with the fundamentals: generating uniform random samples between zero and one.</summary></entry><entry><title type="html">Update: Some Analysis of Physically Based Rendering’s Bibliography</title><link href="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html" rel="alternate" type="text/html" title="Update: Some Analysis of Physically Based Rendering's Bibliography" /><published>2022-01-05T00:00:00-08:00</published><updated>2022-01-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/01/05/pbr-bibliography-4ed.html">&lt;style&gt;
     table {
         font-size: 90%;
     }
@@ -2737,250 +2964,4 @@ be read in parallel would likely shave a few more seconds off.&lt;/p&gt;
 
 &lt;p&gt;Next time, we’ll turn to rendering, covering some of the details related to
 getting this scene to render on the GPU in the first place and finally
-looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 8): Meet The GPU</title><link href="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 8): Meet The GPU" /><published>2021-07-25T00:00:00-07:00</published><updated>2021-07-25T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/25/moana-gpu-part-1.html">&lt;p&gt;It’s been over three months since my &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;last
-post&lt;/a&gt; about rendering Disney’s
-&lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Moana Island
-scene&lt;/a&gt; with
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;.  Back then, I promised a
-further update that would discuss performance when rendering the scene on
-the GPU, but here we are with months gone by and no further news.  Today,
-finally, I’ll start to rectify that.&lt;/p&gt;
-
-&lt;p&gt;Most of the delay was due to lack of motivation: for once, performance was
-surprisingly good out of the box. Where we left off last time, pbrt-v4’s
-CPU rendering path was down to 96.8 seconds of wall-clock time between the
-start of parsing the scene description and the start of actual rendering
-work.  With the GPU path selected and with no further attention to performance tuning,
-rendering started after 83.3 seconds—1.16x faster.&lt;/p&gt;
-
-&lt;p&gt;Of course, faster is to be expected, as roughly half of the pre-rendering
-time on the CPU is spent building BVHs.  pbrt’s BVH construction code is
-written for clarity rather than performance, is only sort-of parallelized,
-and runs entirely on the CPU.  When rendering on the GPU, all of the BVH
-construction is handled by highly-optimized code in OptiX, most
-of it running on the GPU.  If using &lt;em&gt;that&lt;/em&gt; had been slower than pbrt’s CPU path,
-then there surely would have been “interesting” things to discover.
-However, faster was the expectation, and faster was what we got.&lt;/p&gt;
-
-&lt;p&gt;Further sapping motivation for blogging, not only was system startup fast,
-but rendering the scene itself on the GPU pretty much just worked the first
-time.  Here’s the beach view, rendered using an NVIDIA RTX A6000 GPU.  I’m
-going to save the topic of GPU rendering performance for a later post, but,
-well… It’s most definitely &lt;em&gt;fast&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-beach-gpu.jpg&quot; alt=&quot;Moana Island beach view rendered with pbrt-v4 using the GPU&quot; /&gt;
-&lt;i&gt;Moana Island beach view rendered with pbrt-v4 on an NVIDIA RTX A6000 GPU with 1024 samples per pixel.&lt;/i&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Good performance is always nice, but this series of blog posts has mostly
-been about chasing down and fixing performance problems due to poor scaling
-in the face of complexity; everything running well doesn’t leave
-much to write about. With what I saw at first, I assumed that I would end
-up with a short post without much technical content that instead declared
-victory and showed a few pretty pictures.  Happily (in a way), once I
-started actually looking at the data, there were all sorts of good surprises.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-value-of-logging-for-finding-stinky-things&quot;&gt;The Value of Logging For Finding Stinky Things&lt;/h2&gt;
-
-&lt;p&gt;I’m all for a good debugger and a good profiler, but it’s surprising
-how far one can go with basic instrumentation and logging.  For example,
-if you give pbrt &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-level verbose&lt;/code&gt; in its command-line arguments, it
-prints all sorts of chatty information as it does its work, announcing that
-it’s starting up the thread pool, telling you what it has found as far as
-GPUs in the system, and giving updates about what it’s currently working
-on.&lt;/p&gt;
-
-&lt;p&gt;Here are a few lines of what it prints early on when rendering
-the Moana island scene:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @     0.103s parser.cpp:745 ] Started parsing materials.pbrt
-[ tid 000 @     0.103s parser.cpp:620 ] Finished parsing materials.pbrt
-[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainA/isMountainA.pbrt
-[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isMountainB/isMountainB.pbrt
-[ tid 000 @     0.103s parser.cpp:590 ] Started parsing isGardeniaA/isGardeniaA.pbrt
-[ tid 000 @     0.103s parser.cpp:745 ] Started parsing isMountainA/objects.pbrt
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;In each line we get the id of the thread that issued the log message (here,
-always the main thread), the elapsed time since pbrt started running, the
-location in the source where the logging call was made, and then whatever
-it has to tell us.  Here we can immediately see that the entirety of
-&lt;code class=&quot;highlighter-rouge&quot;&gt;materials.pbrt&lt;/code&gt; was parsed nearly instantaneously.  We can
-also see that multiple additional files are being parsed in parallel, each
-getting started without pbrt waiting for the one before it to finish.  This all
-is to be expected, so no surprises so far.&lt;/p&gt;
-
-&lt;p&gt;As I was gearing up to start writing this post, I noticed the following when doing
-a run with &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-level verbose&lt;/code&gt;:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @    43.820s wavefront/integrator.cpp:140 ] Starting to create lights
-[ tid 000 @    53.465s wavefront/integrator.cpp:229 ] Done creating lights
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;That’s ten seconds to create the light sources in the scene.  Those ten seconds
-were especially evident when seen live—there’s “Starting to create
-lights”, then no logging whatsoever for ten long seconds before pbrt comes
-back, bright eyed and proud that it’s gotten all the lights taken care of.
-That long pause was enough for me to realize something was off; I knew that
-it had been no more than 5 or so seconds to create the lights for this
-scene before, so there was surely something amiss.&lt;/p&gt;
-
-&lt;p&gt;While a profiler could have cleared up what was happening in those ten
-seconds, a simple sampling-based approach was enough: I re-ran pbrt (still
-using an optimized build) with the debugger, waited for that long ten
-second pause, then stopped execution and printed out the current stack
-trace before letting it resume.&lt;sup id=&quot;fnref:sampling-profiling&quot;&gt;&lt;a href=&quot;#fn:sampling-profiling&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; A few quick iterations of
-that was all it took to discover that much of that time was spent in two
-functions that checked whether an image had any pixels with floating-point
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L199&quot;&gt;infinity&lt;/a&gt;
-or
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cc8f68c38fc6abe2a9aee031bc75a457e517265a/src/pbrt/util/image.cpp#L208&quot;&gt;not-a-number&lt;/a&gt;
-values.&lt;/p&gt;
-
-&lt;p&gt;I had added those checks after spending way too much time debugging an
-unexpected infinity that turned out to be from an environment map light
-source that had an infinite-valued pixel.  Now, the Moana island scene
-includes an environment map that is 8k pixels square, otherwise known as 64
-million pixels.  Oh, and those pixels are stored as 8-bit values, so
-there’s no risk of funny floating-point values in any of them.  Perhaps looping over all of them, lovingly converting them from 8-bit sRGB to float, and then seeing if they were perhaps infinite was not the best use of cycles.&lt;/p&gt;
-
-&lt;p&gt;It took two &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/f5668154f298ecef5a6fc5a1d62a9ec11e6abecf&quot;&gt;one-line
-fixes&lt;/a&gt;
-to early out in that case, and light creation time went back to the 5
-seconds or so that it used to be.  The total time to first pixel went down
-to 77.9 seconds—19 seconds faster than when rendering with the
-CPU.&lt;/p&gt;
-
-&lt;h2 id=&quot;basic-profiling-in-the-renderer&quot;&gt;Basic Profiling in the Renderer&lt;/h2&gt;
-
-&lt;p&gt;Fixing that self-inflicted wound gave me some momentum; it was a small
-taste of the satisfaction of making something slow run faster and that was
-enough to give me motivation to dig in further.  However, the task is
-trickier than it was before since pbrt is now doing work on both the CPU
-and the GPU. It’s important to understand what each is up to; for example,
-maybe it’s fine if the CPU is mostly idle at some point if the GPU is
-working full-tilt.  However, if both are lounging around not doing much,
-then perhaps we should see where the slacking lies.&lt;/p&gt;
-
-&lt;p&gt;Sticking with my log-based methodology, I &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/6e48cc048a393af74124b01f6bae6b8871d454ed&quot;&gt;added a &lt;code class=&quot;highlighter-rouge&quot;&gt;--log-utilization&lt;/code&gt;
-command-line
-option&lt;/a&gt;
-to pbrt.  It causes an extra thread to be launched that measures current
-system activity every 100ms and reports it to pbrt’s verbose log.  Thus,
-when it’s running, you get updates ten times as a second about what’s going
-on interspersed with pbrt’s regular logging output, which makes it easy to
-connect to what pbrt is doing.  Here’s what it reports at the start of
-light creation:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[ tid 000 @    43.213s pbrt/wavefront/integrator.cpp:140 ] Starting to create lights
-[ tid 000 @    43.267s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
-[ tid 000 @    43.267s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
-[ tid 000 @    43.367s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0140 user 0.0000 nice 0.0016 system 0.9845 idle
-[ tid 000 @    43.368s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
-[ tid 000 @    43.468s pbrt/util/log.cpp:175 ] CPU: Memory used 32101 MB. Core activity: 0.0155 user 0.0000 nice 0.0000 system 0.9845 idle
-[ tid 000 @    43.469s pbrt/util/log.cpp:193 ] GPU: Memory used 1156 MB. SM activity: 0 memory activity: 0
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;Both CPU and GPU activity are reported where a value of 1 represents full
-utilization.  The system I’m using has a 32 core/64 thread CPU, so all 64 of those
-threads would need to be active and doing work to achieve a 1.
-Here, we can see that we’ve got one thread keeping busy (1/64=0.0156), with
-everything else sitting idle.  That’s not impressive, but it’s not
-unexpected: there’s little parallelism in that part of
-the system.&lt;/p&gt;
-
-&lt;p&gt;Just as with the regular text logging, I often find it productive to
-eyeball that output.  Though it’s not as fancy as a graphical profiler,
-there’s nearly zero overhead to using it; sometimes, low friction is more
-important than comprehensive data.  Reading such logs is actually
-how I did all of the work described in this and the two following posts,
-though it’s also easy enough to make graphs using that output as well.&lt;/p&gt;
-
-&lt;h2 id=&quot;first-performance-graphs-and-setting-a-baseline&quot;&gt;First Performance Graphs and Setting a Baseline&lt;/h2&gt;
-
-&lt;p&gt;As a baseline, here is where things stood with the light creation fix in
-there, shown using separate graphs for the CPU and the GPU.&lt;sup id=&quot;fnref:gpu-lag&quot;&gt;&lt;a href=&quot;#fn:gpu-lag&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;
-These
-graphs start after the scene description has been parsed and materials,
-textures, and lights have been created. For these investigations we’ll
-focus on the geometric work that happens after all that finishes, starting
-47 seconds in.  Up until then both the CPU and GPU path run the same code,
-which has probably received &lt;a href=&quot;/matt/blog/2021/04/11/moana-time-to-first-pixel.html&quot;&gt;enough
-attention&lt;/a&gt; for now.&lt;/p&gt;
-
-&lt;p&gt;Here, x axis is time in seconds and the y axis is processor utilization.
-The start of rendering is indicated by a vertical dashed line.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-fiximage.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-fiximage.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Four phases of work that are shown in these graphs:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;em&gt;Process non-instanced geometry&lt;/em&gt;: all of the non-instanced geometry (e.g., the mountains and the ocean surface) is converted to objects like pbrt’s &lt;code class=&quot;highlighter-rouge&quot;&gt;TriangleMesh&lt;/code&gt;, including reading geometry that stored in PLY files from disk. Once this geometry is in memory, pbrt has OptiX build BVHs for it.  (Triangles and non-triangles go into separate BVHs.)&lt;/li&gt;
-  &lt;li&gt;&lt;em&gt;Build instance BVHs&lt;/em&gt;: For each geometric object that is instanced (e.g., each type of shrub and flower), the geometry is read from disk and an individual BVH is built.&lt;/li&gt;
-  &lt;li&gt;&lt;em&gt;Process instance uses&lt;/em&gt;: For each use of a geometric instance, a structure is initialized that bundles up the handle to the instance’s BVH and the transformation matrix that places it in the scene.&lt;/li&gt;
-  &lt;li&gt;&lt;em&gt;Build top-level BVH&lt;/em&gt;: The final scene-wide BVH is built including both the non-instanced geometry and all of the instance uses.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Going back to the graphs, the only thing to be happy about is the final
-stage of building the final top-level BVH: there’s not much left for the
-CPU to do at that point and the GPU is nicely occupied during that phase.
-For worse and for better, there’s plenty of unused computing capacity left
-sitting idle in the rest of the graph.&lt;/p&gt;
-
-&lt;h2 id=&quot;a-first-small-victory&quot;&gt;A First Small Victory&lt;/h2&gt;
-
-&lt;p&gt;The nearly 6 seconds spent on &lt;em&gt;Process instance uses&lt;/em&gt; was one of the first
-things that caught my eye, even though it’s not where most of the time is
-spent.  If you look at &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1427&quot;&gt;the corresponding
-loop&lt;/a&gt;,
-there’s not much to it; there’s a hash table lookup using the name of the instance
-(e.g. “xgCabbage_archivecoral_cabbage0003_geo”).  That leads to the handle to
-its BVH and then there’s just a bit of data movement, initializing an
-&lt;code class=&quot;highlighter-rouge&quot;&gt;OptixInstance&lt;/code&gt; structure with the transformation matrix and a few other
-things so that the instance use is part of the final scene BVH.&lt;/p&gt;
-
-&lt;p&gt;Since that loop is not doing much that is computationally intensive, it
-didn’t seem worth parallelizing when I first wrote it.  However, when you
-have over 39 million instances, a little bit of data movement for each one adds up.
-It’s easy enough to parallelize that loop:
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/757f00567cc11d2b9202daca21793eebaeb18a45&quot;&gt;(1)&lt;/a&gt;
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/1820fa7d618da0b51179261091b02279a2dd3dba&quot;&gt;(2)&lt;/a&gt;, 
-and doing so brings &lt;em&gt;Process instance uses&lt;/em&gt; down from 5.9 seconds to 1.1 seconds of
-wall-clock time, which brings us to 72.2 seconds for time to first pixel.  These
-graphs show the improvement:&lt;/p&gt;
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-&lt;p&gt;(As in earlier posts, the scale of the x axis is the same as the baseline graph
-in order to make it easier to compare successive graphs with each other.)&lt;/p&gt;
-
-&lt;p&gt;CPU utilization during that phase is still a little spiky, but that phase
-now achieves the best CPU utilization of all of them. With its total
-time down to one second, it’s hard to worry too much more about it.&lt;/p&gt;
-
-&lt;h2 id=&quot;looking-ahead&quot;&gt;Looking Ahead&lt;/h2&gt;
-
-&lt;p&gt;It was a slow start, but we’ve gone from lack of motivation to two easy
-fixes that shaved roughly ten seconds off of startup time.  Furthermore,
-those have brought us to being “just” twelve seconds away from a
-sub-one-minute time to first pixel.  &lt;em&gt;That&lt;/em&gt; would be exciting, and there’s
-still got plenty of idle processor time in the graphs and plenty of code
-still unexamined under the lens of Moana.  To that end, we’ll dig into the
-instance BVH phase next time around.&lt;/p&gt;
-
-&lt;h2 id=&quot;notes&quot;&gt;notes&lt;/h2&gt;
-&lt;div class=&quot;footnotes&quot;&gt;
-  &lt;ol&gt;
-    &lt;li id=&quot;fn:sampling-profiling&quot;&gt;
-      &lt;p&gt;I’m not sure where I first learned about this trick.  I’m almost certain that I read a blog post extolling the idea somewhere years ago but am unable to find it again now. &lt;a href=&quot;#fnref:sampling-profiling&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-    &lt;/li&gt;
-    &lt;li id=&quot;fn:gpu-lag&quot;&gt;
-      &lt;p&gt;The GPU’s performance monitoring API reports its results averaged over an unspecified but up-to-one-second amount of previous time whereas the CPU numbers are calculated strictly based on activity in the last 100ms. This leads to some lag in the GPU results that manifests itself in activity sometimes being charged to the wrong stage; an example is “Process instance uses”, which doesn’t actually use the GPU at all. (I also believe that the spike in GPU activity at the start of “Build instance BVHs” should be charged to “Process non-instanced geometry.”) However, rather than futzing with the data, I have reported it as measured. &lt;a href=&quot;#fnref:gpu-lag&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-    &lt;/li&gt;
-  &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Performance when rendering the Moana Island scene using pbrt-v4 on the GPU was surprisingly good at the start. And yet this is the first of three posts on the topic...</summary></entry></feed>
+looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry></feed>
