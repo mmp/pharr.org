@@ -583,7 +583,7 @@ irregular amount of computation afoot is not ideal if high performance on
 GPUs or using SIMD instructions is of interest.</p>
 
 <p>Nevertheless, a quick benchmark suggests that <code class="highlighter-rouge">SampleRange()</code> is only about
-2.5 times slower than \((1-t)a+tb\) on my CPU here if the cost of
+2.5 times slower than \((1-t)a+tb\) on my system here if the cost of
 random number generation is included.  If a reasonable amount of computation
 is performed for each sample, the added cost may be no concern.  However, lacking
 a clear example of a case where this first-class sampling makes a
