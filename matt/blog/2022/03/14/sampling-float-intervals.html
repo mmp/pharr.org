@@ -548,14 +548,14 @@ sampled.</p>
 handling closed intervals \([a,b]\) is mostly a matter of updating the
 <code class="highlighter-rouge">if</code> test in the <code class="highlighter-rouge">while</code> loop accordingly.  The only other difference is
 that <code class="highlighter-rouge">eb</code> is always be increased by one.  Thus, the worst case for this
-algorithm is when <code class="highlighter-rouge">b</code> is an exact power of 2, again giving a \(1/2\)
+version of the algorithm is when <code class="highlighter-rouge">b</code> is an exact power of 2, again giving a \(1/2\)
 chance of selecting the upper interval each time, with a \(1-2^{-23}\)
 probability of rejecting the sample in that interval.</p>
 
 <h2 id="further-improvements">Further Improvements</h2>
 
-<p>Stratified sampling is a topic we didn’t get to today; it is usually
-worthwhile when one is generating multiple samples over an interval.  For a
+<p>Stratified sampling is a topic we didn’t get to today; it is often
+desirable when one is generating multiple samples over an interval.  For a
 power-of-2 stratification, it’s possible to work backward from the various
 sampling algorithms to determine constraints on the bit patterns the
 achieve stratification.  I’ll leave the details of that to the reader;
