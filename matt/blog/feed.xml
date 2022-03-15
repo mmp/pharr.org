@@ -1,5 +1,529 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-05T15:05:59-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Sampling in Floating Point (1/3): The Unit Interval</title><link href="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html" rel="alternate" type="text/html" title="Sampling in Floating Point (1/3): The Unit Interval" /><published>2022-03-05T00:00:00-08:00</published><updated>2022-03-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html">&lt;p&gt;&lt;em&gt;(The following assumes basic familiarity with the IEEE floating point
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-14T17:07:04-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Sampling in Floating Point (2/3): 1D Intervals</title><link href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html" rel="alternate" type="text/html" title="Sampling in Floating Point (2/3): 1D Intervals" /><published>2022-03-14T00:00:00-07:00</published><updated>2022-03-14T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">&lt;p&gt;After learning about &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;Walker’s
+algorithm&lt;/a&gt;
+for uniformly sampling \([0,1)\) in floating-point, I started thinking
+about how his approach might be generalized to arbitrary intervals; being
+able to uniformly sample any interval while potentially generating all
+possible floating-point values inside it would certainly be a nice tool to
+add to the toolbox.&lt;/p&gt;
+
+&lt;p&gt;The good news is that it was a fun thought exercise with things learned
+along the way.  In the end I found enough insights to come up with a
+solution. However, upon further digging I found two previous
+implementations of the approach I came up with.  So much for a &lt;em&gt;tour de
+force&lt;/em&gt; paper describing my findings in &lt;em&gt;ACM Transactions on Modeling and
+Computer Simulation&lt;/em&gt;.  They are:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Christoph Conrads’s &lt;a href=&quot;https://gitlab.com/christoph-conrads/rademacher-fpl&quot;&gt;Rademacher Floating Point
+Library&lt;/a&gt;, which dates
+to 2018.  See the 
+&lt;a href=&quot;https://gitlab.com/christoph-conrads/rademacher-fpl/-/blob/master/include/rademacher-fpl/impl/uniform-real-distribution.hpp#L225&quot;&gt;make_uniform_random_value()&lt;/a&gt;
+function there.&lt;/li&gt;
+  &lt;li&gt;Olaf Bernstein’s
+&lt;a href=&quot;https://github.com/camel-cdr/cauldron/blob/7d5328441b1a1bc8143f627aebafe58b29531cb9/cauldron/random.h#L1604&quot;&gt;dist_uniformf_dense()&lt;/a&gt;
+which seems to date to 2021.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;(I’d be interested to hear if there are any earlier instances of it.)&lt;/p&gt;
+
+&lt;p&gt;Nevertheless, I still thought it might be useful to write up some of the
+motivation, walk through my route to a solution, and explain some of the
+subtleties.&lt;/p&gt;
+
+&lt;h2 id=&quot;whats-wrong-with-linear-interpolation&quot;&gt;What’s Wrong With Linear Interpolation?&lt;/h2&gt;
+
+&lt;p&gt;If you want to sample a value in \([a,b)\) for arbitrary \(a\) and
+\(b\), the usual thing is to take a uniform value in \([0,1)\) and use
+it to linearly interpolate between \(a\) and \(b\).  &lt;a href=&quot;/matt/blog/2022/03/05/sampling-fp-unit-interval.html&quot;&gt;Last
+time&lt;/a&gt; we saw how to
+compute a gold-standard uniform floating-point value in \([0,1)\), so why
+not use that to interpolate?  Needless to say, that works in practice, but
+once again, there are some subtleties.&lt;/p&gt;
+
+&lt;p&gt;First one must choose an equation with which to linearly interpolate.  For an
+interval \([a,b)\) with interpolation parameter \(t\), are two common
+choices: \(a+t (b-a)\) and \((1-t)a +t b\).  Each has its own strengths
+and weaknesses.&lt;/p&gt;
+
+&lt;p&gt;The first, \(a + t (b-a)\), requires fewer operations but has the disadvantage
+that even if \(t \in [0,1)\), it is not guaranteed that the interpolated
+value will be in \([a,b)\).  For example, with \(a=2.5\),
+\(b=8.87385559\), and \(t=1-2^{-24}\), the last floating-point value
+before 1, then with float32, we find that
+\[
+2.5 + (1 - 2^{-24}) (8.87385559 - 2.5) \rightarrow 8.87385559;
+\]
+the result is equal to the upper bound even though 
+\(t&amp;lt;1\).  A similar problem occurs with the closed interval
+\([a,b]\): the value \(t=1\) can yield value that is greater than
+\(b\).&lt;/p&gt;
+
+&lt;p&gt;In graphics, respecting intervals is important since we often do things
+like bound vertex positions at different times, linearly interpolate them,
+and then want to be able to assert that the result is inside the bounds.  In this
+case, \((1-t)a+tb\) is
+preferable, since \(t=0\) always yields \(a\) and \(t=1\) gives
+\(b\). However, that formulation has the surprising shortcoming that
+increasing \(t\) sometimes causes the interpolated value to move
+backwards.  Consider this interpolant with \(a=2.5\) and
+\(b=10.53479\):
+\[
+(1-t) \cdot 2.5 + t \cdot 10.53479.
+\]
+With \(t=0.985167086\), the interpolant gives 10.4156&lt;strong&gt;113&lt;/strong&gt;. Moving
+\(t\) up to the next possible floating-point value, 0.985167146, the
+interpolant’s value is reduced, down to 10.4156&lt;strong&gt;103&lt;/strong&gt;.  The rounding on
+the terms has gone differently with that small change in
+\(t\) and it’s (slightly) downhill from there.  In practice, these little
+wobbles are unlikely to cause trouble, though they do mean that an
+assertion that implicitly assumes that the interpolant is monotonic may
+fail for fairly obscure reasons.&lt;/p&gt;
+
+&lt;p&gt;Both of these approaches also suffer from a minor bias for reasons similar
+to why dividing a random 32-bit value by \(2^{-32}\) to generate a
+uniform random variable led to a bias in sampled floats: each \(t\) value
+maps to a single floating-point value and if there are more of one than the
+other, rounding may introduce a minor non-uniformity.  (The numerics people
+like to say this is due to the pigeonhole principle. I can’t say that is
+incorrect, but I like to think of it in terms of aliasing: it’s taking
+something at one frequency it and then resampling it at another—things
+always get a little messy when you do that and aren’t careful.)&lt;/p&gt;
+
+&lt;p&gt;For more on the above, including an entertaining review of how linear
+interpolation is implemented in assorted programming languages’ standard
+libraries and assorted misstatements in their documentation about the
+characteristics of the expected results, see &lt;a href=&quot;https://hal.archives-ouvertes.fr/hal-03282794/&quot;&gt;Drawing random
+floating-point numbers from an
+interval&lt;/a&gt;, by &lt;a href=&quot;https://frederic.goualard.net&quot;&gt;Frédéric
+Goualard&lt;/a&gt;.&lt;sup id=&quot;fnref:fixed&quot;&gt;&lt;a href=&quot;#fn:fixed&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;a-few-utility-functions&quot;&gt;A Few Utility Functions&lt;/h2&gt;
+
+&lt;p&gt;Before we go further, let’s specify a few utility functions that will be
+used in the forthcoming implementations.  (All of the following code is
+available in a &lt;a href=&quot;https://github.com/mmp/uniformfloat&quot;&gt;small header-only
+library&lt;/a&gt;.)&lt;/p&gt;
+
+&lt;p&gt;For efficient sampling of the \(p=1/2\) geometric distribution, a function that
+uses native bit counting instructions will be useful:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CountLeadingZeros&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;We’ll assume the existence of two functions that provide uniform random
+values.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Random64Bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Random32Bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;C++20’s &lt;code class=&quot;highlighter-rouge&quot;&gt;std::bit_cast()&lt;/code&gt; function makes it easy to convert from a float32 to
+its bitwise representation and back.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ToBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bit_cast&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FromBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bit_cast&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;A few helper functions extract the pieces of a float32.  (If necessary, see
+the &lt;a href=&quot;https://en.wikipedia.org/wiki/Single-precision_floating-point_format&quot;&gt;Wikipedia
+page&lt;/a&gt;
+for details of the in-memory layout of float32s to understand what these
+are doing.)  Zero is returned by &lt;code class=&quot;highlighter-rouge&quot;&gt;SignBit()&lt;/code&gt; for positive values and one
+for negative.  Because the float32 exponent is stored in memory in biased
+form as an unsigned value from zero to 255, &lt;code class=&quot;highlighter-rouge&quot;&gt;Exponent()&lt;/code&gt; returns the
+unbiased exponent, which ranges from \(-126\) to 127 for normal
+floating-point values, with \(-127\) reserved for zero and the
+denormalized floats.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SignBit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ToBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;31&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ToBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0xff&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;constexpr&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SignificandMask&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ToBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SignificandMask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;We’ll also find it useful to be able to generate uniform random
+significands.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;uint32_t&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;RandomSignificand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Random32Bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SignificandMask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Float32FromParts()&lt;/code&gt; constructs a float32 value from the specified pieces.
+The assertions document the requirements for the input parameters.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FromBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sign&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;31&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;A positive power-of-two float32 value can be constructed by shifting the
+biased exponent into place.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FloatPow2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;126&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FromBits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Expressed with these primitives, Reynolds’s &lt;a href=&quot;http://marc-b-reynolds.github.io/distribution/2017/01/17/DenseFloat.html#the-parts-im-not-tell-you&quot;&gt;pragmatic
+compromise&lt;/a&gt;
+algorithm for uniformly sampling in \([0,1)\) is:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Sample01&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RandomBits64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SignificandMask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CountLeadingZeros&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x1&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;first-steps&quot;&gt;First Steps&lt;/h2&gt;
+
+&lt;p&gt;Back to our original question: can we do better than linear interpolation
+to sample an arbitrary interval, and more specifically, is it possible to
+generalize Walker’s algorithm to remove the limitation of sampling over
+\([0,1)\)?  I had no idea how to go all the way from the original
+algorithm to arbitrary intervals so I started with a few small thought
+experiments to chip away at the edges of the problem an improve my
+intuition.  (In all of the following, I’ll assume a half-open interval
+\([a,b)\) that does not span zero; we’ll come back to the generalizations
+of a closed interval \([a,b]\) and intervals that span zero at the end.)&lt;/p&gt;
+
+&lt;p&gt;An easy first case is to consider intervals that start at zero and end with
+an arbitrary power of two.  I first took the smallest step possible and
+thought about \([0,2)\).  Indeed, Walker’s approach just works; there’s
+nothing in it that requires the upper bound to be 1; we can apply the same
+idea of starting with the upper \([1,2)\) interval, randomly selecting it
+with probability 1/2 and otherwise continuing down intervals until one is
+chosen or we hit the denorms. There’s an easy first victory.&lt;/p&gt;
+
+&lt;p&gt;Have we missed anything?  We should be careful.  To further validate this
+direction, consider the case where we have a tiny power-of-two sized
+interval, say \([0,2^{-124})\).  The minimum exponent for normal numbers
+is \(-126\), so we have just two regular power-of-two sized intervals and
+then the denorms.  Here’s how that looks on the floating-point number line
+with valid floats marked with hashes and a 3-bit significand to keep the
+figure scrutable:&lt;/p&gt;
+
+&lt;center&gt; &lt;img src=&quot;/matt/blog/images/fp-sample-interval-blogpost_down-by-denorms.svg&quot; height=&quot;70&quot; /&gt; &lt;/center&gt;
+
+&lt;p&gt;We sample the \([2^{-125}, 2^{-124})\) interval with probability 1/2 and
+otherwise sample \([2^{-126}, 2^{-125})\) with probability 1/2.  If
+neither is selected, we uniformly sample the denorms which are between
+\([0,2^{-126})\).  This extreme case helps us better understand how the
+edge case of the denorms is handled: because the width of the last interval
+of normal floats and the width of the denorms is equal, choosing between
+them with equal probability leads to uniform sampling of the full interval.&lt;/p&gt;
+
+&lt;p&gt;On this topic, Walker wrote:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;In practice, the range of the exponent will be limited, and the
+probability of the number falling into either of the two smallest
+intervals will be the same.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Denormalized numbers were invented after his paper so it seems that this
+was a minor fudge in his original approach, corrected today by
+advances in floating-point.&lt;/p&gt;
+
+&lt;p&gt;Here is a function to sample a float32 exponent for this case, taking 64
+random bits at a time and counting zeros to sample the distribution. An
+exponent is returned either if a one bit is found in the random bits or if
+enough zero bits have been seen to make it to the denorms.  In either case,
+if the denorms have been reached, \(-127\) is returned so that a
+denormalized or zero floating-point value results.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleToPowerOfTwoExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;126&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CountLeadingZeros&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Random64Bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Given &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleToPowerOfTwoExponent()&lt;/code&gt;, the full algorithm to
+uniformly sample an interval \([0,2^x)\) is simple.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleToPowerOfTwo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SampleToPowerOfTwoExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RandomSignificand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;An implementation that uses a fixed number of random bits can be found with
+a straightforward generalization of Reynolds’s “pragmatic” algorithm that
+always consumes only 64 random bits, though there are two differences
+compared to the \([0,1)\) case. First, if the initial interval is
+\([0,2^{-88})\) or smaller, then the 41 bits remaining after the
+significand is extracted from the 64-bit random value are more than are
+needed to consider for all of the possible power-of-two intervals.  In that
+case, we need to be careful to finish in the denorms rather than trying to
+construct a float32 with an invalid exponent.  Clamping the exponent at
+\(-127\) takes care of this.&lt;/p&gt;
+
+&lt;p&gt;The second difference is that if all of the bits used to select an interval
+are zero, then if the initial exponent is \(x\), then the remaining
+interval that we will sample using equal spacing is \([0,2^{x-41})\).
+Given a 23-bit significand \(s\), the sampled value is then
+\[
+\frac{s}{2^{23}} 2^{x-41}.
+\]
+It is tempting to merge the division by \(2^{23}\) and the multiplication
+by \(2^{x-41}\) into a single constant, though doing so would lead to
+underflow when \(x &amp;lt; -63\).  (Reynolds’s algorithm for \([0,1)\) could
+just multiply the significand by \(2^{-64}\) in this case since \(x\)
+was always 0 and there were no concerns about underflow.)&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleToPowerOfTwoFast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SignificandMask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CountLeadingZeros&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;41&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;41&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x1&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FloatPow2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;41&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exponent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Another easy case comes with an interval where both endpoints have the
+same exponent.  In that case, the spacing between them is uniform and a
+value can be sampled by randomly sampling a significand between theirs.
+That setting is shown on the floating-point number line below; the values
+marked in red are the possible results, depending on the significand.&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/matt/blog/images/fp-sample-interval-blogpost_single-interval.svg&quot; height=&quot;70&quot; /&gt;
+&lt;/center&gt;
+
+&lt;p&gt;The code is easy to write given a &lt;code class=&quot;highlighter-rouge&quot;&gt;RandomInt()&lt;/code&gt; function that returns a
+uniform random integer between 0 and the specified value, inclusive:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleSameExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sa&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sb&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sa&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RandomInt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sb&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sa&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SignBit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;arbitrary-power-of-2-lower-bounds&quot;&gt;Arbitrary (Power of 2) Lower Bounds&lt;/h2&gt;
+
+&lt;p&gt;The easy successes stop coming when we consider intervals with a
+power-of-two value at their lower bounds: say that we’d like to sample
+uniformly over \([1,7)\).  Our intervals are \([1,2)\), \([2,4)\),
+and \([4,7)\).  Their respective widths are 1, 2, and 4; the sampling
+probabilities are \(1/7\), \(2/7\), and \(4/7\).  So much for a nice
+geometric distribution with \(p=1/2\).  The setting is illustrated below:&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/matt/blog/images/fp-sample-interval-blogpost_sample-1-8.svg&quot; height=&quot;80&quot; /&gt;
+&lt;/center&gt;
+
+&lt;p&gt;Here we most definitely see the importance of the denorms and the last
+power-of-two sized interval of normal floating-point numbers having the same
+width.  With a power-of-two interval that ends above zero, we no longer have
+two intervals at the end that should be sampled with the same probability
+and things fall apart.&lt;/p&gt;
+
+&lt;p&gt;Upon reaching this realization, I had no idea how to proceed; I feared that
+the cause might be lost.  Lacking any other ideas, I wondered if it would
+work to apply Walker’s approach still with the probability \(1/2\) of
+sampling each interval but then cycling around when one goes past the lower
+interval, along these lines:&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/matt/blog/images/fp-sample-interval-blogpost_sample-1-8-redo.svg&quot; height=&quot;110&quot; /&gt;
+&lt;/center&gt;
+
+&lt;p&gt;With this method, the probability of sampling the \([4,7)\) interval is
+then \(1/2\) the first time around.  With \(1/8\) probability we cycle
+back around for another \(1/2\) chance, and so forth.  We have:
+\[
+\frac{1}{2} + \frac{1}{8} \frac{1}{2} + \cdots = \frac{1}{2}
+\sum_{i=0}^\infty \frac{1}{8^i} = \frac{4}{7}
+\]
+Success! (Needless to say, the other intervals work out with the desired
+probabilities as well.)&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;SampleExponent()&lt;/code&gt; implements the algorithm that consumes random bits until
+it successfully samples such a single power-of-two interval.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CountLeadingZeros&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Random64Bits&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;If &lt;code class=&quot;highlighter-rouge&quot;&gt;emin&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;emax&lt;/code&gt; are not known at compile time, computing the integer
+modulus in &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleExponent()&lt;/code&gt; may be expensive.  Because the maximum value
+of &lt;code class=&quot;highlighter-rouge&quot;&gt;emax-emin&lt;/code&gt; is 253, it may be worthwhile to maintain a table of
+constants for use with an efficient integer modulus algorithm (see e.g.,
+&lt;a href=&quot;https://arxiv.org/abs/2012.12369&quot;&gt;Lemire et al. 2021&lt;/a&gt;.)&lt;/p&gt;
+
+&lt;p&gt;With &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleExponent()&lt;/code&gt; in hand, the full algorithm is straightforward.&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// Sample uniformly and comprehensively in [2^emin, 2^emax).
+&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleExponentRange&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RandomSignificand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SampleExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;emax&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;For a “pragmatic” version of this algorithm that uses a fixed number of
+random bits, we could take the number of leading zeros modulo the number of
+power-of-two sized intervals under consideration to choose an interval and
+then use a uniform random significand.  However, in the rare case where all
+of the bits used to sample an interval are zero, the remaining interval is
+of the form \([2^a, 2^c)\) where \(c=41 \mod (b-a)\); we’ve used up all
+of our random bits to be faced with the same general problem we started
+with (unless it happens that \(c=a+1\).)  At that point we might use
+linear interpolation to sample the remaining interval, though that’s
+admittedly unsatisfying, as linear interpolation is the thing we’re trying
+to avoid.&lt;/p&gt;
+
+&lt;h2 id=&quot;partial-intervals-at-one-or-both-ends&quot;&gt;Partial Intervals at One or Both Ends&lt;/h2&gt;
+
+&lt;p&gt;With that we finally have enough to return to the original task, uniformly
+and comprehensively sampling an arbitrary interval \([a,b)\).  This is,
+unfortunately, the point at which I haven’t been able to figure out a
+reasonable “pragmatic” implementation that uses a small and fixed number of
+random bits.  The figure below shows the general setting; as before, the
+valid candidate values are marked in red.&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/matt/blog/images/fp-sample-interval-blogpost_sample-general-interval.svg&quot; /&gt;
+&lt;/center&gt;
+
+&lt;p&gt;An approach based on rejection sampling can be used to sample the specified
+interval: the idea is that we will sample all of the possible intervals as
+before, with probability according to their width.  Then we uniformly sample a
+significand in the chosen interval and then accept the value if it is
+within \([a,b)\).  For the power-of-two intervals in the middle, we will
+always accept the sample, and for the intervals on the ends, the
+probability of acceptance is proportional to how much of the power-of-two
+interval overlaps \([a,b)\).&lt;/p&gt;
+
+&lt;p&gt;The implementation isn’t much code given all the helpers we’ve already
+defined, though there are two important details.  First, the upper exponent
+is bumped up by one if &lt;code class=&quot;highlighter-rouge&quot;&gt;b&lt;/code&gt;’s significand is non-zero.  To understand why,
+consider the difference between sampling the intervals \([a, 8)\) and
+\([a, 8.5)\).  In the former case, we will never need to consider an
+exponent of 3, but for the later case, we must.  Second, the algorithm used
+for sampling exponent must account for whether zero or the denorms are
+included in \([a,b)\); this corresponds to the differences we saw earlier
+in how to sample intervals like \([0,2^x)\) versus \([2^x,2^y)\).&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SampleRange&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ea&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eb&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Exponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Significand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;eb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ea&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;127&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SampleToPowerOfTwoExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;eb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;
+                              &lt;span class=&quot;n&quot;&gt;SampleExponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ea&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+       &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Float32FromParts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RandomSignificand&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+       &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+           &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Note that it would probably be worthwhile to handle the special case of
+matching exponents with a call to &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleSameExponent()&lt;/code&gt;, as rejection
+sampling with a significand that spans the entire power-of-two range will be
+highly inefficient if the two values are close together.&lt;/p&gt;
+
+&lt;p&gt;The worst case for this algorithm comes when &lt;code class=&quot;highlighter-rouge&quot;&gt;b&lt;/code&gt;’s significand is
+small—i.e., &lt;code class=&quot;highlighter-rouge&quot;&gt;b&lt;/code&gt; is just past a power-of-two.  The upper power-of-two range
+will be sampled with probability at least 1/2 but then the sampled value
+&lt;code class=&quot;highlighter-rouge&quot;&gt;v&lt;/code&gt; will usually be rejected, requiring another time through the &lt;code class=&quot;highlighter-rouge&quot;&gt;while&lt;/code&gt;
+loop.  Conversely, having &lt;code class=&quot;highlighter-rouge&quot;&gt;a&lt;/code&gt; just below a power of 2 is less trouble,
+since the corresponding power-of-two interval is the least likely to be
+sampled.&lt;/p&gt;
+
+&lt;h2 id=&quot;closed-intervals&quot;&gt;Closed Intervals&lt;/h2&gt;
+
+&lt;p&gt;One nice thing about the algorithm implemented in &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleRange()&lt;/code&gt; is that
+handling closed intervals \([a,b]\) is mostly a matter of updating the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt; test in the &lt;code class=&quot;highlighter-rouge&quot;&gt;while&lt;/code&gt; loop accordingly.  The only other difference is
+that &lt;code class=&quot;highlighter-rouge&quot;&gt;eb&lt;/code&gt; is always be increased by one.  Thus, the worst case for this
+algorithm is when &lt;code class=&quot;highlighter-rouge&quot;&gt;b&lt;/code&gt; is an exact power of 2, again giving a \(1/2\)
+chance of selecting the upper interval each time, with a \(1-2^{-23}\)
+probability of rejecting the sample in that interval.&lt;/p&gt;
+
+&lt;h2 id=&quot;further-improvements&quot;&gt;Further Improvements&lt;/h2&gt;
+
+&lt;p&gt;Stratified sampling is a topic we didn’t get to today; it is usually
+worthwhile when one is generating multiple samples over an interval.  For a
+power-of-2 stratification, it’s possible to work backward from the various
+sampling algorithms to determine constraints on the bit patterns the
+achieve stratification.  I’ll leave the details of that to the reader;
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Sample01()&lt;/code&gt; is a good place to start.&lt;/p&gt;
+
+&lt;p&gt;We also haven’t dug into the case of an interval that spans zero.  To
+achieve uniform sampling a similar rejection-based approach is probably
+needed where given such an interval \([a,b)\) we define an extended
+interval \([-c,c)\) with \(c=\max (|a|, |b|)\) that encompasses the
+original interval.  We can then randomly select the positive or negative
+side, generate a sample, and then reject it if it is not inside the
+original interval.  However, the combination of an unbalanced interval that
+spans zero and also includes an exact power of two at its upper bound gives
+an even worse worst case: consider a highly unbalanced interval like
+\([-2^{-100}, 2^{64}]\): we end up with a nearly \(3/4\) chance of
+rejecting each candidate sample.&lt;/p&gt;
+
+&lt;h2 id=&quot;discussion&quot;&gt;Discussion&lt;/h2&gt;
+
+&lt;p&gt;It was pretty good going through the special cases until we reached the
+end.  Unfortunately, I don’t see a good way to work around the need to do
+rejection sampling when there are partial power-of-two intervals at the ends
+of the range.  Perhaps that isn’t the worst thing ever, but having an
+irregular amount of computation afoot is not ideal if high performance on
+GPUs or using SIMD instructions is of interest.&lt;/p&gt;
+
+&lt;p&gt;Nevertheless, a quick benchmark suggests that &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleRange()&lt;/code&gt; is only about
+2.5 times slower than \((1-t)a+tb\) on my CPU here (with the cost of
+random number generation included).  If a reasonable amount of computation
+is performed for each sample, the cost may be no concern.  However, lacking
+a clear example of a case where this first-class sampling makes a
+difference in the final results, it’s hard to argue for the added expense
+in general.&lt;/p&gt;
+
+&lt;h3 id=&quot;note&quot;&gt;note&lt;/h3&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:fixed&quot;&gt;
+      &lt;p&gt;Goualard also suggests a sampling algorithm based on a uniform spacing over the interval that is by design not able to generate all possible floating-point values.  This algorithm seems to have been previously derived by Artur Grabowski in his &lt;a href=&quot;https://github.com/art4711/random-double&quot;&gt;random-double&lt;/a&gt; library from 2015; see &lt;a href=&quot;https://github.com/art4711/random-double/blob/60464979e3eb039803d5a840dbbde025e0b0956f/arbitrary_range.c#L296&quot;&gt;rd_positive()&lt;/a&gt; there. &lt;a href=&quot;#fnref:fixed&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">A ramble extending Walker's algorithm to sample arbitrary floating-point intervals, later found to be a rederivation of earlier work.</summary></entry><entry><title type="html">Sampling in Floating Point (1/3): The Unit Interval</title><link href="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html" rel="alternate" type="text/html" title="Sampling in Floating Point (1/3): The Unit Interval" /><published>2022-03-05T00:00:00-08:00</published><updated>2022-03-05T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/05/sampling-fp-unit-interval.html">&lt;p&gt;&lt;em&gt;(The following assumes basic familiarity with the IEEE floating point
 representation—sign, power of two exponent, and significand—but 
 not necessarily expert-level understanding of it.)&lt;/em&gt;&lt;/p&gt;
 
@@ -2718,250 +3242,4 @@ different with those two differences harmonized.&lt;/p&gt;
 
 &lt;p&gt;Next time we’ll come back to to review where pbrt-v4 stands in the time to
 first pixel department and then end this series, at least for now, with
-some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 9): We Got Instances</title><link href="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 9): We Got Instances" /><published>2021-07-27T00:00:00-07:00</published><updated>2021-07-27T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/27/moana-gpu-instances.html">&lt;p&gt;&lt;a href=&quot;/matt/blog/2021/07/25/moana-gpu-part-1.html&quot;&gt;Last time around&lt;/a&gt; we finally
-got started digging into &lt;a href=&quot;https://github.com/mmp/pbrt-v4&quot;&gt;pbrt-v4&lt;/a&gt;’s
-performance with the Moana Island scene using its GPU rendering path.
-Then, as today, the focus was limited to all of the processing that goes on
-before rendering begins.  There was plenty left unresolved by the end,
-including 16 seconds spent building BVHs for the object instances that
-featured poor utilization on both CPU and GPU.&lt;/p&gt;
-
-&lt;p&gt;Before we get into trying to improve that, here is the far-away view of the
-Moana Island scene, again rendered on an NVIDIA RTX A6000.  As before,
-mum’s the word on performance until next time, but once again, this didn’t
-take too long.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/pbrt-v4-moana-gpu.jpg&quot; alt=&quot;Moana Island main view rendered with pbrt-v4 using the GPU&quot; /&gt;
-&lt;i&gt;Moana Island main view rendered at 1920x804 resolution with pbrt-v4 on an NVIDIA RTX A6000 GPU with 2048 samples per pixel.&lt;/i&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Now back to work.  In the 16 seconds that pbrt-v4 spends in its &lt;em&gt;Build
-instance BVHs&lt;/em&gt; phase, it does the following three things for each geometric
-object that is instanced repeatedly in the scene:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Reads any geometry specified via PLY files from disk. (Any geometry not
-specified in PLY files has already been read during regular parsing
-of the scene description.)&lt;/li&gt;
-  &lt;li&gt;Converts the geometry into the in-memory geometric representation that
-OptiX takes as input to its BVH construction routines.&lt;/li&gt;
-  &lt;li&gt;Has OptiX build its BVH.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The first two steps run on the CPU and the third runs on the GPU.&lt;/p&gt;
-
-&lt;p&gt;There are a total of 312 such instance definitions and the work for one is
-independent of the work for all of the others; this is a friendly problem
-to parallelize.  Yet if we look at the CPU and GPU utilization graphs from
-where we left off last time, the results are unimpressive during the
-&lt;em&gt;Process instance BVHs&lt;/em&gt; phase:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-parallelize-optix-instance.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-parallelize-optix-instance.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;(As before, the x axis is seconds, y axis is processor utilization, and the
-dashed line indicates the start of rendering.)&lt;/p&gt;
-
-&lt;p&gt;It starts out looking promising with 40% of the CPU in use, but after less
-than two seconds of that, CPU utilization drops down to just a few cores
-until all the instances are finished.  The GPU is occasionally fully
-occupied, but it’s idle for much of the time.  Thus, we can’t blame all of
-that CPU idling on threads waiting for the GPU.&lt;/p&gt;
-
-&lt;h2 id=&quot;starting-with-the-obvious&quot;&gt;Starting With The Obvious&lt;/h2&gt;
-
-&lt;p&gt;The natural place to start is to parallelize the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L1385&quot;&gt;outermost
-loop&lt;/a&gt;
-that does the three things outlined above; honestly, there’s no excuse for
-it not having been parallel from the start.  The change is &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/2842083e37fd30d566091f0420d751628e492b80&quot;&gt;barely any work
-at
-all&lt;/a&gt;,
-and in a world where the performance gods were feeling generous, that would
-be the end of it.  The only thing that one might worry about in the
-parallelization is contention on the mutex used to serialize updates to the
-hash table, bit with just 312 instances, it seems
-unlikely that will be a big problem.&lt;/p&gt;
-
-&lt;p&gt;The good news is that this change did reduce time to first pixel; the bad
-news is that it was only down to 68.5 seconds—an improvement of just 3.7
-seconds.  I’m always happy to take a 5% improvement in overall performance,
-but one has to feel a little mixed about that when it might have been much
-more.  Here are the performance graphs—as before they start after parsing
-has finished and the lights, materials, and textures have been created:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-ias-1.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-ias-1.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;We can see that 3.7 second improvement; we can see that CPU utilization is
-better throughout instance processing; and we can see that the GPU spends
-less time idle. Yet, there’s nothing thrilling in the graphs: the CPU is
-still sitting around not making much of itself and the GPU isn’t being
-pushed very hard.&lt;/p&gt;
-
-&lt;h2 id=&quot;no-luck-from-the-next-three-obvious-things&quot;&gt;No Luck From The Next Three Obvious Things&lt;/h2&gt;
-
-&lt;p&gt;Parallelizing the outermost loop isn’t enough if there’s something that serializes
-work in the middle of it.  I soon remembered such a thing in the
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/gpu/aggregate.cpp#L104&quot;&gt;function that launches the OptiX kernels to build
-BVHs&lt;/a&gt;.
-BVH construction there is serialized; not only is all work submitted to the
-main CUDA command stream, but the CPU synchronizes with the GPU twice along
-the way.  As a result, the GPU can only work on one BVH at a time, and
-if another thread shows up wanting to build its own independent BVH, its work
-is held up until the GPU finishes whatever it is already in the middle of.&lt;/p&gt;
-
-&lt;p&gt;I decided that leaving the synchronization in wouldn’t be too terrible if
-pbrt &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/4b74e6b6156d05c53a54df63da1bd3b121e4b2c9&quot;&gt;allowed each thread to independently submit work to the
-GPU&lt;/a&gt;.
-That was mostly a matter of taking a &lt;code class=&quot;highlighter-rouge&quot;&gt;cudaStream_t&lt;/code&gt; in that function’s
-arguments and passing a different stream for each thread.  Thus, each
-thread will wait for its own BVH to be built but it won’t be prevented
-from starting its own work by other threads.  In turn, the GPU can work
-on multiple BVHs in parallel, which is helpful when there are instances that
-aren’t very complex.&lt;/p&gt;
-
-&lt;p&gt;Sadly, and to my surprise, the performance benefit from that change was nil.&lt;/p&gt;
-
-&lt;p&gt;I flailed a bit at that point, parallelizing two more inner loops in
-instance BVH construction
-(&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/a881617a1a9a49561022de53c2cf863cac0e0394&quot;&gt;1&lt;/a&gt;)
-(&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/ad9a5ebe300d40e59c6c2c42b2651cc2169a026a&quot;&gt;2&lt;/a&gt;),
-hoping that giving the CPU more available work would help.  From that, too,
-there was no meaningful change in performance.  Time to get scientific again.&lt;/p&gt;
-
-&lt;h2 id=&quot;too-much-performance-to-handle&quot;&gt;Too Much Performance To Handle&lt;/h2&gt;
-
-&lt;p&gt;Giving up on an easy win from semi-informed guesses, I returned to my tried
-and true performance bottleneck finder: running pbrt under the debugger,
-interrupting execution when CPU utilization was low, and seeing what was
-actually going on.  A quick scan of all of the threads’ backtraces at one
-of these points showed that all 64 were in the the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/cf042ca90b398b36677cbd7f83fda43bb0078b58/src/pbrt/util/mesh.cpp#L23&quot;&gt;TriangleMesh
-constructor&lt;/a&gt;.
-(“That’s funny—we shouldn’t be spending much time there at all” was my
-first reaction; that reaction is almost always good news when one is looking for
-ways to improve performance.)&lt;/p&gt;
-
-&lt;p&gt;Not only were all the threads in that constructor, but all but one was held
-up waiting for the same mutex, which was held by the remaining one.  And
-yet, there’s nary a mutex to be seen in that code…&lt;/p&gt;
-
-&lt;p&gt;A closer look at the stack traces and it became clear that the &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/a881617a1a9a49561022de53c2cf863cac0e0394/src/pbrt/gpu/memory.cpp#L31&quot;&gt;mutex in
-pbrt’s GPU memory
-allocator&lt;/a&gt;
-was the point of contention; if 64 threads are trying to allocate of meshes
-all at once, things will understandably go bad there.&lt;/p&gt;
-
-&lt;p&gt;I &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/20dd25e41cb61f3560e49193d1388e4058c425d3&quot;&gt;updated the allocator to use per-thread
-slabs&lt;/a&gt;,
-where each thread periodically goes out to the main allocator for a 1MB
-chunk of memory but otherwise allocates memory from its own chunk
-directly, no mutex required.  I assumed that this would be enough to
-make that allocation much less of a bottleneck, but there’s no way to know
-until you actually run the code.&lt;/p&gt;
-
-&lt;p&gt;I could tell that I was getting somewhere when my computer locked up and
-shut down when I ran pbrt with that fix.  I restarted it and tried again,
-and was thrilled when my computer died once again.  Progress!&lt;/p&gt;
-
-&lt;p&gt;To explain: I’ve been using a slightly under-powered power supply with this
-computer for a while.  It’s enough to power the CPU at full utilization and
-is enough to power the GPU at full utilization.  Both at the same time?  A
-bit too much to ask for.  It hadn’t been much of a problem; I just got used
-to not running big compilation jobs at the same time that the GPU was busy.
-In most of my day-to-day work, it’s one processor or the other at work at a
-time.  Those crashes were a good hint that I had gotten both processors to
-be busy at once, which seemed promising.&lt;/p&gt;
-
-&lt;p&gt;Unwilling to wait for a new power supply to be delivered in the mail, I
-braved a trip to Best Buy for quick gratification and 1000 W of
-future-proof power.  I could reliably measure performance after swapping
-out the old power supply; time to first pixel was down to 64.9
-seconds—another 3.6 seconds improvement—and graphs that were looking
-better:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-cuda-mem-slabs.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-cuda-mem-slabs.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The extra good news in those graphs is that the first phase, &lt;em&gt;Process
-non-instanced geometry&lt;/em&gt;, unexpectedly got one second faster—look at that
-spike in CPU utilization there now! Apparently instance BVH construction
-wasn’t the only thing bottlenecked on that mutex.&lt;/p&gt;
-
-&lt;p&gt;And yet even with that fixed, CPU utilization there was still middling.&lt;/p&gt;
-
-&lt;h2 id=&quot;its-always-a-mutex&quot;&gt;It’s Always a Mutex&lt;/h2&gt;
-
-&lt;p&gt;Another round with the debugger as profiler and there was still lots of mutex
-contention under the &lt;code class=&quot;highlighter-rouge&quot;&gt;TriangleMesh&lt;/code&gt; constructor.  A little more digging and
-it became clear that the
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/3a09fc31cef26a83dd2ce505880ca4dac8e291b0/src/pbrt/util/buffercache.h#L34&quot;&gt;BufferCache::LookupOrAdd()&lt;/a&gt;
-method was the culprit.&lt;/p&gt;
-
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;BufferCache&lt;/code&gt; is something I added to pbrt after my first go-round with the
-Moana Island; it uses a hash table to detect redundant vertex and index buffers in the scene
-and only stores each one once.  It makes a difference—even though the
-Moana Island comes in highly-instanced, &lt;code class=&quot;highlighter-rouge&quot;&gt;BufferCache&lt;/code&gt; saves 4.9 GB of
-memory when used with it.&lt;/p&gt;
-
-&lt;p&gt;What was its problem?  It’s bad enough that it’s worth copying a few lines
-of code here:&lt;/p&gt;
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    std::lock_guard&amp;lt;std::mutex&amp;gt; lock(mutex);
-    Buffer lookupBuffer(buf.data(), buf.size());
-    if (auto iter = cache.find(lookupBuffer); iter != cache.end()) {
-       ...
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;Not only do we have have our single contended mutex, but if you trace through the
-&lt;code class=&quot;highlighter-rouge&quot;&gt;Buffer&lt;/code&gt; class and the hashing flow, it turns out that hash of the buffer
-data is computed with the mutex held—totally unnecessary and awfully
-rude, especially if one’s buffer covers many megabytes of memory.&lt;/p&gt;
-
-&lt;p&gt;The
-&lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/cf042ca90b398b36677cbd7f83fda43bb0078b58&quot;&gt;fix&lt;/a&gt;
-makes three improvements: the hash is computed before the lock is acquired,
-a reader-writer lock is used so that multiple threads can check for their
-buffer in the cache concurrently, and the hash table is broken up into 64
-shards, each protected by its own mutex.  In short, an attempt to atone for
-the initial failure with plenty of parallelism prophylaxis.&lt;/p&gt;
-
-&lt;p&gt;Survey says? 5.3 seconds faster, which brings us down to &lt;strong&gt;59.6 seconds&lt;/strong&gt; for
-the time to first pixel.  An extra bonus is that the first phase, &lt;em&gt;Process
-non-instanced geometry&lt;/em&gt;, sped up by another 0.8 seconds, bringing it down
-to 3.0 seconds (versus the 4.9 seconds it was at the start of today’s
-work).  The performance graphs are starting to go somewhere:&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-cpu-shard-buffercache.svg&quot; alt=&quot;CPU utilization&quot; /&gt;
-&lt;br /&gt;
-&lt;img src=&quot;/matt/blog/images/ttfp-gpu-shard-buffercache.svg&quot; alt=&quot;GPU utilization&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;There’s still plenty of CPU idle time in &lt;em&gt;Build instance BVHs&lt;/em&gt;, though one
-might make the observation that CPU utilization and GPU utilization are
-roughly inversely correlated there.  That fits with the fact that CPU threads
-go idle while waiting for the GPU to build their BVHs, which is a
-shortcoming that I think we will stick with for now in the interests of
-implementation simplicity.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;With the one-minute mark broken, my motivation started to wane.  The most
-obvious remaining problems are low CPU utilization at the start of &lt;em&gt;Process
-non-instanced geometry&lt;/em&gt; and at the end of &lt;em&gt;Build instance BVHs&lt;/em&gt;.  I believe
-that those both correspond to the CPU working its way through a large PLY file in a
-single thread; splitting those files multiple smaller ones files that could
-be read in parallel would likely shave a few more seconds off.&lt;/p&gt;
-
-&lt;p&gt;Next time, we’ll turn to rendering, covering some of the details related to
-getting this scene to render on the GPU in the first place and finally
-looking at rendering performance.&lt;/p&gt;</content><author><name></name></author><summary type="html">More work on performance with pbrt-v4 and the Moana Island scene, this time looking at getting object instances ready for rendering.</summary></entry></feed>
+some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry></feed>

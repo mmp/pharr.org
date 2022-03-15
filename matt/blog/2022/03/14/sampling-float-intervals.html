@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Sampling in Floating Point (2/3): 1D Intervals</title>
+  <meta name="description" content="A ramble extending Walker&#39;s algorithm to sample arbitrary floating-point intervals, later found to be a rederivation of earlier work.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr&#39;s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr&#39;s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Sampling in Floating Point (2/3): 1D Intervals</h1>
+    <p class="post-meta">
+      <time datetime="2022-03-14T00:00:00-07:00" itemprop="datePublished">
+        
+        Mar 14, 2022
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>After learning about <a href="https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2">Walker’s
+algorithm</a>
+for uniformly sampling \([0,1)\) in floating-point, I started thinking
+about how his approach might be generalized to arbitrary intervals; being
+able to uniformly sample any interval while potentially generating all
+possible floating-point values inside it would certainly be a nice tool to
+add to the toolbox.</p>
+
+<p>The good news is that it was a fun thought exercise with things learned
+along the way.  In the end I found enough insights to come up with a
+solution. However, upon further digging I found two previous
+implementations of the approach I came up with.  So much for a <em>tour de
+force</em> paper describing my findings in <em>ACM Transactions on Modeling and
+Computer Simulation</em>.  They are:</p>
+<ul>
+  <li>Christoph Conrads’s <a href="https://gitlab.com/christoph-conrads/rademacher-fpl">Rademacher Floating Point
+Library</a>, which dates
+to 2018.  See the 
+<a href="https://gitlab.com/christoph-conrads/rademacher-fpl/-/blob/master/include/rademacher-fpl/impl/uniform-real-distribution.hpp#L225">make_uniform_random_value()</a>
+function there.</li>
+  <li>Olaf Bernstein’s
+<a href="https://github.com/camel-cdr/cauldron/blob/7d5328441b1a1bc8143f627aebafe58b29531cb9/cauldron/random.h#L1604">dist_uniformf_dense()</a>
+which seems to date to 2021.</li>
+</ul>
+
+<p>(I’d be interested to hear if there are any earlier instances of it.)</p>
+
+<p>Nevertheless, I still thought it might be useful to write up some of the
+motivation, walk through my route to a solution, and explain some of the
+subtleties.</p>
+
+<h2 id="whats-wrong-with-linear-interpolation">What’s Wrong With Linear Interpolation?</h2>
+
+<p>If you want to sample a value in \([a,b)\) for arbitrary \(a\) and
+\(b\), the usual thing is to take a uniform value in \([0,1)\) and use
+it to linearly interpolate between \(a\) and \(b\).  <a href="/matt/blog/2022/03/05/sampling-fp-unit-interval.html">Last
+time</a> we saw how to
+compute a gold-standard uniform floating-point value in \([0,1)\), so why
+not use that to interpolate?  Needless to say, that works in practice, but
+once again, there are some subtleties.</p>
+
+<p>First one must choose an equation with which to linearly interpolate.  For an
+interval \([a,b)\) with interpolation parameter \(t\), are two common
+choices: \(a+t (b-a)\) and \((1-t)a +t b\).  Each has its own strengths
+and weaknesses.</p>
+
+<p>The first, \(a + t (b-a)\), requires fewer operations but has the disadvantage
+that even if \(t \in [0,1)\), it is not guaranteed that the interpolated
+value will be in \([a,b)\).  For example, with \(a=2.5\),
+\(b=8.87385559\), and \(t=1-2^{-24}\), the last floating-point value
+before 1, then with float32, we find that
+\[
+2.5 + (1 - 2^{-24}) (8.87385559 - 2.5) \rightarrow 8.87385559;
+\]
+the result is equal to the upper bound even though 
+\(t&lt;1\).  A similar problem occurs with the closed interval
+\([a,b]\): the value \(t=1\) can yield value that is greater than
+\(b\).</p>
+
+<p>In graphics, respecting intervals is important since we often do things
+like bound vertex positions at different times, linearly interpolate them,
+and then want to be able to assert that the result is inside the bounds.  In this
+case, \((1-t)a+tb\) is
+preferable, since \(t=0\) always yields \(a\) and \(t=1\) gives
+\(b\). However, that formulation has the surprising shortcoming that
+increasing \(t\) sometimes causes the interpolated value to move
+backwards.  Consider this interpolant with \(a=2.5\) and
+\(b=10.53479\):
+\[
+(1-t) \cdot 2.5 + t \cdot 10.53479.
+\]
+With \(t=0.985167086\), the interpolant gives 10.4156<strong>113</strong>. Moving
+\(t\) up to the next possible floating-point value, 0.985167146, the
+interpolant’s value is reduced, down to 10.4156<strong>103</strong>.  The rounding on
+the terms has gone differently with that small change in
+\(t\) and it’s (slightly) downhill from there.  In practice, these little
+wobbles are unlikely to cause trouble, though they do mean that an
+assertion that implicitly assumes that the interpolant is monotonic may
+fail for fairly obscure reasons.</p>
+
+<p>Both of these approaches also suffer from a minor bias for reasons similar
+to why dividing a random 32-bit value by \(2^{-32}\) to generate a
+uniform random variable led to a bias in sampled floats: each \(t\) value
+maps to a single floating-point value and if there are more of one than the
+other, rounding may introduce a minor non-uniformity.  (The numerics people
+like to say this is due to the pigeonhole principle. I can’t say that is
+incorrect, but I like to think of it in terms of aliasing: it’s taking
+something at one frequency it and then resampling it at another—things
+always get a little messy when you do that and aren’t careful.)</p>
+
+<p>For more on the above, including an entertaining review of how linear
+interpolation is implemented in assorted programming languages’ standard
+libraries and assorted misstatements in their documentation about the
+characteristics of the expected results, see <a href="https://hal.archives-ouvertes.fr/hal-03282794/">Drawing random
+floating-point numbers from an
+interval</a>, by <a href="https://frederic.goualard.net">Frédéric
+Goualard</a>.<sup id="fnref:fixed"><a href="#fn:fixed" class="footnote">1</a></sup></p>
+
+<h2 id="a-few-utility-functions">A Few Utility Functions</h2>
+
+<p>Before we go further, let’s specify a few utility functions that will be
+used in the forthcoming implementations.  (All of the following code is
+available in a <a href="https://github.com/mmp/uniformfloat">small header-only
+library</a>.)</p>
+
+<p>For efficient sampling of the \(p=1/2\) geometric distribution, a function that
+uses native bit counting instructions will be useful:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="n">CountLeadingZeros</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">value</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>We’ll assume the existence of two functions that provide uniform random
+values.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">uint64_t</span> <span class="n">Random64Bits</span><span class="p">();</span>
+<span class="kt">uint32_t</span> <span class="n">Random32Bits</span><span class="p">();</span>
+</code></pre>
+</div>
+
+<p>C++20’s <code class="highlighter-rouge">std::bit_cast()</code> function makes it easy to convert from a float32 to
+its bitwise representation and back.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">uint32_t</span> <span class="nf">ToBits</span><span class="p">(</span><span class="kt">float</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">bit_cast</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">f</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">float</span> <span class="nf">FromBits</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">bit_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">);</span> <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>A few helper functions extract the pieces of a float32.  (If necessary, see
+the <a href="https://en.wikipedia.org/wiki/Single-precision_floating-point_format">Wikipedia
+page</a>
+for details of the in-memory layout of float32s to understand what these
+are doing.)  Zero is returned by <code class="highlighter-rouge">SignBit()</code> for positive values and one
+for negative.  Because the float32 exponent is stored in memory in biased
+form as an unsigned value from zero to 255, <code class="highlighter-rouge">Exponent()</code> returns the
+unbiased exponent, which ranges from \(-126\) to 127 for normal
+floating-point values, with \(-127\) reserved for zero and the
+denormalized floats.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">SignBit</span><span class="p">(</span><span class="kt">float</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">ToBits</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">31</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="nf">Exponent</span><span class="p">(</span><span class="kt">float</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">((</span><span class="n">ToBits</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span class="o">-</span> <span class="mi">127</span><span class="p">;</span> <span class="p">}</span>
+<span class="k">constexpr</span> <span class="kt">int</span> <span class="n">SignificandMask</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+<span class="kt">int</span> <span class="nf">Significand</span><span class="p">(</span><span class="kt">float</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">ToBits</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">SignificandMask</span><span class="p">;</span> <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>We’ll also find it useful to be able to generate uniform random
+significands.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">uint32_t</span> <span class="nf">RandomSignificand</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Random32Bits</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">SignificandMask</span><span class="p">;</span> <span class="p">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">Float32FromParts()</code> constructs a float32 value from the specified pieces.
+The assertions document the requirements for the input parameters.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">Float32FromParts</span><span class="p">(</span><span class="kt">int</span> <span class="n">sign</span><span class="p">,</span> <span class="kt">int</span> <span class="n">exponent</span><span class="p">,</span> <span class="kt">int</span> <span class="n">significand</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">sign</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">sign</span> <span class="o">==</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">127</span> <span class="o">&amp;&amp;</span> <span class="n">exponent</span> <span class="o">&lt;=</span> <span class="mi">127</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">significand</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">significand</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">FromBits</span><span class="p">((</span><span class="n">sign</span> <span class="o">&lt;&lt;</span> <span class="mi">31</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">exponent</span> <span class="o">+</span> <span class="mi">127</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">|</span> <span class="n">significand</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>A positive power-of-two float32 value can be constructed by shifting the
+biased exponent into place.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">FloatPow2</span><span class="p">(</span><span class="kt">int</span> <span class="n">exponent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">126</span> <span class="o">&amp;&amp;</span> <span class="n">exponent</span> <span class="o">&lt;=</span> <span class="mi">127</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">FromBits</span><span class="p">((</span><span class="n">exponent</span> <span class="o">+</span> <span class="mi">127</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Expressed with these primitives, Reynolds’s <a href="http://marc-b-reynolds.github.io/distribution/2017/01/17/DenseFloat.html#the-parts-im-not-tell-you">pragmatic
+compromise</a>
+algorithm for uniformly sampling in \([0,1)\) is:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">Sample01</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">uint64_t</span> <span class="n">bits</span> <span class="o">=</span> <span class="n">RandomBits64</span><span class="p">();</span>
+    <span class="kt">int</span> <span class="n">significand</span> <span class="o">=</span> <span class="n">bits</span> <span class="o">&amp;</span> <span class="n">SignificandMask</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="kt">int</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">CountLeadingZeros</span><span class="p">(</span><span class="n">bits</span><span class="p">);</span> <span class="n">lz</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">lz</span><span class="p">,</span> <span class="n">significand</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mh">0x1</span><span class="n">p</span><span class="o">-</span><span class="mi">64</span><span class="n">f</span> <span class="o">*</span> <span class="n">significand</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h2 id="first-steps">First Steps</h2>
+
+<p>Back to our original question: can we do better than linear interpolation
+to sample an arbitrary interval, and more specifically, is it possible to
+generalize Walker’s algorithm to remove the limitation of sampling over
+\([0,1)\)?  I had no idea how to go all the way from the original
+algorithm to arbitrary intervals so I started with a few small thought
+experiments to chip away at the edges of the problem an improve my
+intuition.  (In all of the following, I’ll assume a half-open interval
+\([a,b)\) that does not span zero; we’ll come back to the generalizations
+of a closed interval \([a,b]\) and intervals that span zero at the end.)</p>
+
+<p>An easy first case is to consider intervals that start at zero and end with
+an arbitrary power of two.  I first took the smallest step possible and
+thought about \([0,2)\).  Indeed, Walker’s approach just works; there’s
+nothing in it that requires the upper bound to be 1; we can apply the same
+idea of starting with the upper \([1,2)\) interval, randomly selecting it
+with probability 1/2 and otherwise continuing down intervals until one is
+chosen or we hit the denorms. There’s an easy first victory.</p>
+
+<p>Have we missed anything?  We should be careful.  To further validate this
+direction, consider the case where we have a tiny power-of-two sized
+interval, say \([0,2^{-124})\).  The minimum exponent for normal numbers
+is \(-126\), so we have just two regular power-of-two sized intervals and
+then the denorms.  Here’s how that looks on the floating-point number line
+with valid floats marked with hashes and a 3-bit significand to keep the
+figure scrutable:</p>
+
+<center> <img src="/matt/blog/images/fp-sample-interval-blogpost_down-by-denorms.svg" height="70" /> </center>
+
+<p>We sample the \([2^{-125}, 2^{-124})\) interval with probability 1/2 and
+otherwise sample \([2^{-126}, 2^{-125})\) with probability 1/2.  If
+neither is selected, we uniformly sample the denorms which are between
+\([0,2^{-126})\).  This extreme case helps us better understand how the
+edge case of the denorms is handled: because the width of the last interval
+of normal floats and the width of the denorms is equal, choosing between
+them with equal probability leads to uniform sampling of the full interval.</p>
+
+<p>On this topic, Walker wrote:</p>
+
+<blockquote>
+  <p>In practice, the range of the exponent will be limited, and the
+probability of the number falling into either of the two smallest
+intervals will be the same.</p>
+</blockquote>
+
+<p>Denormalized numbers were invented after his paper so it seems that this
+was a minor fudge in his original approach, corrected today by
+advances in floating-point.</p>
+
+<p>Here is a function to sample a float32 exponent for this case, taking 64
+random bits at a time and counting zeros to sample the distribution. An
+exponent is returned either if a one bit is found in the random bits or if
+enough zero bits have been seen to make it to the denorms.  In either case,
+if the denorms have been reached, \(-127\) is returned so that a
+denormalized or zero floating-point value results.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">SampleToPowerOfTwoExponent</span><span class="p">(</span><span class="kt">int</span> <span class="n">exponent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">127</span> <span class="o">&amp;&amp;</span> <span class="n">exponent</span> <span class="o">&lt;=</span> <span class="mi">127</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">126</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="kt">int</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">CountLeadingZeros</span><span class="p">(</span><span class="n">Random64Bits</span><span class="p">());</span> <span class="n">lz</span> <span class="o">==</span> <span class="mi">64</span><span class="p">)</span>
+            <span class="n">exponent</span> <span class="o">-=</span> <span class="mi">64</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">127</span><span class="p">,</span> <span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lz</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">127</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Given <code class="highlighter-rouge">SampleToPowerOfTwoExponent()</code>, the full algorithm to
+uniformly sample an interval \([0,2^x)\) is simple.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">SampleToPowerOfTwo</span><span class="p">(</span><span class="kt">int</span> <span class="n">exponent</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ex</span> <span class="o">=</span> <span class="n">SampleToPowerOfTwoExponent</span><span class="p">(</span><span class="n">exponent</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ex</span><span class="p">,</span> <span class="n">RandomSignificand</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>An implementation that uses a fixed number of random bits can be found with
+a straightforward generalization of Reynolds’s “pragmatic” algorithm that
+always consumes only 64 random bits, though there are two differences
+compared to the \([0,1)\) case. First, if the initial interval is
+\([0,2^{-88})\) or smaller, then the 41 bits remaining after the
+significand is extracted from the 64-bit random value are more than are
+needed to consider for all of the possible power-of-two intervals.  In that
+case, we need to be careful to finish in the denorms rather than trying to
+construct a float32 with an invalid exponent.  Clamping the exponent at
+\(-127\) takes care of this.</p>
+
+<p>The second difference is that if all of the bits used to select an interval
+are zero, then if the initial exponent is \(x\), then the remaining
+interval that we will sample using equal spacing is \([0,2^{x-41})\).
+Given a 23-bit significand \(s\), the sampled value is then
+\[
+\frac{s}{2^{23}} 2^{x-41}.
+\]
+It is tempting to merge the division by \(2^{23}\) and the multiplication
+by \(2^{x-41}\) into a single constant, though doing so would lead to
+underflow when \(x &lt; -63\).  (Reynolds’s algorithm for \([0,1)\) could
+just multiply the significand by \(2^{-64}\) in this case since \(x\)
+was always 0 and there were no concerns about underflow.)</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">SampleToPowerOfTwoFast</span><span class="p">(</span><span class="kt">int</span> <span class="n">exponent</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">bits</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">significand</span> <span class="o">=</span> <span class="n">bits</span> <span class="o">&amp;</span> <span class="n">SignificandMask</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">CountLeadingZeros</span><span class="p">(</span><span class="n">bits</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lz</span> <span class="o">==</span> <span class="mi">41</span> <span class="o">&amp;&amp;</span> <span class="n">exponent</span> <span class="o">-</span> <span class="mi">41</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">127</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">significand</span> <span class="o">*</span> <span class="mh">0x1</span><span class="n">p</span><span class="o">-</span><span class="mi">23</span><span class="n">f</span> <span class="o">*</span> <span class="n">FloatPow2</span><span class="p">(</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">41</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">ex</span> <span class="o">=</span> <span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lz</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">127</span><span class="p">,</span> <span class="n">ex</span><span class="p">),</span> <span class="n">significand</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Another easy case comes with an interval where both endpoints have the
+same exponent.  In that case, the spacing between them is uniform and a
+value can be sampled by randomly sampling a significand between theirs.
+That setting is shown on the floating-point number line below; the values
+marked in red are the possible results, depending on the significand.</p>
+
+<center>
+<img src="/matt/blog/images/fp-sample-interval-blogpost_single-interval.svg" height="70" />
+</center>
+
+<p>The code is easy to write given a <code class="highlighter-rouge">RandomInt()</code> function that returns a
+uniform random integer between 0 and the specified value, inclusive:</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">SampleSameExponent</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span> <span class="o">&amp;&amp;</span> <span class="n">Exponent</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">Exponent</span><span class="p">(</span><span class="n">b</span><span class="p">));</span>
+    <span class="kt">int</span> <span class="n">sa</span> <span class="o">=</span> <span class="n">Significand</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">sb</span> <span class="o">=</span> <span class="n">Significand</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">sig</span> <span class="o">=</span> <span class="n">sa</span> <span class="o">+</span> <span class="n">RandomInt</span><span class="p">(</span><span class="n">sb</span> <span class="o">-</span> <span class="n">sa</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="n">SignBit</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">Exponent</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">sig</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h2 id="arbitrary-power-of-2-lower-bounds">Arbitrary (Power of 2) Lower Bounds</h2>
+
+<p>The easy successes stop coming when we consider intervals with a
+power-of-two value at their lower bounds: say that we’d like to sample
+uniformly over \([1,7)\).  Our intervals are \([1,2)\), \([2,4)\),
+and \([4,7)\).  Their respective widths are 1, 2, and 4; the sampling
+probabilities are \(1/7\), \(2/7\), and \(4/7\).  So much for a nice
+geometric distribution with \(p=1/2\).  The setting is illustrated below:</p>
+
+<center>
+<img src="/matt/blog/images/fp-sample-interval-blogpost_sample-1-8.svg" height="80" />
+</center>
+
+<p>Here we most definitely see the importance of the denorms and the last
+power-of-two sized interval of normal floating-point numbers having the same
+width.  With a power-of-two interval that ends above zero, we no longer have
+two intervals at the end that should be sampled with the same probability
+and things fall apart.</p>
+
+<p>Upon reaching this realization, I had no idea how to proceed; I feared that
+the cause might be lost.  Lacking any other ideas, I wondered if it would
+work to apply Walker’s approach still with the probability \(1/2\) of
+sampling each interval but then cycling around when one goes past the lower
+interval, along these lines:</p>
+
+<center>
+<img src="/matt/blog/images/fp-sample-interval-blogpost_sample-1-8-redo.svg" height="110" />
+</center>
+
+<p>With this method, the probability of sampling the \([4,7)\) interval is
+then \(1/2\) the first time around.  With \(1/8\) probability we cycle
+back around for another \(1/2\) chance, and so forth.  We have:
+\[
+\frac{1}{2} + \frac{1}{8} \frac{1}{2} + \cdots = \frac{1}{2}
+\sum_{i=0}^\infty \frac{1}{8^i} = \frac{4}{7}
+\]
+Success! (Needless to say, the other intervals work out with the desired
+probabilities as well.)</p>
+
+<p><code class="highlighter-rouge">SampleExponent()</code> implements the algorithm that consumes random bits until
+it successfully samples such a single power-of-two interval.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">SampleExponent</span><span class="p">(</span><span class="kt">int</span> <span class="n">emin</span><span class="p">,</span> <span class="kt">int</span> <span class="n">emax</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="kt">int</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">CountLeadingZeros</span><span class="p">(</span><span class="n">Random64Bits</span><span class="p">());</span> <span class="n">lz</span> <span class="o">==</span> <span class="mi">64</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">+=</span> <span class="mi">64</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="k">return</span> <span class="n">emax</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">c</span> <span class="o">+</span> <span class="n">lz</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">emax</span> <span class="o">-</span> <span class="n">emin</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>If <code class="highlighter-rouge">emin</code> and <code class="highlighter-rouge">emax</code> are not known at compile time, computing the integer
+modulus in <code class="highlighter-rouge">SampleExponent()</code> may be expensive.  Because the maximum value
+of <code class="highlighter-rouge">emax-emin</code> is 253, it may be worthwhile to maintain a table of
+constants for use with an efficient integer modulus algorithm (see e.g.,
+<a href="https://arxiv.org/abs/2012.12369">Lemire et al. 2021</a>.)</p>
+
+<p>With <code class="highlighter-rouge">SampleExponent()</code> in hand, the full algorithm is straightforward.</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="c1">// Sample uniformly and comprehensively in [2^emin, 2^emax).
+</span><span class="kt">float</span> <span class="nf">SampleExponentRange</span><span class="p">(</span><span class="kt">int</span> <span class="n">emin</span><span class="p">,</span> <span class="kt">int</span> <span class="n">emax</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">emax</span> <span class="o">&gt;</span> <span class="n">emin</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">significand</span> <span class="o">=</span> <span class="n">RandomSignificand</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">SampleExponent</span><span class="p">(</span><span class="n">emin</span><span class="p">,</span> <span class="n">emax</span><span class="p">),</span> <span class="n">significand</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>For a “pragmatic” version of this algorithm that uses a fixed number of
+random bits, we could take the number of leading zeros modulo the number of
+power-of-two sized intervals under consideration to choose an interval and
+then use a uniform random significand.  However, in the rare case where all
+of the bits used to sample an interval are zero, the remaining interval is
+of the form \([2^a, 2^c)\) where \(c=41 \mod (b-a)\); we’ve used up all
+of our random bits to be faced with the same general problem we started
+with (unless it happens that \(c=a+1\).)  At that point we might use
+linear interpolation to sample the remaining interval, though that’s
+admittedly unsatisfying, as linear interpolation is the thing we’re trying
+to avoid.</p>
+
+<h2 id="partial-intervals-at-one-or-both-ends">Partial Intervals at One or Both Ends</h2>
+
+<p>With that we finally have enough to return to the original task, uniformly
+and comprehensively sampling an arbitrary interval \([a,b)\).  This is,
+unfortunately, the point at which I haven’t been able to figure out a
+reasonable “pragmatic” implementation that uses a small and fixed number of
+random bits.  The figure below shows the general setting; as before, the
+valid candidate values are marked in red.</p>
+
+<center>
+<img src="/matt/blog/images/fp-sample-interval-blogpost_sample-general-interval.svg" />
+</center>
+
+<p>An approach based on rejection sampling can be used to sample the specified
+interval: the idea is that we will sample all of the possible intervals as
+before, with probability according to their width.  Then we uniformly sample a
+significand in the chosen interval and then accept the value if it is
+within \([a,b)\).  For the power-of-two intervals in the middle, we will
+always accept the sample, and for the intervals on the ends, the
+probability of acceptance is proportional to how much of the power-of-two
+interval overlaps \([a,b)\).</p>
+
+<p>The implementation isn’t much code given all the helpers we’ve already
+defined, though there are two important details.  First, the upper exponent
+is bumped up by one if <code class="highlighter-rouge">b</code>’s significand is non-zero.  To understand why,
+consider the difference between sampling the intervals \([a, 8)\) and
+\([a, 8.5)\).  In the former case, we will never need to consider an
+exponent of 3, but for the later case, we must.  Second, the algorithm used
+for sampling exponent must account for whether zero or the denorms are
+included in \([a,b)\); this corresponds to the differences we saw earlier
+in how to sample intervals like \([0,2^x)\) versus \([2^x,2^y)\).</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">SampleRange</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span> <span class="o">&amp;&amp;</span> <span class="n">a</span> <span class="o">&gt;=</span> <span class="mf">0.</span><span class="n">f</span> <span class="o">&amp;&amp;</span> <span class="n">b</span> <span class="o">&gt;=</span> <span class="mf">0.</span><span class="n">f</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">ea</span> <span class="o">=</span> <span class="n">Exponent</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">eb</span> <span class="o">=</span> <span class="n">Exponent</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Significand</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">++</span><span class="n">eb</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+       <span class="kt">int</span> <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">ea</span> <span class="o">==</span> <span class="o">-</span><span class="mi">127</span><span class="p">)</span> <span class="o">?</span> <span class="n">SampleToPowerOfTwoExponent</span><span class="p">(</span><span class="n">eb</span><span class="p">)</span> <span class="o">:</span>
+                              <span class="n">SampleExponent</span><span class="p">(</span><span class="n">ea</span><span class="p">,</span> <span class="n">eb</span><span class="p">);</span>
+       <span class="kt">float</span> <span class="n">v</span> <span class="o">=</span> <span class="n">Float32FromParts</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">RandomSignificand</span><span class="p">());</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;=</span> <span class="n">a</span> <span class="o">&amp;&amp;</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span>
+           <span class="k">return</span> <span class="n">v</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Note that it would probably be worthwhile to handle the special case of
+matching exponents with a call to <code class="highlighter-rouge">SampleSameExponent()</code>, as rejection
+sampling with a significand that spans the entire power-of-two range will be
+highly inefficient if the two values are close together.</p>
+
+<p>The worst case for this algorithm comes when <code class="highlighter-rouge">b</code>’s significand is
+small—i.e., <code class="highlighter-rouge">b</code> is just past a power-of-two.  The upper power-of-two range
+will be sampled with probability at least 1/2 but then the sampled value
+<code class="highlighter-rouge">v</code> will usually be rejected, requiring another time through the <code class="highlighter-rouge">while</code>
+loop.  Conversely, having <code class="highlighter-rouge">a</code> just below a power of 2 is less trouble,
+since the corresponding power-of-two interval is the least likely to be
+sampled.</p>
+
+<h2 id="closed-intervals">Closed Intervals</h2>
+
+<p>One nice thing about the algorithm implemented in <code class="highlighter-rouge">SampleRange()</code> is that
+handling closed intervals \([a,b]\) is mostly a matter of updating the
+<code class="highlighter-rouge">if</code> test in the <code class="highlighter-rouge">while</code> loop accordingly.  The only other difference is
+that <code class="highlighter-rouge">eb</code> is always be increased by one.  Thus, the worst case for this
+algorithm is when <code class="highlighter-rouge">b</code> is an exact power of 2, again giving a \(1/2\)
+chance of selecting the upper interval each time, with a \(1-2^{-23}\)
+probability of rejecting the sample in that interval.</p>
+
+<h2 id="further-improvements">Further Improvements</h2>
+
+<p>Stratified sampling is a topic we didn’t get to today; it is usually
+worthwhile when one is generating multiple samples over an interval.  For a
+power-of-2 stratification, it’s possible to work backward from the various
+sampling algorithms to determine constraints on the bit patterns the
+achieve stratification.  I’ll leave the details of that to the reader;
+<code class="highlighter-rouge">Sample01()</code> is a good place to start.</p>
+
+<p>We also haven’t dug into the case of an interval that spans zero.  To
+achieve uniform sampling a similar rejection-based approach is probably
+needed where given such an interval \([a,b)\) we define an extended
+interval \([-c,c)\) with \(c=\max (|a|, |b|)\) that encompasses the
+original interval.  We can then randomly select the positive or negative
+side, generate a sample, and then reject it if it is not inside the
+original interval.  However, the combination of an unbalanced interval that
+spans zero and also includes an exact power of two at its upper bound gives
+an even worse worst case: consider a highly unbalanced interval like
+\([-2^{-100}, 2^{64}]\): we end up with a nearly \(3/4\) chance of
+rejecting each candidate sample.</p>
+
+<h2 id="discussion">Discussion</h2>
+
+<p>It was pretty good going through the special cases until we reached the
+end.  Unfortunately, I don’t see a good way to work around the need to do
+rejection sampling when there are partial power-of-two intervals at the ends
+of the range.  Perhaps that isn’t the worst thing ever, but having an
+irregular amount of computation afoot is not ideal if high performance on
+GPUs or using SIMD instructions is of interest.</p>
+
+<p>Nevertheless, a quick benchmark suggests that <code class="highlighter-rouge">SampleRange()</code> is only about
+2.5 times slower than \((1-t)a+tb\) on my CPU here (with the cost of
+random number generation included).  If a reasonable amount of computation
+is performed for each sample, the cost may be no concern.  However, lacking
+a clear example of a case where this first-class sampling makes a
+difference in the final results, it’s hard to argue for the added expense
+in general.</p>
+
+<h3 id="note">note</h3>
+<div class="footnotes">
+  <ol>
+    <li id="fn:fixed">
+      <p>Goualard also suggests a sampling algorithm based on a uniform spacing over the interval that is by design not able to generate all possible floating-point values.  This algorithm seems to have been previously derived by Artur Grabowski in his <a href="https://github.com/art4711/random-double">random-double</a> library from 2015; see <a href="https://github.com/art4711/random-double/blob/60464979e3eb039803d5a840dbbde025e0b0956f/arbitrary_range.c#L296">rd_positive()</a> there. <a href="#fnref:fixed" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
