@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-14T17:07:04-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-14T18:30:32-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
 </subtitle><entry><title type="html">Sampling in Floating Point (2/3): 1D Intervals</title><link href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html" rel="alternate" type="text/html" title="Sampling in Floating Point (2/3): 1D Intervals" /><published>2022-03-14T00:00:00-07:00</published><updated>2022-03-14T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">&lt;p&gt;After learning about &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;Walker’s
 algorithm&lt;/a&gt;
 for uniformly sampling \([0,1)\) in floating-point, I started thinking
@@ -101,7 +101,7 @@ Goualard&lt;/a&gt;.&lt;sup id=&quot;fnref:fixed&quot;&gt;&lt;a href=&quot;#fn:fi
 
 &lt;p&gt;Before we go further, let’s specify a few utility functions that will be
 used in the forthcoming implementations.  (All of the following code is
-available in a &lt;a href=&quot;https://github.com/mmp/uniformfloat&quot;&gt;small header-only
+available in a &lt;a href=&quot;https://github.com/mmp/uniform_float&quot;&gt;small header-only
 library&lt;/a&gt;.)&lt;/p&gt;
 
 &lt;p&gt;For efficient sampling of the \(p=1/2\) geometric distribution, a function that
