@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-14T19:51:09-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-14T19:51:26-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
 </subtitle><entry><title type="html">Sampling in Floating Point (2/3): 1D Intervals</title><link href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html" rel="alternate" type="text/html" title="Sampling in Floating Point (2/3): 1D Intervals" /><published>2022-03-14T00:00:00-07:00</published><updated>2022-03-14T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">&lt;p&gt;After learning about &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;Walker’s
 algorithm&lt;/a&gt;
 for uniformly sampling \([0,1)\) in floating-point, I started thinking
@@ -511,7 +511,7 @@ GPUs or using SIMD instructions is of interest.&lt;/p&gt;
 &lt;p&gt;Nevertheless, a quick benchmark suggests that &lt;code class=&quot;highlighter-rouge&quot;&gt;SampleRange()&lt;/code&gt; is only about
 2.5 times slower than \((1-t)a+tb\) on my CPU here if the cost of
 random number generation is included.  If a reasonable amount of computation
-is performed for each sample, the cost may be no concern.  However, lacking
+is performed for each sample, the added cost may be no concern.  However, lacking
 a clear example of a case where this first-class sampling makes a
 difference in the final results, it’s hard to argue for the added expense
 in general.&lt;/p&gt;
