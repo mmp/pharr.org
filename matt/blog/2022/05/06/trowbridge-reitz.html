@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" type="image/png" href="/matt/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Let’s Stop Calling it “GGX”</title>
+  <meta name="description" content="A short plea for getting the naming right.">
+
+  <link rel="stylesheet" href="/matt/blog/assets/main.css">
+  <link rel="canonical" href="https://pharr.org/matt/blog/2022/05/06/trowbridge-reitz.html">
+  <link rel="alternate" type="application/rss+xml" title="Matt Pharr’s blog" href="/matt/blog/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/matt/blog/">Matt Pharr’s blog</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Let’s Stop Calling it “GGX”</h1>
+    <p class="post-meta">
+      <time datetime="2022-05-06T00:00:00-07:00" itemprop="datePublished">
+        
+        May 6, 2022
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Fifteen years ago, Walter et al. published a <a href="https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html">fantastic paper about
+microfacets</a>
+at EGSR 2007.  It’s full of great contributions, including working out the
+theory of refraction through rough microfacet models and evaluating various
+models with respect to measured data.  Justifiably, it won the EGSR Test
+of Time award in 2021.</p>
+
+<p>That paper also introduced a microfacet distribution, named there “GGX.”
+That distribution was more effective at fitting their measured data than
+distributions that had been used before in graphics.  To the authors’
+knowledge at the time it was new, but it later became apparent that GGX is
+equivalent to a microfacet distribution that Trowbridge and Reitz
+introduced in 1975.<sup id="fnref:tr"><a href="#fn:tr" class="footnote">1</a></sup> It was an unintentional reinvention—these
+things happen.</p>
+
+<p>Although this connection now seems to be fairly widely known, “GGX” seems
+to have stuck in graphics.  To this day, “GGX” is used widely in the titles
+of papers and their text, often without any reference to Trowbridge and
+Reitz.  It’s an unfortunate state of affairs:</p>
+
+<ul>
+  <li>First and foremost, Trowbridge and Reitz deserve their acknowledgment.
+Their paper is fantastic<sup id="fnref:visual"><a href="#fn:visual" class="footnote">2</a></sup> and their work dates to 1975.</li>
+  <li>It doesn’t reflect well on graphics as a field for us to continue to use
+our own renaming of a preexisting model.  For example, if we all called
+Monte Carlo integration “the Kajiya method,” the broader Monte Carlo
+community would quite reasonably raise an eyebrow.</li>
+  <li>It reduces the impact of work done in graphics that is based on the
+Trowbridge–Reitz distribution; if someone in another field is aware
+of Trowbridge–Reitz but not “GGX,” then there’s research in
+graphics that they’re unlikely to find even though it may be relevant to
+their work.</li>
+</ul>
+
+<p>So, better late than never—let’s make it “Trowbridge–Reitz,” or
+if you prefer, “Trowbridge–Reitz (GGX).”</p>
+
+<h2 id="notes">notes</h2>
+<div class="footnotes">
+  <ol>
+    <li id="fn:tr">
+      <p>Trowbridge, S., and K. P. Reitz. 1975. <a href="/matt/blog/images/average-irregularity-representation-of-a-rough-surface-for-ray-reflection.pdf">Average irregularity representation of a rough ray reflection</a>. <em>Journal of the Optical Society of America</em> <em>65</em> (5), 531–36. <a href="#fnref:tr" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:visual">
+      <p>I love this: “The ellipsoid model may prove useful by allowing estimations of its parameter (e) to a reasonable accuracy simply from visual examination of a surface’s micro-structure. On each of the surfaces we examined, one of the authors has visually estimated the shape of the average ellipsoid by observing cross sections of surface irregularities and by observing variations of abundances of surface microareas with orientation relative to the macrosurface.” <a href="#fnref:visual" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div>
+
+  
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Matt Pharr&#39;s blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li><a href="/matt/">homepage</a></li>
+          
+            <li><a href="mailto:matt.pharr@gmail.com">matt.pharr@gmail.com</a></li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>It seemed worth writing up at the time.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

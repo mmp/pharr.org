@@ -1,5 +1,52 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-03-19T15:33:12-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Sampling in Floating Point (2/3): 1D Intervals</title><link href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html" rel="alternate" type="text/html" title="Sampling in Floating Point (2/3): 1D Intervals" /><published>2022-03-14T00:00:00-07:00</published><updated>2022-03-14T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">&lt;p&gt;After learning about &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;Walker’s
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-05-06T06:14:22-07:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">Let’s Stop Calling it “GGX”</title><link href="https://pharr.org/matt/blog/2022/05/06/trowbridge-reitz.html" rel="alternate" type="text/html" title="Let's Stop Calling it &quot;GGX&quot;" /><published>2022-05-06T00:00:00-07:00</published><updated>2022-05-06T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/05/06/trowbridge-reitz</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/05/06/trowbridge-reitz.html">&lt;p&gt;Fifteen years ago, Walter et al. published a &lt;a href=&quot;https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html&quot;&gt;fantastic paper about
+microfacets&lt;/a&gt;
+at EGSR 2007.  It’s full of great contributions, including working out the
+theory of refraction through rough microfacet models and evaluating various
+models with respect to measured data.  Justifiably, it won the EGSR Test
+of Time award in 2021.&lt;/p&gt;
+
+&lt;p&gt;That paper also introduced a microfacet distribution, named there “GGX.”
+That distribution was more effective at fitting their measured data than
+distributions that had been used before in graphics.  To the authors’
+knowledge at the time it was new, but it later became apparent that GGX is
+equivalent to a microfacet distribution that Trowbridge and Reitz
+introduced in 1975.&lt;sup id=&quot;fnref:tr&quot;&gt;&lt;a href=&quot;#fn:tr&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; It was an unintentional reinvention—these
+things happen.&lt;/p&gt;
+
+&lt;p&gt;Although this connection now seems to be fairly widely known, “GGX” seems
+to have stuck in graphics.  To this day, “GGX” is used widely in the titles
+of papers and their text, often without any reference to Trowbridge and
+Reitz.  It’s an unfortunate state of affairs:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;First and foremost, Trowbridge and Reitz deserve their acknowledgment.
+Their paper is fantastic&lt;sup id=&quot;fnref:visual&quot;&gt;&lt;a href=&quot;#fn:visual&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt; and their work dates to 1975.&lt;/li&gt;
+  &lt;li&gt;It doesn’t reflect well on graphics as a field for us to continue to use
+our own renaming of a preexisting model.  For example, if we all called
+Monte Carlo integration “the Kajiya method,” the broader Monte Carlo
+community would quite reasonably raise an eyebrow.&lt;/li&gt;
+  &lt;li&gt;It reduces the impact of work done in graphics that is based on the
+Trowbridge–Reitz distribution; if someone in another field is aware
+of Trowbridge–Reitz but not “GGX,” then there’s research in
+graphics that they’re unlikely to find even though it may be relevant to
+their work.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So, better late than never—let’s make it “Trowbridge–Reitz,” or
+if you prefer, “Trowbridge–Reitz (GGX).”&lt;/p&gt;
+
+&lt;h2 id=&quot;notes&quot;&gt;notes&lt;/h2&gt;
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:tr&quot;&gt;
+      &lt;p&gt;Trowbridge, S., and K. P. Reitz. 1975. &lt;a href=&quot;/matt/blog/images/average-irregularity-representation-of-a-rough-surface-for-ray-reflection.pdf&quot;&gt;Average irregularity representation of a rough ray reflection&lt;/a&gt;. &lt;em&gt;Journal of the Optical Society of America&lt;/em&gt; &lt;em&gt;65&lt;/em&gt; (5), 531–36. &lt;a href=&quot;#fnref:tr&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:visual&quot;&gt;
+      &lt;p&gt;I love this: “The ellipsoid model may prove useful by allowing estimations of its parameter (e) to a reasonable accuracy simply from visual examination of a surface’s micro-structure. On each of the surfaces we examined, one of the authors has visually estimated the shape of the average ellipsoid by observing cross sections of surface irregularities and by observing variations of abundances of surface microareas with orientation relative to the macrosurface.” &lt;a href=&quot;#fnref:visual&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">A short plea for getting the naming right.</summary></entry><entry><title type="html">Sampling in Floating Point (2/3): 1D Intervals</title><link href="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html" rel="alternate" type="text/html" title="Sampling in Floating Point (2/3): 1D Intervals" /><published>2022-03-14T00:00:00-07:00</published><updated>2022-03-14T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/03/14/sampling-float-intervals.html">&lt;p&gt;After learning about &lt;a href=&quot;https://www.semanticscholar.org/paper/Fast-generation-of-uniformly-distributed-numbers-Walker/71ebd4c11bf15f87918325d92a5b476344b3c7a2&quot;&gt;Walker’s
 algorithm&lt;/a&gt;
 for uniformly sampling \([0,1)\) in floating-point, I started thinking
 about how his approach might be generalized to arbitrary intervals; being
@@ -2981,265 +3028,4 @@ the island scene.&lt;/p&gt;
       &lt;p&gt;As was learned during the initial implementation of this feature. &lt;a href=&quot;#fnref:al&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">More attention to pbrt's performance when getting ready to render Disney's Moana Island scene finally gets us somewhere.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 10): Rendering on the GPU—Finally</title><link href="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 10): Rendering on the GPU—Finally" /><published>2021-07-29T00:00:00-07:00</published><updated>2021-07-29T00:00:00-07:00</updated><id>https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/07/29/moana-rendered-on-the-gpu.html">&lt;p&gt;We’re big fans of actually making pictures around here, so avoiding the
-topic of rendering performance and focusing on performance while getting
-ready for rendering may seem a little off.  A flimsy defense for that is
-“vegetables before dessert”; we must attend to our responsibilities before
-we go off and have fun.  A better justification is more or less Amdahl’s
-law: as rendering time decreases, overall performance is increasingly
-determined by the cost of rest of the work that happens before rendering.
-That motivation should be more clear by the end of this post.&lt;/p&gt;
-
-&lt;h2 id=&quot;preliminaries-textures-and-curves&quot;&gt;Preliminaries: Textures and Curves&lt;/h2&gt;
-
-&lt;p&gt;Making pbrt-v4’s GPU rendering path capable of rendering Disney’s &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Moana
-Island
-scene&lt;/a&gt;
-required attending to two details that I hadn’t gotten around to until
-recently: supporting both &lt;a href=&quot;https://ptex.us/&quot;&gt;Ptex textures&lt;/a&gt; and pbrt’s
-curve shape on the GPU.  Both features were laggards that hadn’t yet been wired
-up on the GPU and both are used extensively in the Moana Island scene.&lt;/p&gt;
-
-&lt;p&gt;Ptex is a texture representation from Walt Disney Animation Studios that
-works around the uv-mapping problem by splitting meshes into &lt;em&gt;faces&lt;/em&gt; (that
-may themselves be collections of triangles or quads) and then applying a
-plain old [0,1]&lt;sup&gt;2&lt;/sup&gt; parameterization to each face.  The Ptex library 
-handles the details of things like loading textures on demand, caching
-parts of them in memory, and texture filtering.&lt;/p&gt;
-
-&lt;p&gt;To my knowledge, there isn’t a Ptex implementation that runs on the GPU.
-One way to work around this problem is to round-trip to the CPU and service
-Ptex requests there; that approach was taken by Chris Hellmuth when he
-&lt;a href=&quot;https://www.render-blog.com/2020/10/03/gpu-motunui/&quot;&gt;rendered the Moana Island scene on the
-GPU&lt;/a&gt;.  That approach
-gives gold-standard results, but at the cost of synchronization and data
-transfer between the two processors as well as the risk of the CPU being
-the performance bottleneck.&lt;/p&gt;
-
-&lt;p&gt;Ingo Wald &lt;a href=&quot;https://ingowald.blog/2020/10/26/moana-on-rtx-first-light/&quot;&gt;took a different
-approach&lt;/a&gt; when
-he got the Moana Island rendering on the GPU; his implementation resampled
-each face’s texture at a low resolution and then packed the results into
-large flat 2D textures.  That keeps everything on the GPU, but risks
-blurred texture lookups due to insufficient resolution.&lt;/p&gt;
-
-&lt;p&gt;And then there’s the approach I took: for each face, pbrt-v4 computes the
-face’s average texture value and stores it in an array.  A texture lookup[sic] is
-then a simple index into that array using the face index.  (Thus, it’s
-basically Ingo’s approach with “low resolution” taken all the way to a
-single pixel.)  The only thing defensible about my approach is that it’s
-just &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.cpp#L755&quot;&gt;a few lines of
-code&lt;/a&gt;
-to convert Ptex textures into this representation, and texture lookup is
-near-trivial &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/textures.h#L989&quot;&gt;indexing into that
-array&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;I can’t say that I’m proud of that solution, but I can at least say that it
-works great for objects that are far away where all you need is the top MIP
-level anyway.  As we will see shortly, it is certainly not
-production-ready.  I hope to get around to replacing it with something
-better in the future, but for now it gets us up and rendering.&lt;/p&gt;
-
-&lt;p&gt;The other thing to take care of was supporting curves on the GPU.
-pbrt-v4’s built-in curve shape uses a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L606&quot;&gt;recursive intersection
-algorithm&lt;/a&gt;
-that is a poor fit for the GPU; I didn’t even try running it there.  OptiX
-does provide a curve primitive, highly optimized, though some plumbing
-would be necessary to wire up pbrt’s curve representation to use it.
-Impatient to get the scene up and rendering, I wrote a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/gpu/aggregate.cpp#L504&quot;&gt;simple function
-that dices curves into bilinear
-patches&lt;/a&gt;.
-(This, too, is something to return to in the future.)&lt;/p&gt;
-
-&lt;p&gt;To my delight, once those two additions were debugged, everything 
-just worked the first time I tried rendering the Moana Island on the GPU.&lt;/p&gt;
-
-&lt;h2 id=&quot;images-and-performance&quot;&gt;Images and Performance&lt;/h2&gt;
-
-&lt;p&gt;Here again is the main view of the island, rendered on both the CPU and the
-GPU with 256 samples per pixel at 1920x804 resolution.  The images are displayed using
-&lt;a href=&quot;https://jeri.io/&quot;&gt;Jeri&lt;/a&gt;, which makes it possible to do all sorts of pixel
-peeping right in the browser.  (Click on the tabs to switch between CPU and
-GPU, or use the number keys after selecting the image. Hit ‘f’ to go
-full-screen. You can also pan and zoom using the mouse.)  If you’d prefer to examine the EXRs directly, here they are:
-&lt;a href=&quot;/matt/blog/images/moana-main-cpu-256spp.exr&quot;&gt;CPU&lt;/a&gt;, &lt;a href=&quot;/matt/blog/images/moana-main-gpu-256spp.exr&quot;&gt;GPU&lt;/a&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
-&lt;div id=&quot;mainview&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;script&gt;
-Jeri.renderViewer(document.getElementById('mainview'), {
-  title: 'mainview', children: [
- { title: 'CPU', image: '/matt/blog/images/moana-main-cpu-256spp.exr' },
- { title: 'GPU', image: '/matt/blog/images/moana-main-gpu-256spp.exr' }
- ]});
-&lt;/script&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;The differences between the image rendered on the CPU and the one rendered
-on the GPU are entirely due to the differences in how Ptex textures and
-curves are handled.  For Ptex, you can see the problems with the current
-approach on the far-away mountainside as well as on the trunks of the palm
-trees.  And then there’s a striking difference in the palm fronds; we’ll
-return to that shortly, but it’s the GPU that has the more accurate result
-there, not the CPU.&lt;/p&gt;
-
-&lt;p&gt;Oh, and about rendering performance?  It’s 26.7 seconds on the
-GPU (an NVIDIA RTX A6000) versus 326.5 seconds on the CPU (a 32 core AMD
-3970X).  Work out the division and that’s 12.2x faster on the GPU.  If
-you’d prefer a clean 2048 sample per pixel rendering, the GPU gets through
-that in 215.6 seconds, once again over 12x faster than the CPU doing the same.&lt;/p&gt;
-
-&lt;p&gt;And so it’s obvious why time to first pixel matters so much.  From start to
-finish, that 256 sample per pixel rendering takes about 90 seconds of
-wall-clock time.  Two thirds of it is spent getting things ready to render,
-30% is rendering, and the rest is a few seconds of shutting things down at
-the end.  With rendering being that fast, if you want to see that image
-sooner, optimizing startup time can be a better place to focus than
-optimizing rendering time.  Naturally, startup time matters less as the
-number of pixel samples increases, but that has to go well into the
-thousands of them before startup time starts to be insignificant.&lt;/p&gt;
-
-&lt;p&gt;There is good news and bad news about memory: the scene needs “just” 29.0
-GB of GPU memory to render.  I’m happy with that in absolute terms, but
-unfortunately it limits how many GPUs can handle the scene.  It would be
-nice to find a way to fit it in 24 GB, in which case it could be rendered
-on an RTX 3090, but for now the full scene requires something along the
-lines of an RTX A6000.  (As a workaround, removing the “isIronwoodA1” and
-“isCoral” models gets it down under 24 GB with limited visual impact and,
-bonus, takes time to first pixel down to 51 seconds.)&lt;/p&gt;
-
-&lt;p&gt;As far as where the time is spent, pbrt-v4 offers a &lt;code class=&quot;highlighter-rouge&quot;&gt;--stats&lt;/code&gt; command-line
-option that prints out various statistics after rendering finishes.  When
-the GPU is used, it gives a summary of where the GPU spent its time during
-rendering.  Here, sorted and summarized, is what it has to say about
-rendering the main view of the Moana Island:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt; &lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;  Total Time (ms)  &lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;  Percentage&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Tracing closest hit rays&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11976.57&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;45.4%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Tracing shadow rays&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8441.60&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;32.0%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Material/BSDF evaluation and shading&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4294.59&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;16.3%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Generating samples&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;638.44&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2.4%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Generating camera rays&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;443.17&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1.7%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Handling escaped rays&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;267.56&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1.0%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Updating the film&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;127.35&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;0.5%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Handling emitters hit by indirect rays&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;97.47&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;0.4%&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Other&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;75.61&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;0.3%&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;That’s 77.4% of the total runtime spent on ray intersection tests and
-associated &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/wavefront/intersect.h#L49&quot;&gt;enqueuing of subsequent
-work&lt;/a&gt;.
-Most of the rest is in that 16.3% of material and BSDF work that is done at
-each intersection.  It includes evaluating textures, sampling light
-sources, and evaluating and sampling BSDFs.  For less complex scenes,
-that’s where most of the runtime is normally spent.&lt;/p&gt;
-
-&lt;p&gt;With apologies to the artists who spent untold hours on the textures for
-this scene, here is another view of the island scene, this one the
-“rootsCam” camera. (Direct links to the EXRs: 
-&lt;a href=&quot;/matt/blog/images/moana-roots-cpu-256spp.exr&quot;&gt;CPU&lt;/a&gt;, 
-&lt;a href=&quot;/matt/blog/images/moana-roots-gpu-256spp.exr&quot;&gt;GPU&lt;/a&gt;.)&lt;/p&gt;
-
-&lt;div class=&quot;card-img-top&quot; style=&quot;display:block; width: 100%; padding-top: 47%;  position:relative;&quot;&gt;
-&lt;div id=&quot;rootsview&quot; style=&quot;position: absolute; top: 0; left: 0; right: 0; bottom: 0;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;script&gt;
-Jeri.renderViewer(document.getElementById('rootsview'), {
-  title: 'rootsview', children: [
- { title: 'CPU', image: '/matt/blog/images/moana-roots-cpu-256spp.exr' },
- { title: 'GPU', image: '/matt/blog/images/moana-roots-gpu-256spp.exr' }
- ]});
-&lt;/script&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;Again rendered at 256 samples per pixel, this took 32.1 seconds to render
-on the GPU and 557.6 seconds on the CPU.  That’s 17.4x faster on the GPU,
-with a similar breakdown of where the time was spent.&lt;/p&gt;
-
-&lt;p&gt;With this viewpoint the shortcomings of pbrt-v4’s current approach for
-Ptex on the GPU are even more obvious; not only do the sand dunes appear
-faceted from lack of texture detail, but we have lost all of the fine
-bump-mapping detail.  (Turns out, taking differences of a constant function
-to compute shading normals doesn’t work out so well.)&lt;/p&gt;
-
-&lt;p&gt;However, it is clear from these images that it is the GPU that is giving
-the better result in those tufts of grass in the lower right.  The CPU’s
-rendering path isn’t getting the self-shadowing correct down there, while
-the GPU’s is.  (The same thing is happening in the palm fronds in the main
-view.)  This discrepancy was unexpected and is something to chase down in
-the future. I suspect the issue stems from the CPU curve implementation
-needing a &lt;a href=&quot;https://github.com/mmp/pbrt-v4/blob/4763b251b592a6ba95c811bc1877ff0ff1c21c13/src/pbrt/shapes.cpp#L719&quot;&gt;fairly large
-epsilon&lt;/a&gt;
-at ray intersections; this is necessary to avoid self-intersections since
-the CPU’s curve shape orients itself to face the ray being traced.  On the
-GPU, a much smaller epsilon is possible because true geometry is used for
-curves.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;The 12-17x speedups on the GPU are not based on a comparison of
-perfectly-matching implementations, though other than the ray intersection
-routines, curves, and Ptex, both otherwise run the same C++ code.  Each is
-better and worse than the other in different ways: while the diced curve
-representation used on the GPU turned out to be superior to the CPU’s curve
-shape, the lack of proper Ptex texturing on the GPU at the moment is a
-loss.&lt;/p&gt;
-
-&lt;p&gt;One nice thing about the performance breakdown on the GPU is that there’s
-plenty of headroom to do more shading work.  With 77% of runtime spent on
-ray intersections and 16% on shading, even doubling the cost of shading
-with a more complete Ptex implementation wouldn’t increase the overall
-runtime very much.  I expect that the GPU’s speedup wouldn’t be too
-different with those two differences harmonized.&lt;/p&gt;
-
-&lt;p&gt;Next time we’ll come back to to review where pbrt-v4 stands in the time to
-first pixel department and then end this series, at least for now, with
-some renderer-design retrospection.&lt;/p&gt;</content><author><name></name></author><summary type="html">After our extended tour through where pbrt-v4 spends its time getting ready to render the Moana Island scene, we finally look at rendering, comparing performance and images from the CPU and GPU rendering paths.</summary></entry></feed>
+&lt;/div&gt;</content><author><name></name></author><summary type="html">More attention to pbrt's performance when getting ready to render Disney's Moana Island scene finally gets us somewhere.</summary></entry></feed>
