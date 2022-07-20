@@ -181,6 +181,13 @@
                                 <a href="https://github.com/mmp/pbrt-v4">pbrt-v4</a>
                                 has an implementation of it.
                             </div>
+                            <div class="comments mb-2">
+                                Subsequent to publication, I realized that both
+                                <a href="http://www.lafortune.eu/publications/Dublin.html">Lafortune And Willems (1995)</a>
+                                and
+                                <a href="http://graphics.ucsd.edu/~henrik/papers/importance_driven_path_tracing_using_the_photon_map">Jensen (1995)</a>
+                                used a related technique for product sampling of BRDFs with indirect lighting: they both took indirect lighting samples, applied the inverse of the importance sampling mapping, and then tabularized sample counts in primary sample space. Samples in [0,1]^2 were then generated based on that distribution before being used for BRDF importance sampling. This work should have been included in our previous work discussion. (It does, however, share some similarities with the earlier work of Booth (1986), which is cited.)
+                            </div>
                             <div class="citation mb-2">
                                 <b>Citation:</b>
                                 David Hart, Matt Pharr, Thomas M&uuml;ller, Ward Lopes, Morgan McGuire, and Peter Shirley. 2020. Practical product sampling by fitting and composing warps.
@@ -511,7 +518,7 @@
                     <h3 class="mb-1">Committees</h3>
                     <ul>
                         <li>Papers Chair, Eurographics Symposium on Rendering 2020 (with Carsten Dachsbacher)</li>
-                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018</li>
+                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022</li>
                         <li>Program Chair, High Performance Graphics 2014</li>
                         <li>Conference Chair, High Performance Graphics 2011 (with John Owens)</li>
                         <li>Papers Chair, High Performance Graphics 2009 (with David McAllister and Ingo Wald)</li>
@@ -521,7 +528,11 @@
                         </li>
                     </ul>
                     <h3 class="mb-1">TOG Production Renderers</h3>
-                    <p>In 2018, I guest-edited a special issue of ACM Transactions on Graphics on production rendering. The developers of five widely-used renderers wrote comprehensive systems papers, describing the challenges they face, the constraints they work under, and the solutions they have developed:</p>
+                    <p>
+                        In 2018, I guest-edited a special issue of
+                        <i>ACM Transactions on Graphics</i>
+                        on production rendering. The developers of five widely-used renderers wrote comprehensive systems papers, describing the challenges they face, the constraints they work under, and the solutions they have developed:
+                    </p>
                     <ul>
                         <li><a href="https://graphics.pixar.com/library/RendermanTog2018/">RenderMan (Christensen et al.)</a></li>
                         <li><a href="https://jo.dreggn.org/home/2018_manuka.pdf">Manuka (Fascione et al.)</a></li>
@@ -534,6 +545,44 @@
                         <a href="assets/tog_intro.pdf">short introduction</a>
                         that discusses the industry's transition from Reyes to path tracing.
                     </p>
+                    <h3 class="mb-1">Reports / Drafts</h3>
+                    <p>Here are a handful of additional documents that are not formal publications as such.</p>
+                    <ul>
+                        <li>
+                            <b>Physically Based Image Synthesis: Design and Implementation of a Rendering System (2003)</b>
+                            <i>(with Greg Humphreys)</i>
+                            <a href="assets/lrt-draft-2003.pdf">[PDF]</a>
+                            <div></div>
+                            For posterity, a 2003 snapshot of the manuscript that became the
+                            <i>Physically Based Rendering</i>
+                            book.
+                        </li>
+                        <li>
+                            <b>Infinite Area Light Source With Importance Sampling (2004)</b>
+                            <i>(with Greg Humphreys)</i>
+                            <a href="assets/infinitesample.pdf">[PDF]</a>
+                            <div></div>
+                            A short literate program implementation of an importance sampling algorithm for infinite light sources, too late for the first edition of
+                            <i>Physically Based Rendering,</i>
+                            but included in subsequent editions.
+                        </li>
+                        <li>
+                            <b>The Implementation of a Hair Scattering Model (2016)</b>
+                            <a href="assets/hair.pdf">[PDF]</a>
+                            <div></div>
+                            This is an implementation of Chiang et al's
+                            <i>A Practical and Controllable Hair and Fur Model for Production Path Tracing,</i>
+                            implemented as a literate program. The forthcoming fourth edition of
+                            <i>Physically Based Rendering</i>
+                            includes an updated version of this.
+                        </li>
+                        <li>
+                            <b>The Implementation of a Scalable Texture Cache (2017)</b>
+                            <a href="assets/texcache.pdf">[PDF]</a>
+                            <div></div>
+                            I spent some time trying to figure out how to implement a texture cache for CPU rendering that scaled well with many threads; this is a problem that has clearly been solved in production but one where no one has published about their approaches. This write-up this is the result of my efforts&mdash;an effective approach that is based on the "read-copy update" technique, implemented as a literate program.
+                        </li>
+                    </ul>
                     <h3 class="mb-1">Code</h3>
                     <ul>
                         <li>
