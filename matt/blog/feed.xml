@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2022-12-22T10:28:02-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2023-01-03T09:50:14-08:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
 </subtitle><entry><title type="html">Some News About the 4th Edition of Physically Based Rendering</title><link href="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html" rel="alternate" type="text/html" title="Some News About the 4th Edition of Physically Based Rendering" /><published>2022-12-22T00:00:00-08:00</published><updated>2022-12-22T00:00:00-08:00</updated><id>https://pharr.org/matt/blog/2022/12/22/pbr-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html">&lt;p&gt;I’m delighted to report that the final laid-out pages of the 4th edition of
 &lt;em&gt;Physically Based Rendering&lt;/em&gt; are now on their way to the printer.  As they
 say, it’s been a journey, but I think that all involved are thrilled with
@@ -16,7 +16,7 @@ the book.&lt;/p&gt;
 
 &lt;p align=&quot;center&quot;&gt;
 &lt;a href=&quot;/matt/blog/images/pbr-4ed-cover.jpg&quot;&gt;
-    &lt;img src=&quot;/matt/blog/images/pbr-4ed-cover.jpg&quot; width=&quot;512&quot; height=&quot;660&quot; alt=&quot;Physically Based Rendering Book Cover&quot; /&gt;
+    &lt;img src=&quot;/matt/blog/images/pbr-4ed-cover.jpg&quot; width=&quot;512&quot; alt=&quot;Physically Based Rendering Book Cover&quot; /&gt;
 &lt;/a&gt;
 &lt;/p&gt;
 
@@ -60,17 +60,17 @@ rendered, naturally, with pbrt.&lt;/p&gt;
 
 &lt;p align=&quot;center&quot;&gt;
 &lt;a href=&quot;/matt/blog/images/kroken-camera1.jpg&quot;&gt;
-    &lt;img src=&quot;/matt/blog/images/kroken-camera1.jpg&quot; width=&quot;625&quot; height=&quot;625&quot; alt=&quot;Kroken Scene, Camera 1 View&quot; /&gt;
+    &lt;img src=&quot;/matt/blog/images/kroken-camera1.jpg&quot; width=&quot;625&quot; alt=&quot;Kroken Scene, Camera 1 View&quot; /&gt;
 &lt;/a&gt;
 &lt;/p&gt;
 &lt;p align=&quot;center&quot;&gt;
 &lt;a href=&quot;/matt/blog/images/watercolor-camera-3.jpg&quot;&gt;
-    &lt;img src=&quot;/matt/blog/images/watercolor-camera-3.jpg&quot; width=&quot;625&quot; height=&quot;833&quot; alt=&quot;Watercolor Scene, Camera 3 View&quot; /&gt;
+    &lt;img src=&quot;/matt/blog/images/watercolor-camera-3.jpg&quot; width=&quot;625&quot; alt=&quot;Watercolor Scene, Camera 3 View&quot; /&gt;
 &lt;/a&gt;
 &lt;/p&gt;
 &lt;p align=&quot;center&quot;&gt;
 &lt;a href=&quot;/matt/blog/images/watercolor-camera-13.jpg&quot;&gt;
-    &lt;img src=&quot;/matt/blog/images/watercolor-camera-13.jpg&quot; width=&quot;625&quot; height=&quot;833&quot; alt=&quot;Watercolor Scene, Camera 13 View&quot; /&gt;
+    &lt;img src=&quot;/matt/blog/images/watercolor-camera-13.jpg&quot; width=&quot;625&quot; alt=&quot;Watercolor Scene, Camera 13 View&quot; /&gt;
 &lt;/a&gt;
 &lt;/p&gt;
 
