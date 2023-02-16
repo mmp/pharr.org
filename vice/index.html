@@ -50,19 +50,8 @@
 	    <span></span>
 	    <span></span>
 	  </button>
-	  <div class="site-logo"><a class="navbar-brand" href="index.html"><img class="logo-icon me-2" src="assets/vice/tower-rounded-inset-48x48.png" srcset="assets/vice/tower-rounded-inset-96x96.png 2x" width="48" height="48" alt="logo"><span class="logo-text">Vice<span class="text-alt">: an open-source, cross-platform ATC simulator</span></span></a></div>    
+	  <div class="site-logo"><a class="navbar-brand" href="index.html"><img class="logo-icon me-2" src="assets/vice/tower-rounded-inset-48x48.png" srcset="assets/vice/tower-rounded-inset-96x96.png 2x" width="48" height="48" alt="logo"><span class="logo-text">Vice<span class="text-alt"> ATC simulator</span></span></a></div>    
         </div><!--//docs-logo-wrapper-->
-
-        <!--
-	<div class="docs-top-utilities d-flex justify-content-end align-items-center">
-	  <div class="top-search-box d-none d-lg-flex">
-	    <form class="search-form">
-	      <input type="text" placeholder="Search the docs..." name="search" class="form-control search-input">
-	      <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-	    </form>
-	  </div>
-	</div><!--//docs-top-utilities-->
-        -->
       </div><!--//container-->
     </div><!--//branding-->
   </header><!--//header-->
@@ -98,18 +87,19 @@
 <div class="text-center">
 <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
 </div>
-	    <h1 class="docs-heading">Introduction <span class="docs-time">Last updated: 2022-09-17</span></h1>
+	    <h1 class="docs-heading">Introduction <span class="docs-time">Last updated: 2023-02-15</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>Vice</i> is (now) an air traffic control simulator, focused on the TRACON.
-                The overall goal was to provide a training experience similar to a VATSIM sweatbox with an instructor, 
+                Its goal is to provide a training experience similar to a VATSIM sweatbox with an instructor, 
                 just without the instructor, making it possible to better prepare for sweatboxes ahead of time.
                 It presents a STARS-like interface, supports the same commands as <a href="https://vstars.rosscarlson.dev">vSTARS</a>,
                 but with simulated traffic and other controllers.
               </p>
-              <p>It currently only supports a single scenario, departure control at JFK, though adding more scenarios
-                wouldn't be too much work.
-                (A scenario for JFK arrivals will likely be coming in the next week or so.)
+              <p>It currently only supports departure and arrival control
+                scenarios at JFK, though adding more
+                airports wouldn't be too much work; PHL scenarios will
+                likely come next.
                 See the short <a href="https://youtu.be/COSOrrscYTQ">video overview</a> for more information.
               </p>
 	    </section><!--//docs-intro-->
@@ -122,8 +112,9 @@
               of the screen you can see the (virtual) pilot's readback.
               The aircraft will then start following that instruction, to the best of its abilities.
             </p>
-            <p>If you'd like to issue multiple commands to an aircraft, enter them one after another, without spaces,
-              and then click on the appropriate aircraft.
+            <p>If you'd like to issue multiple commands to an aircraft,
+              enter them one after another with a space between them, and
+              then click on the appropriate aircraft.
             </p>
 
               <table class="table table-bordered">
@@ -135,16 +126,6 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><code>C</code><i>alt</i></td>
-                    <td>Directs the aircraft to climb to the specified altitude, which is given in hundreds of feet.</td>
-                    <td><code>C170</code></td>
-                  </tr>
-                  <tr>
-                    <td><code>D</code><i>fix</i></td>
-                    <td>Directs the aircraft to proceed direct to the given fix. (The specified fix must be in the aircraft's flight plan.)</td>
-                    <td><code>DWAVEY</code></td>
-                  </tr>
                   <tr>
                     <td><code>H</code><i>heading</i></td>
                     <td>Directs the aircraft to fly the specified heading. It will turn in whichever direction gets it to that heading most quickly.</td>
@@ -161,9 +142,43 @@
                     <td><code>R180</code></td>
                   </tr>
                   <tr>
+                    <td><code>D</code><i>fix</i></td>
+                    <td>Directs the aircraft to proceed direct to the given
+                    fix. (The specified fix must be in the aircraft's
+                    flight plan, including on the approach assigned to it.)</td>
+                    <td><code>DWAVEY</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>C</code><i>alt</i></td>
+                    <td>Directs the aircraft to climb to the specified altitude, which is given in hundreds of feet.</td>
+                    <td><code>C170</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>D</code><i>alt</i></td>
+                    <td>Directs the aircraft to descend to the specified
+                    altitude, given in hundreds of feet.</td>
+                    <td><code>DWAVEY</code></td>
+                  </tr>
+                  <tr>
                     <td><code>S</code><i>knots</i></td>
                     <td>Gives the aircraft a speed restriction.</td>
                     <td><code>S250</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>E</code><i>approach</i></td>
+                    <td>Tells the aircraft to expect the specified
+                    approach. This command must be used before an aircraft
+                    is cleared for an approach.  It also adds the approach
+                    fixes to the end of the aircraft's flight plan</td>
+                    <td><code>H050</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>E</code><i>approach</i></td>
+                    <td>Tells the aircraft to expect the specified
+                    approach. This command must be used before an aircraft
+                    is cleared for an approach.  It also adds the approach
+                    fixes to the end of the aircraft's flight plan</td>
+                    <td><code>H050</code></td>
                   </tr>
                   <tr>
                     <td><code>X</code></td>
