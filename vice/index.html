@@ -67,8 +67,10 @@
       </div>
       <nav id="docs-nav" class="docs-nav navbar">
 	<ul class="section-items list-unstyled nav flex-column pb-3">
-	  <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-introduction"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Introduction</a></li>
+	  <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#jfk">KJFK Scenarios</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
@@ -82,38 +84,86 @@
 
     <div class="docs-content">
       <div class="container">
-	<article class="docs-article" id="section-introduction">
+	<article class="docs-article" id="section-using">
 	  <header class="docs-header">
 <div class="text-center">
 <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
 </div>
-	    <h1 class="docs-heading">Introduction <span class="docs-time">Last updated: 2023-02-15</span></h1>
+    <br>
+	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-02-18</span></h1>
 
 	    <section class="docs-intro">
-	      <p><i>Vice</i> is (now) an air traffic control simulator, focused on the TRACON.
+	      <p><i>Vice</i> is (now) an air traffic control simulator, focused on TRACON.
                 Its goal is to provide a training experience similar to a VATSIM sweatbox with an instructor, 
-                just without the instructor, making it possible to better prepare for sweatboxes ahead of time.
-                It presents a STARS-like interface, supports the same commands as <a href="https://vstars.rosscarlson.dev">vSTARS</a>,
-                but with simulated traffic and other controllers.
+                just without the instructor, making it possible to better
+                prepare for sweatboxes and to practice vectoring techniques without being on the network.
+                It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
-              <p>It currently only supports departure and arrival control
-                scenarios at JFK, though adding more
-                airports wouldn't be too much work; PHL scenarios will
-                likely come next.
-                See the short <a href="https://youtu.be/COSOrrscYTQ">video overview</a> for more information.
+              <p><i>Vice</i> currently only supports departure and arrival control
+                scenarios at KJFK, though adding scenarios at more
+                airports wouldn't be too much work; KPHL will
+                likely come next.  <a href="mailto:matt@pharr.org">Get in touch</a> if you're interested in helping!
+              </p>
+              <p>
+                There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of the system.
               </p>
 	    </section><!--//docs-intro-->
 	  </header>
 
+	  <section class="docs-intro" id="started">
+            <h2 class="section-heading">Getting Started</h2>
+            <p>The radar client interface that <i>Vice</i> provides is based on STARS, by way of reimplementing most of the functionality in 
+              <a href="https://vstars.rosscarlson.dev">vSTARS</a>. In general, all of the keyboard and menu commands that are available in vSTARS
+              are available in <i>Vice</i> (though quicklook and CRDA are not yet implemented).  See the <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS Command Reference</a> for a summary of the commands supported.
+              The appearance of <i>Vice</i> can be similarly configured using the DCB buttons at the top of the window.
+            </p>
+            <p>
+              When <i>Vice</i> is launched, a window is shown for configuring the simulation.
+              A number of scenarios are available, some departure-only and some including both departures and arrivals.
+            </p>
+            <div class="text-center">
+              <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="594" class="img-fluid" alt="configuration dialog box">
+            </div>
+            <br>
+            <p>
+              In addition to the total number of aircraft to launch in the simulation, it is possible to set the average departure rate (ADR)
+              for all of the airports that may have departures in the scenario as well as the average arrival rate (AAR) for all of the
+              active arrivals.
+              Both of these are specified in terms of aircraft per hour, so an ADR of 30 corresponds to an aircraft  departing
+              every two minutes (on average).
+              If you'd like an arrival-only scenario, for example, just set all of the departure rates to zero.
+              The "Sequencing challenge" slider controls how challenging the departure sequence is&mdash;the higher it is, the more likely it is
+              that successive departures will be to the same gate or to the same fix.
+            </p>
+            <p>
+              After you have configured the simulation, click "Ok" and you will have a STARS scope and flight strip window to work with.
+              Use the usual STARS commands as appropriate (to initiate track, accept handoffs, handoff to other controllers, etc.),
+              and the additional <a href="#commands">ATC commands below</a> to issue control commands to aircraft.
+            </p>
+            <p>
+              During the simulation, the "Settings" menu offers a few options, including pausing and resuming.
+              If "Restart..." is selected, the configuration window is shown again, allowing a new scenario to be selected.
+              Finally, "Settings..." allows configuring a number of details, including the flight strips shown at the right and
+              in which situations sounds are played (and which sounds to play for them.)
+              </p>
+            <div class="text-center">
+              <img src="menu.jpg" srcset="menu-2x.jpg 2x" width="133" height="107" class="img-fluid" alt="configuration dialog box">
+            </div>
+            </br>
+            <p>To adjust the amount of space used for flight strips, right click the line separating the flight strips from the
+              radar window and drag left or right with your mouse.
+              </p>
+          </section>
+          
 	  <section class="docs-intro" id="commands">
             <h2 class="section-heading">ATC Commands</h2>
-            <p>A number of commands are available for issuing control instructions to aircraft.
-              To use them, type the appropriate command and click on an aircraft's track; on the top
-              of the screen you can see the (virtual) pilot's readback.
+            <p>In order to issue control commands to aircraft, type the appropriate command from the table below
+              and click on an aircraft's track. After you issue a command, the virtual pilot's readback is shown at the top of the window.
               The aircraft will then start following that instruction, to the best of its abilities.
+              Unlike VATSIM, the pilots will always do exactly what you tell them to.
             </p>
             <p>If you'd like to issue multiple commands to an aircraft,
-              enter them one after another with a space between them, and
+              enter the commands one after another with a space between them and
               then click on the appropriate aircraft.
             </p>
 
@@ -157,11 +207,12 @@
                     <td><code>D</code><i>alt</i></td>
                     <td>Directs the aircraft to descend to the specified
                     altitude, given in hundreds of feet.</td>
-                    <td><code>DWAVEY</code></td>
+                    <td><code>D020</code></td>
                   </tr>
                   <tr>
                     <td><code>S</code><i>knots</i></td>
-                    <td>Gives the aircraft a speed restriction.</td>
+                    <td>Gives the aircraft a speed restriction.  If the restriction is given after an aircraft is cleared for an approach,
+                    the speed restriction is in effect until 5 mile final.</td>
                     <td><code>S250</code></td>
                   </tr>
                   <tr>
@@ -170,19 +221,17 @@
                     approach. This command must be used before an aircraft
                     is cleared for an approach.  It also adds the approach
                     fixes to the end of the aircraft's flight plan</td>
-                    <td><code>H050</code></td>
+                    <td><code>EI2L</code></td>
                   </tr>
                   <tr>
-                    <td><code>E</code><i>approach</i></td>
-                    <td>Tells the aircraft to expect the specified
-                    approach. This command must be used before an aircraft
-                    is cleared for an approach.  It also adds the approach
-                    fixes to the end of the aircraft's flight plan</td>
-                    <td><code>H050</code></td>
+                    <td><code>C</code><i>approach</i></td>
+                    <td>Clears the aircraft for the specified
+                    approach. The aircraft must be told to expect the approach before it is cleared for it.</td>
+                    <td><code>CI2L</code></td>
                   </tr>
                   <tr>
                     <td><code>X</code></td>
-                    <td>Deletes the specified aircraft from the simulation.</td>
+                    <td>Deletes the specified aircraft from the simulation. This command is useful when one starts going down the tubes.</td>
                     <td><code>X</code></td>
                   </tr>
                 </tbody>
@@ -190,6 +239,69 @@
 
 	    </section><!--//docs-intro-->
 
+	  <section class="docs-intro" id="jfk">
+            <h2 class="section-heading">KJFK Scenarios</h2>
+
+            <p>
+              Conveniently, the identifiers used for approaches with the "expect approach" and "cleared approach"
+              commands are the same as the ones used for scratchpads.
+              (Thus, you can practice scratchpad assignment while you're at it!)
+              Only ILS and RNAV approaches are currently available in <i>Vice</i>; the table below summarizes them.
+              </p>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>4L</td>
+                    <td><code>I4L</code></td>
+                    <td><code>R4L</code></td>
+                  </tr>
+                  <tr>
+                    <td>4R</td>
+                    <td><code>I4R</code></td>
+                    <td><code>R4R</code></td>
+                  </tr>
+                  <tr>
+                    <td>13L</td>
+                    <td><code>I3L</code></td>
+                    <td><code>R3L</code></td>
+                  </tr>
+                  <tr>
+                    <td>13R</td>
+                    <td>n/a</td>
+                    <td><code>R3R</code></td>
+                  </tr>
+                  <tr>
+                    <td>22L</td>
+                    <td><code>I2L</code></td>
+                    <td><code>R2L</code></td>
+                  </tr>
+                  <tr>
+                    <td>22R</td>
+                    <td><code>I2R</code></td>
+                    <td><code>R2R</code></td>
+                  </tr>
+                  <tr>
+                    <td>31L</td>
+                    <td><code>I1L</code></td>
+                    <td><code>R1L</code></td>
+                  </tr>
+                  <tr>
+                    <td>31R</td>
+                    <td><code>I1R</code></td>
+                    <td><code>R1R</code></td>
+                  </tr>
+                </tbody>
+                </table>
+
+            </section>
         </article>
 
         <article class="docs-article" id="section-installation">
@@ -198,7 +310,7 @@
 
             <section class="docs-intro">
               <p><i>Vice</i> provides installers for both Windows and Mac that make installation and upgrades straightforward.
-                On Linux, a more manual process is currently necessary.
+                On Linux, a more manual process is necessary.
               </p>
             </section><!--//docs-intro-->
           </header>
@@ -206,9 +318,7 @@
             <h2 class="section-heading"><i class="fa-brands fa-windows"></i> Windows</h2>
 
             <p>To install <i>vice</i> on Windows, download and launch the installer below.
-              After installation, you can find the <i>vice</i> application in the <i>Program Files (x86)/Vice</i> folder.
-              (Apologies that the installer does not yet offer the option of adding <i>vice</i> to your program menu or making a desktop shortcut; that will
-              be remedied in a future release.)
+              After installation, <i>vice</i> will be available in the Windows Start menu and a shortcut will be added to your desktop.
             </p>
             <div class="content">
               <div class="callout-block callout-block-info">
@@ -220,7 +330,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.2.1/Vice-v0.2.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.2.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.3.0/Vice-v0.3.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.3.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -229,14 +339,13 @@
             <p>On a Macintosh computer, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel (x86) and Apple (M1, ...) CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.2.1/Vice-v0.2.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.2.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.3.0/Vice-v0.3.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.3.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
             <h2 class="section-heading"><i class="fa-brands fa-linux"></i> Linux</h2>
 
-            <p>On Linux systems, it is currently necessary to install <i>vice</i> from source.
-              (We will provide a simpler installation process in the future.)
+            <p>On Linux systems, it is necessary to install <i>vice</i> from source.
               See the <a href="https://github.com/mmp/vice#building-vice">directions on building vice on Linux</a> in the source code distribution for details.
               </p>
           </section><!--//section-->
