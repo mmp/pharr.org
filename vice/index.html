@@ -70,12 +70,15 @@
 	  <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#jfk">KJFK Scenarios</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#phl">KPHL Scenarios</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Linux</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
 <!--	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-faqs"><span class="theme-icon-holder me-2"><i class="fas fa-lightbulb"></i></span>FAQs</a></li>
 -->
 	</ul>
@@ -90,19 +93,19 @@
 <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
 </div>
     <br>
-	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-02-18</span></h1>
+	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-02-27</span></h1>
 
 	    <section class="docs-intro">
-	      <p><i>Vice</i> is (now) an air traffic control simulator, focused on TRACON.
+	      <p><i>vice</i> is (now) an air traffic control simulator, focused on TRACON.
                 Its goal is to provide a training experience similar to a VATSIM sweatbox with an instructor, 
                 just without the instructor, making it possible to better
-                prepare for sweatboxes and to practice vectoring techniques without being on the network.
+                prepare for sweatboxes and to practice vectoring and traffic handling techniques without being on the network.
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
-              <p><i>Vice</i> currently only supports departure and arrival control
-                scenarios at KJFK, though adding scenarios at more
-                airports wouldn't be too much work; KPHL will
-                likely come next.  <a href="mailto:matt@pharr.org">Get in touch</a> if you're interested in helping!
+              <p><i>vice</i> currently supports departure and arrival control
+                scenarios at KJFK and KPHL, though adding scenarios at more
+                airports wouldn't be too much work.
+                <a href="mailto:matt@pharr.org">Get in touch</a> if you're interested in helping!
               </p>
               <p>
                 There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of the system.
@@ -112,24 +115,28 @@
 
 	  <section class="docs-intro" id="started">
             <h2 class="section-heading">Getting Started</h2>
-            <p>The radar client interface that <i>Vice</i> provides is based on STARS, by way of reimplementing most of the functionality in 
+            <p>The radar client interface that <i>vice</i> provides is based on STARS, by way of reimplementing most of the functionality in 
               <a href="https://vstars.rosscarlson.dev">vSTARS</a>. In general, all of the keyboard and menu commands that are available in vSTARS
-              are available in <i>Vice</i> (though quicklook and CRDA are not yet implemented).  See the <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS Command Reference</a> for a summary of the commands supported.
-              The appearance of <i>Vice</i> can be similarly configured using the DCB buttons at the top of the window.
+              are available in <i>vice</i> (though quicklook and CRDA are not yet implemented).  See the <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS Command Reference</a> for a summary of the commands supported.
+              The appearance of <i>vice</i> can be similarly configured using the DCB buttons at the top of the window.
             </p>
             <p>
-              When <i>Vice</i> is launched, a window is shown for configuring the simulation.
-              A number of scenarios are available, some departure-only and some including both departures and arrivals.
+              When <i>vice</i> is launched, a window is shown for configuring the simulation.
+              A number of scenarios are available, some departure-only and
+              some including both departures and arrivals.
+              Here is one of the KJFK scenarios:
             </p>
             <div class="text-center">
-              <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="594" class="img-fluid" alt="configuration dialog box">
+              <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="593" class="img-fluid" alt="configuration dialog box">
             </div>
             <br>
             <p>
               In addition to the total number of aircraft to launch in the simulation, it is possible to set the average departure rate (ADR)
               for all of the airports that may have departures in the scenario as well as the average arrival rate (AAR) for all of the
-              active arrivals.
-              Both of these are specified in terms of aircraft per hour, so an ADR of 30 corresponds to an aircraft  departing
+              active arrival airports.
+              (Here, we have the option of also having arrivals to Republic,
+              KFRG, a JFK satellite airport.)
+              Both of these rates are specified in terms of aircraft per hour, so an ADR of 30 corresponds to an aircraft  departing
               every two minutes (on average).
               If you'd like an arrival-only scenario, for example, just set all of the departure rates to zero.
               The "Sequencing challenge" slider controls how challenging the departure sequence is&mdash;the higher it is, the more likely it is
@@ -149,7 +156,7 @@
             <div class="text-center">
               <img src="menu.jpg" srcset="menu-2x.jpg 2x" width="133" height="107" class="img-fluid" alt="configuration dialog box">
             </div>
-            </br>
+            <br>
             <p>To adjust the amount of space used for flight strips, right click the line separating the flight strips from the
               radar window and drag left or right with your mouse.
               </p>
@@ -207,7 +214,7 @@
                     <td><code>D</code><i>alt</i></td>
                     <td>Directs the aircraft to descend to the specified
                     altitude, given in hundreds of feet.</td>
-                    <td><code>D020</code></td>
+                    <td><code>D20</code></td>
                   </tr>
                   <tr>
                     <td><code>S</code><i>knots</i></td>
@@ -239,14 +246,63 @@
 
 	    </section><!--//docs-intro-->
 
+	  <section class="docs-intro" id="airspace">
+            <h2 class="section-heading">Airspace</h2>
+            <p>
+              <i>vice</i> is able to indicate when aircraft are outside of the departure or approach airspace,
+              if it has information about the airspace boundaries.
+              (This information is currently only available for KPHL.)
+              If an aircraft is outside of its assigned airspace, a red "AS" error will be printed at the
+              top of its datablock, as shown below.
+              The valid altitudes for the aircraft are shown as well, if there are any valid altitudes
+              at its current location.
+              For example, the aircraft below is at 5,000' but should be between 10,000' and 12,000' (or should be at a different location!)
+            <div class="text-center">
+              <img src="violation.jpg" srcset="violation-2x.jpg 2x" width="100" height="89" class="img-fluid" alt="configuration dialog box">
+            </div>
+            </p>
+
+            <p>
+              Two commands are available to draw the boundaries and altitude ranges of the departure and approach airspace.
+              (Note that the placement of the drawn altitude labels is not always ideal.)
+              </p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>DA</code></td>
+                    <td>Draw the approach airspace, or stop drawing the approach airspace if it is currently being shown.</td>
+                  </tr>
+                  <tr>
+                    <td><code>DD</code></td>
+                    <td>Draw the departure airspace, or stop drawing the departure airspace if it is currently being shown.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+          </section>
+
 	  <section class="docs-intro" id="jfk">
             <h2 class="section-heading">KJFK Scenarios</h2>
 
             <p>
+              Scenarios are available for all of the usual JFK configurations.
+              It is also possible to include
+              KFRG arrivals, KLGA departures to the Southwest and to water gates, and KISP departures
+              to the North gate, if desired.
+              The "intra-TRACON" arrivals are flights from nearby
+              airports that don't arrive via STARS but are instead inbound from COL, ZIGGI, and DPK.
+            </p>
+            <p>
               Conveniently, the identifiers used for approaches with the "expect approach" and "cleared approach"
               commands are the same as the ones used for scratchpads.
               (Thus, you can practice scratchpad assignment while you're at it!)
-              Only ILS and RNAV approaches are currently available in <i>Vice</i>; the table below summarizes them.
+              Only ILS and RNAV approaches are currently available in <i>vice</i>; the table below summarizes the ones at KJFK.
               </p>
 
               <table class="table table-bordered">
@@ -275,7 +331,7 @@
                   </tr>
                   <tr>
                     <td>13R</td>
-                    <td>n/a</td>
+                    <td>&mdash;</td>
                     <td><code>R3R</code></td>
                   </tr>
                   <tr>
@@ -301,7 +357,106 @@
                 </tbody>
                 </table>
 
+            <p>
+             These are the supported KFRG approaches:
+              </p>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>&mdash;</td>
+                    <td><code>R1</code></td>
+                  </tr>
+                  <tr>
+                    <td>14</td>
+                    <td><code>I14</code></td>
+                    <td><code>R14</code></td>
+                  </tr>
+                  <tr>
+                    <td>19</td>
+                    <td>&mdash;</td>
+                    <td><code>R19</code></td>
+                  </tr>
+                  <tr>
+                    <td>32</td>
+                    <td>&mdash;</td>
+                    <td><code>R32</code></td>
+                  </tr>
+                </tbody>
+                </table>
+
             </section>
+
+	  <section class="docs-intro" id="phl">
+            <h2 class="section-heading">KPHL Scenarios</h2>
+
+            <p><i>vice</i> offers scenarios at KPHL for both West and East ops.
+              There is also a "KPHL 27R Final" scenario that has flows of traffic from the
+              North and South that need to be merged in the approach.
+            </p>
+            <p>
+              As with KJFK, the identifiers used for the "expect approach" and "cleared approach"
+              commands correspond to the scratchpad labels used at KPHL.
+              For now only the ILS approaches are available (except for runway 35, where there is no localizer.)
+              They are summarized for reference below:
+            </p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>9L</td>
+                    <td><code>I9L</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>9R</td>
+                    <td><code>I9R</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>17</td>
+                    <td><code>17Z</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>26</td>
+                    <td><code>I26</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>27L</td>
+                    <td><code>27L</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>27R</td>
+                    <td><code>27R</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>35</td>
+                    <td>&mdash;</td>
+                    <td><code>G35</code></td>
+                  </tr>
+                </tbody>
+                </table>
+
+          </section>
+          
         </article>
 
         <article class="docs-article" id="section-installation">
@@ -309,13 +464,12 @@
             <h1 class="docs-heading">Installation</h1>
 
             <section class="docs-intro">
-              <p><i>Vice</i> provides installers for both Windows and Mac that make installation and upgrades straightforward.
-                On Linux, a more manual process is necessary.
+              <p>Installing <i>vice</i> is straightforward, at least on Windows and Macs; on Linux, more work is needed.
               </p>
             </section><!--//docs-intro-->
           </header>
           <section class="docs-section" id="install-windows">
-            <h2 class="section-heading"><i class="fa-brands fa-windows"></i> Windows</h2>
+            <h2 class="section-heading"><i class="fa-brands fa-windows"></i>Windows</h2>
 
             <p>To install <i>vice</i> on Windows, download and launch the installer below.
               After installation, <i>vice</i> will be available in the Windows Start menu and a shortcut will be added to your desktop.
@@ -330,16 +484,16 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.3.1/Vice-v0.3.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.3.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.4.0/Vice-v0.4.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
             <h2 class="section-heading"><i class="fa-brands fa-apple"></i> Macintosh</h2>
 
-            <p>On a Macintosh computer, download the <i>zip</i> file below; it contains a universal binary that runs
+            <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel (x86) and Apple (M1, ...) CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.3.1/Vice-v0.3.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.3.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.4.0/Vice-v0.4.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -360,6 +514,17 @@ how it simulates aircraft or the STARS interface.
 <p>The best way to report bugs is vie email at <i>matt@pharr.org</i>. Alternatively, if you have a github account, you can
   file bugs directly in <a href="https://github.com/mmp/vice/issues">vice's issue tracker</a>.
   </p>
+          </section><!--//section-->
+
+          <section class="docs-section" id="releases">
+            <h2 class="section-heading">Release History</h2>
+
+            <ul>
+              <li>0.2.1: Initial release</li>
+              <li>0.3.1: Added KJFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
+              <li>0.4.0: Added KPHL scenarios, airspace warnings, and KFRG arrivals and intra-TRACON arrivals for KJFK.</li>
+            </ul>
+
           </section><!--//section-->
 
         </article><!--//docs-article-->
