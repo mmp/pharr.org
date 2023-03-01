@@ -189,20 +189,24 @@
                     <td><code>H050</code></td>
                   </tr>
                   <tr>
-                    <td><code>L</code><i>heading</i> / <code>L</code><i>degrees</i></td>
-                    <td>Directs the aircraft to turn left. If three digits
-                    are provided, the aircraft turns to that heading. If
-                    two digits are provided, the aircraft turns left that
-                    many degrees.</td>
-                    <td><code>L130</code> / <code>L10</code></td>
+                    <td><code>L</code><i>heading</i></td>
+                    <td>Directs the aircraft to turn left to the specified heading.</td>
+                    <td><code>L130</code></td>
                   </tr>
                   <tr>
-                    <td><code>R</code><i>heading</i> / <code>R</code><i>degrees</i></td>
-                    <td>Directs the aircraft to turn right. If three digits
-                    are provided, the aircraft turns to that heading. If
-                    two digits are provided, the aircraft turns right that
-                    many degrees.</td>
-                    <td><code>R270</code> / <code>R10</code></td>
+                    <td><code>L</code><i>degrees</i><code>D</code></td>
+                    <td>Directs the aircraft to turn the specified number of degrees to the left.</td>
+                    <td><code>L10D</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>R</code><i>heading</i></td>
+                    <td>Directs the aircraft to turn right to the specified heading.</td>
+                    <td><code>R210</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>R</code><i>degrees</i><code>D</code></td>
+                    <td>Directs the aircraft to turn the specified number of degrees to the right.</td>
+                    <td><code>R20D</code></td>
                   </tr>
                   <tr>
                     <td><code>D</code><i>fix</i></td>
@@ -226,14 +230,14 @@
                     <td><code>S</code><i>knots</i></td>
                     <td>Gives the aircraft a speed restriction.  If the restriction is given after an aircraft is cleared for an approach,
                     the speed restriction is in effect until 5 mile final.</td>
-                    <td><code>S250</code></td>
+                    <td><code>S210</code></td>
                   </tr>
                   <tr>
                     <td><code>E</code><i>approach</i></td>
                     <td>Tells the aircraft to expect the specified
                     approach. This command must be used before an aircraft
                     is cleared for an approach.  It also adds the approach
-                    fixes to the end of the aircraft's flight plan</td>
+                    fixes to the end of the aircraft's route.</td>
                     <td><code>EI2L</code></td>
                   </tr>
                   <tr>
@@ -490,7 +494,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.4.1/Vice-v0.4.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.4.2/Vice-v0.4.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.2 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -499,7 +503,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel (x86) and Apple (M1, ...) CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.4.1/Vice-v0.4.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.4.2/Vice-v0.4.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.2 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -530,6 +534,7 @@ how it simulates aircraft or the STARS interface.
               <li>0.3.1: Added KJFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
               <li>0.4.0: Added KPHL scenarios, airspace warnings, and KFRG arrivals and intra-TRACON arrivals for KJFK.</li>
               <li>0.4.1: Fixed bugs in datablock positioning, added "turn left/right X degrees" commands.</li>
+              <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
             </ul>
 
           </section><!--//section-->
