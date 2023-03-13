@@ -9773,11 +9773,11 @@ a.text-link {
 
 .docs-article {
   padding: 2rem;
-  color: #5d6778;
+  color: #303040;
   scroll-margin-top: 69px;
   scroll-snap-margin-top: 69px; }
   .docs-article strong {
-    color: #252930; }
+    color: #080808; }
   .docs-article .docs-heading {
     font-size: 3rem;
     margin-bottom: 2rem;

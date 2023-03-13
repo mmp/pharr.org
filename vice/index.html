@@ -67,19 +67,29 @@
       </div>
       <nav id="docs-nav" class="docs-nav navbar">
 	<ul class="section-items list-unstyled nav flex-column pb-3">
-	  <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
+	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#jfk">KJFK Scenarios</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#phl">KPHL Scenarios</a></li>
+	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-scenarios"><span class="theme-icon-holder me-2"><i class="fas fa-earth-americas"></i></span>Scenarios</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#ewr">KEWR</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#jfk">KJFK</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#phl">KPHL</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#lib">LIB</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Linux</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
-<!--	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-faqs"><span class="theme-icon-holder me-2"><i class="fas fa-lightbulb"></i></span>FAQs</a></li>
+<!--	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-engineering"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Engineering</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-locations">Specifying Locations</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-videomaps">Video Maps</a></li>
+          <li class="nav-item"><a class="nav-link scrollto" href="#fe-general">General Configuration</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airlines-aircraft">Airlines and Aircraft</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports and Departures</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-arrivals">Arrivals</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
 -->
 	</ul>
       </nav><!--//docs-nav-->
@@ -93,7 +103,7 @@
 <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
 </div>
     <br>
-	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-02-27</span></h1>
+	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-03-13</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is (now) an air traffic control simulator, focused on TRACON.
@@ -103,8 +113,9 @@
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> currently supports departure and arrival control
-                scenarios at KJFK and KPHL, though adding scenarios at more
-                airports wouldn't be too much work.
+                scenarios at KEWR, KJFK and KPHL, as well as Liberty Departure scenarios.
+                Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
+                documentation for the format will be posted in the next few days.
                 <a href="mailto:matt@pharr.org">Get in touch</a> if you're interested in helping!
               </p>
               <p>
@@ -124,12 +135,16 @@
               When <i>vice</i> is launched, a window is shown for configuring the simulation.
               A number of scenarios are available, some departure-only and
               some including both departures and arrivals.
-              Here is one of the KJFK scenarios:
+              Here is the window for KJFK:
             </p>
             <div class="text-center">
               <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="593" class="img-fluid" alt="configuration dialog box">
             </div>
             <br>
+            <p>
+              Scenarios may offer one or more control positions; KJFK offers both approach and departure.
+              Once a control position is chosen, you can choose a specific runway configuration.
+              </p>
             <p>
               In addition to the total number of aircraft to launch in the simulation, it is possible to set the average departure rate (ADR)
               for all of the airports that may have departures in the scenario as well as the average arrival rate (AAR) for all of the
@@ -296,6 +311,98 @@
               </table>
 
           </section>
+          </article>
+
+	<article class="docs-article" id="section-scenarios">
+	  <h1 class="docs-heading">Scenarios</h1>
+
+	  <section class="docs-intro">
+            <p>Departure and arrival scenarios are now available at 4 ZNY airports.
+              For all of them, the identifiers used for approaches with the "expect approach" and "cleared approach"
+              commands are the same as the ones used for scratchpads.
+              (Thus, you can practice scratchpad assignment while you're at it!)
+              </p>
+	    </section><!--//docs-intro-->
+	  </header>
+
+
+	  <section class="docs-intro" id="ewr">
+            <h2 class="section-heading">KEWR Scenarios</h2>
+
+            <p>
+              Scenarios are available for all of the usual airport configurations, at both KEWR and KTEB.
+              The following approaches are available at KEWR:
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>4L</td>
+                    <td><code>I4L</code></td>
+                    <td><code>R4L</code></td>
+                  </tr>
+                  <tr>
+                    <td>4R</td>
+                    <td><code>I4R</code></td>
+                    <td><code>R4R</code></td>
+                  </tr>
+                  <tr>
+                    <td>11</td>
+                    <td><code>I11</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>22L</td>
+                    <td><code>I2L</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>22R</td>
+                    <td><code>I2R</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>29</td>
+                    <td>&mdash;</td>
+                    <td>X: <code>R29</code>, Y: <code>RY9</code>, Z: <code>RZ9</code></td>
+                  </tr>
+                </tbody>
+                </table>
+              <p>And these are the KTEB approaches:</p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>6</td>
+                    <td><code>I06</code></td>
+                    <td>X: <code>RX6</code>, Y: <code>RY6</code>, Z: <code>RZ6</code></td>
+                  </tr>
+                  <tr>
+                    <td>19</td>
+                    <td><code>I19</code></td>
+                    <td>X: <code>RX9</code>, Y: <code>RY9</code>, Z: <code>RZ9</code></td>
+                  </tr>
+                  <tr>
+                    <td>24</td>
+                    <td>&mdash;</td>
+                    <td><code>R24</code></td>
+                  </tr>
+                </tbody>
+                </table>
+
+              </section>
 
 	  <section class="docs-intro" id="jfk">
             <h2 class="section-heading">KJFK Scenarios</h2>
@@ -308,14 +415,8 @@
               The "intra-TRACON" arrivals are flights from nearby
               airports that don't arrive via STARS but are instead inbound from COL, ZIGGI, and DPK.
             </p>
-            <p>
-              Conveniently, the identifiers used for approaches with the "expect approach" and "cleared approach"
-              commands are the same as the ones used for scratchpads.
-              (Thus, you can practice scratchpad assignment while you're at it!)
-              Only ILS and RNAV approaches are currently available in <i>vice</i>; the table below summarizes the ones at KJFK.
-              </p>
 
-              <table class="table table-bordered">
+              <table class="table">
                 <thead>
                   <tr>
                     <th>Runway</th>
@@ -371,7 +472,7 @@
              These are the supported KFRG approaches:
               </p>
 
-              <table class="table table-bordered">
+              <table class="table">
                 <thead>
                   <tr>
                     <th>Runway</th>
@@ -413,12 +514,12 @@
               North and South that need to be merged in the approach.
             </p>
             <p>
-              As with KJFK, the identifiers used for the "expect approach" and "cleared approach"
+              As with the other airports, the identifiers used for the "expect approach" and "cleared approach"
               commands correspond to the scratchpad labels used at KPHL.
               For now only the ILS approaches are available (except for runway 35, where there is no localizer.)
               They are summarized for reference below:
             </p>
-              <table class="table table-bordered">
+              <table class="table">
                 <thead>
                   <tr>
                     <th>Runway</th>
@@ -467,6 +568,15 @@
 
           </section>
           
+	  <section class="docs-intro" id="lib">
+            <h2 class="section-heading">Liberty Departure</h2>
+
+            <p>
+              Not surprisingly, the Liberty departure scenarios only include departures.
+              Departures from KEWR, KJFK, and KLGA can be simulated.
+            </p>
+
+          </section>
         </article>
 
         <article class="docs-article" id="section-installation">
@@ -494,16 +604,16 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.4.3/Vice-v0.4.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.3 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.5.0/Vice-v0.5.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
             <h2 class="section-heading"><i class="fa-brands fa-apple"></i> Macintosh</h2>
 
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
-              on both Intel (x86) and Apple (M1, ...) CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
+              on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.4.3/Vice-v0.4.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.4.3 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.5.0/Vice-v0.5.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -536,6 +646,7 @@ how it simulates aircraft or the STARS interface.
               <li>0.4.1: Fixed bugs in datablock positioning, added "turn left/right X degrees" commands.</li>
               <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
               <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
+              <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
             </ul>
 
           </section><!--//section-->
