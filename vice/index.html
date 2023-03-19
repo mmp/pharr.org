@@ -82,15 +82,16 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Linux</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
-<!--	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-engineering"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Engineering</a></li>
+	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-engineering"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Engineering</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-locations">Specifying Locations</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-videomaps">Video Maps</a></li>
-          <li class="nav-item"><a class="nav-link scrollto" href="#fe-general">General Configuration</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-routes">Aircraft Routes</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airlines-aircraft">Airlines and Aircraft</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-videomaps">Video Maps</a></li>
+          <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenario-groups">Scenario Groups</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports and Departures</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-arrivals">Arrivals</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airspace">Airspace</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
--->
 	</ul>
       </nav><!--//docs-nav-->
     </div><!--//docs-sidebar-->
@@ -115,8 +116,8 @@
               <p><i>vice</i> currently supports departure and arrival control
                 scenarios at KEWR, KJFK and KPHL, as well as Liberty Departure scenarios.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
-                documentation for the format will be posted in the next few days.
-                <a href="mailto:matt@pharr.org">Get in touch</a> if you're interested in helping!
+                see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
+                and please <a href="mailto:matt@pharr.org">get in touch</a> if you'd like to contribute!
               </p>
               <p>
                 There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of the system.
@@ -317,8 +318,9 @@
 	  <h1 class="docs-heading">Scenarios</h1>
 
 	  <section class="docs-intro">
-            <p>Departure and arrival scenarios are now available at 4 ZNY airports.
-              For all of them, the identifiers used for approaches with the "expect approach" and "cleared approach"
+            <p>Departure and arrival scenarios are available at a number of ZNY airports as well as for Liberty departure,
+              which merges departures from multiple airports.
+              For all of these, the identifiers used for approaches with the "expect approach" and "cleared approach"
               commands are the same as the ones used for scratchpads.
               (Thus, you can practice scratchpad assignment while you're at it!)
               </p>
@@ -589,7 +591,7 @@
             </section><!--//docs-intro-->
           </header>
           <section class="docs-section" id="install-windows">
-            <h2 class="section-heading"><i class="fa-brands fa-windows"></i>Windows</h2>
+            <h2 class="section-heading"><i class="fa-brands fa-windows"></i> Windows</h2>
 
             <p>To install <i>vice</i> on Windows, download and launch the installer below.
               After installation, <i>vice</i> will be available in the Windows Start menu and a shortcut will be added to your desktop.
@@ -604,7 +606,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.5.0/Vice-v0.5.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.0 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.5.1/Vice-v0.5.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.1 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -613,7 +615,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.5.0/Vice-v0.5.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.0 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.5.1/Vice-v0.5.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.1 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -647,11 +649,733 @@ how it simulates aircraft or the STARS interface.
               <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
               <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
               <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
+              <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
             </ul>
 
           </section><!--//section-->
 
         </article><!--//docs-article-->
+
+        <article class="docs-article" id="section-facility-engineering">
+          <header class="docs-header">
+            <h1 class="docs-heading">Facility Engineering</h1>
+
+            <section class="docs-intro">
+              <p>All of the configuration of <i>vice</i> is via JSON-formatted files.
+                Extending <i>vice</i> to include more airports or additional scenarios is a matter
+                of generating additional JSON that provides the necessary information.
+              </p>
+              <p>In the following, the use of terms like "element", "object", "member", "array", etc.,
+                correspond to their use in the JSON specification.  See <a href="https://www.json.org/json-en.html">this page</a> for reference.
+                </p>
+              <p>Scenarios are directly included in <i>vice</i> when a release is made.
+                See the <a href="https://github.com/mmp/vice/tree/master/scenarios"><tt>scenarios/</tt> directory</a> in the 
+                  vice source code for the scenarios that are currently available and the
+                <a href="https://github.com/mmp/vice/tree/master/videomaps"><tt>videomaps/</tt> directory</a> for
+                the video map definitions.
+                Files in those directories with names ending with a "zst" suffix have been compressed using <a href="https://facebook.github.io/zstd/">zstandard</a>;
+                in order to examine their contents, you'll want to install zstandard or another decompression program that supports that
+                format.
+              </p>
+              <p>When developing new scenarios, you'll want to open a command prompt and run <i>vice</i> from the command line.
+                With the command line there are two options make it possible to specify additional files for testing:
+              </p>
+              <ul>
+                <li>The <tt>-scenario</tt> command line option takes a single filename.
+                The scenario specified file is loaded at startup time; if it has the same name as an existing scenario, it replaces
+                  that scenario's definition.
+                </li>
+                <li>In a similar manner, the <tt>-videomap</tt> command line option also takes a single filename that specifies a file
+                  with video map definitions.
+                </li>
+              </ul>
+              <p>
+                Thus, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations, or you
+                or might specify completely new scenario and video map files if you're working on support for a new ARTCC.
+              </p>
+
+            </section><!--//docs-intro-->
+          </header>
+
+          <section class="docs-section" id="fe-locations">
+            <h2 class="section-heading">Specifying Locations</h2>
+
+            <p>Throughout the <i>vice</i> configuration files, it's often necessary to specify various locations on the Earth.
+              <i>vice</i> has a built-in database of all of the VORs, NDBs, and fixes in the United States (courtesy of the FAA),
+              which allows using these directly for specifying locations.  Locations can also be specified via
+              latitude-longitude positions, given as strings. For convenience, three latitude-longitude formats are supported.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Encoding</th>
+                    <th>Description</th>
+                    <th style="width:30%">Example</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Name of VOR/NDB/fix</td>
+                    <td>A string giving the name of a VOR, NDB, or fix in the United States.</td>
+                    <td><code>"JFK"</code></td>
+                  </tr>
+                  <tr>
+                    <td>Decimal value pair</td>
+                    <td>A pair of decimal numbers where the first specifies the longitude and the second specifies the latitude.</td>
+                    <td><code>"40.6328888, -73.771385"</code></td>
+                  </tr>
+                  <tr>
+                    <td>Degrees, minutes, seconds</td>
+                    <td>A pair of values with position specified in degrees, minutes, and seconds, separated by periods.
+                      "N" and "S" are used to distinguish North and South latitudes and similarly for "E" and "W" with longitudes.</td>
+                    <td><code>"N40.37.58.400, W073.46.17.000"</code></td>
+                  </tr>
+                  <tr>
+                    <td>ISO6790 Annex H</td>
+                    <td>A more compact degrees/minutes/seconds representation; see the <a href="https://en.wikipedia.org/wiki/ISO_6709#String_expression_(Annex_H)">Wikipedia page</a> for details.</td>
+                    <td><code>"+403758.400-0734617.000"</code></td>
+                  </tr>
+                </tbody>
+                </table>
+            <p>(In all three examples above, the location specified is the same&mdash;the JFK VOR.)
+            </p>
+            <p>
+              In <i>vice</i>, if you hold down the control and shift keys and click on a point on the video map, the corresponding
+              latitude-longitude position is copied to the clipboard&mdash;this can be very useful when developing new scenarios!
+            </p>
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-routes">
+            <h2 class="section-heading">Routes</h2>
+
+            <p><i>vice</i> uses a custom syntax for specifying the routes of aircraft, both for arrivals and departures.
+              In addition to the lateral positions along the route, it is possibly to specify speed and altitude restrictions, handoff points,
+              and headings to fly.
+            </p>
+            <p>Here is an example route from a JFK departure. The first two waypoints are custom fixes at the start and end of the KJFK 31L runway,
+              specified via the "fixes" object in the <a href="#fe-scenario-groups">scenario group</a>, while the next three are standard
+              fixes.  The "#223" at the end leaves the aircraft on a 223 heading as it departs RNGRR.  It will maintain that heading until it
+              is further vectored by the controller.  If there's are further fixes after such a heading, the aircraft may be sent direct to one of
+              those fixes by the controller.
+            <pre>
+  "_JFK_31L _JFK_13R SKORR METSS RNGRR #223"
+            </pre>
+            <p>
+              Altitude and speed restrictions can be specified at fixes.  Here's an example from a JFK arrival.  The "@a3000" after CATOD specifies
+              a 3,000' altitude restriction at the crossing and "@s210" specifies a 210 kts speed restriction. 
+              </p>
+            <pre>
+  "PZULU CATOD@a3000@s210 IGIDE@a1900 _JFK_31R@a50",
+            </pre>
+            <p>Finally, a handoff point can be specified using a single "@".  Here is an example from the CAMRN4 arrival at KJFK.
+              Immediately after the aircraft reaches KARRS it will be handed off from the virtual controller that is tracking it (NY_CTR in this case)
+              to the user's control position.  The aircraft will continue to CAMRN and then fly a 041 heading until the user gives
+              it vectors.
+            </p>
+            <pre>
+  "N039.46.43.120,W074.03.15.529 KARRS @ CAMRN #41"
+            </pre>
+          </section><!--//section-->
+
+          </section><!--//section-->
+          <section class="docs-section" id="fe-airlines-aircraft">
+            <h2 class="section-heading">Airlines and Aircraft</h2>
+
+            <p>Both departures and arrivals need to know about which airlines fly their routes and which aircraft they use for them.
+              Airlines are specified via their ICAO strings (e.g., AAL for American Airlines).  See the file
+              <a href="https://github.com/mmp/vice/blob/master/resources/openscope-airlines.json">openscope-airlines.json</a>
+              for the database of possible airlines.
+              In that file, each airline may have one or more aircraft fleets specified, in its "fleets" member.
+              If no fleet is specified, <i>vice</i> randomly chooses an aircraft type from the "default" fleet, but if
+              a particular fleet's aircraft is a better match to a route, you may want to use it.
+              For example, AAL's "long" fleet would be a good choice for trans-Atlantic flights.
+            </p>
+            <p>For reference, the available types of aircraft and their performance characteristics are available in the
+              <a href="https://github.com/mmp/vice/blob/master/resources/openscope-aircraft.json">openscope-aircraft.json</a>
+              file.
+            </p>
+            <p>As is probably obvious, both of these databases are by way of <a href="https://github.com/openscope/openscope">openScope</a>,
+              which made them available under the MIT license.
+            </p>
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-videomaps">
+            <h2 class="section-heading">Video Maps</h2>
+
+            <p>Video maps are specified separately from the rest of the configuration since they require fairly large files and are not normally edited by hand.
+              Video map files are simply JSON files with a series of members, each one of which stores an array of strings giving latitude-longitude positions.
+              Each successive pair of positions specifies a line to be draw when rendering the video map.
+              The following shows an excerpt from the ZNY video maps file that gives a sense of the format.
+            </p>
+            <pre>
+{
+  "ABE": [
+    "N041.00.05.616,W075.32.00.217",
+    "N041.00.01.277,W075.32.29.551",
+    ...
+  ],
+  "ABE - MVA": [
+    "N040.31.00.726,W076.31.35.993",
+    "N040.30.09.063,W076.31.21.985",
+    ...
+  ],
+  ...
+}
+</pre>
+        </section><!--//section-->
+
+          <section class="docs-section" id="fe-scenario-groups">
+            <h2 class="section-heading">Scenario Groups</h2>
+
+            <p><i>vice</i> offers users a variety of ATC scenarios, where a scenario consists of one or more airports being controlled,
+              a control position (departure, approach, etc.), and airport configurations&mdash;the runways that are active at each
+              airport.  Scenarios are organized in <i>scenario groups</i>, which generally collect multiple control scenarios at a single
+              airport.
+              Each scenario group is specified by its own JSON file; see the <a href="https://github.com/mmp/vice/tree/master/scenarios"><tt>scenarios/</tt> directory</a> in the
+              <i>vice</i> source code distribution for examples.
+            </p>
+            <p>These are the elements of a scenario group:</p>
+              <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"airports"</td>
+                <td>Object</td>
+                <td>Defines all of the airports that are included in the scenarios. See the <a href="#fe-airports">airports section</a> for details.</td>
+              </tr>
+              <tr>
+                <td>"airspace"</td>
+                <td>Object</td>
+                <td>Defines the extent of controllers' airspace; see <a href="#fe-airspace">airspace</a> for details.</td>
+              </tr>
+              <tr>
+                <td>"arrival_groups"</td>
+                <td>Object</td>
+                <td>Defines the possible arrival routes; see <a href="#fe-arrivals">arrivals</a>.</td>
+              </tr>
+              <tr>
+                <td>"center"</td>
+                <td>String</td>
+                <td>Default radar scope center (as a <a href="#fe-locations">latitude-longitude position</a>.)</td>
+              </tr>
+              <tr>
+                <td>"control_positions"</td>
+                <td>Object</td>
+                <td>Information about all of the controllers that are used in the scenarios in the group.  For each controller, the following members should be specified:
+                  <ul>
+                    <li>"callsign": a string giving the position's callsign (e.g., "NY_CTR")</li>
+                    <li>"frequency": the controller's radio frequency, expressed as an integer (e.g., 125325 for 125.325)</li>
+                    <li>"scope_char": a string giving a single character to use on radar scopes for tracks owned by this position (e.g., "C")</li>
+                    <li>"sector_id": the controller's sector id, as used for handoffs, etc. (e.g., "N56")</li>
+                    </ul>
+                  </td>
+              </tr>
+              <tr>
+                <td>"default_controller"</td>
+                <td>String</td>
+                <td>A default to use for the initial selected control position when the scenario group is chosen.
+                  There must be at least one scenario for this controller in "scenarios".</td>
+              </tr>
+              <tr>
+                <td>"default_scenario"</td>
+                <td>String</td>
+                <td>A default to use for the initial scenario when the scenario group is chosen.
+                  Must match one of the members in "scenarios".</td>
+              </tr>
+              <tr>
+                <td>"fixes"</td>
+                <td>Object</td>
+                <td>Each member associates a name with a latitude-longitude location. These names can be used when specifying
+                  routes for departures and arrivals. (Note that they cannot be used when specifying other locations in the scenario group configuration.)
+                  For example, this associates a useful name with the point at the end of runway 22R at JFK: <code>"_JFK_22R": "N040.39.00.362,W073.45.49.053"</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>"magnetic_variation"</td>
+                <td>Number</td>
+                <td>Number of degrees difference between true North and magnetic North.
+                  Around New York, for example, this value is approximately 13.</td>
+              </tr>
+              <tr>
+                <td>"name"</td>
+                <td>String</td>
+                <td>The name for the scenario group.  This name cannot be the same as the name for any of the other scenario groups.</td>
+              </tr>
+              <tr>
+                <td>"nm_per_latitude"</td>
+                <td>Number</td>
+                <td>Number of nautical miles per degree of latitude in the area around the scenario group's center point.
+                  On Earth, this should be 60.
+                </td>
+              </tr>
+              <tr>
+                <td>"nm_per_longitude"</td>
+                <td>Number</td>
+                <td>Number of nautical miles per degree of longitude in the area around the scenario group's center point.
+                  This value depends on the center point's latitude; it's around 45 around KJFK, for example.
+                </td>
+              </tr>
+              <tr>
+                <td>"primary_airport"</td>
+                <td>String</td>
+                <td>The main airport for the scenario.
+                  This is used to determine which airport's altimeter and winds to include at the top of the SSA list in the STARS radar scope.</td>
+              </tr>
+              <tr>
+                <td>"radar_sites"</td>
+                <td>Object</td>
+                <td>Specification of all of the radar sites.
+                  (A good source of data for these is the <code>RadarSites</code> section of your ARTCC's vSTARs configuration file.)
+                  Each object member describes a radar site; the member's name gives the site's identifier.
+                  Each radar site has the following configuration values:
+                  <ul>
+                    <li>"char": a single character string identifier for the radar</li>
+                    <li>"elevation": an integer giving the radar site's elevation in feet</li>
+                    <li>"position": the radar's lateral position</li>
+                    <li>"primary_range": an integer giving the range in nautical miles at which the radar can pick up a primary track (typically, 60)</li>
+                    <li>"secondary_range": an integer giving the range in nautical miles at which the radar can pick up a secondary track (typically, 120)</li>
+                    <li>"silence_angle": the spread angle in degrees of the radar's "cone of silence"&mdash;the volume above it where aircraft cannot be tracked (typically, 30)</li>
+                    <li>"slope_angle": the angle in degrees with respect to the ground that the base of radar coverage increases as a function of distance from the radar site (typically, 0.175)</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>"scenarios"</td>
+                <td>Object</td>
+                <td>This defines all of the ATC scenarios that are available in the scenario group. See the <a href="#fe-scenarios">scenarios section</a> for details.</td>
+              </tr>
+              <tr>
+                <td>"scratchpads"</td>
+                <td>Object</td>
+                <td>Each member specifies a scratchpad entry that is assigned when a departing aircraft has a given exit fix.  Example: <code>"MERIT": "MER"</code></td>
+              </tr>
+              <tr>
+                <td>"stars_maps"</td>
+                <td>Array of objects</td>
+                <td>These objects specify the available video maps in the STARS scope; the first 6 are shown in the main DCB and all are available under the "MAPS" sub-menu.
+                  Each one has three member values:
+                  <ul>
+                    <li>"group": either 0 or 1, to denote map group "A" or "B".  (STARS allows setting the brightness of these separately.)</li>
+                    <li>"label": a short string giving the map's label to show in the STARS DCB (e.g., "JFK4")</li>
+                    <li>"name": a string giving the name of the map in the video map file (e.g., "N90 JFK - 4s")</li>
+                    </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>"video_map_file"</td>
+                <td>String</td>
+                <td>Filename of the video map file from which the maps specified in "stars_maps" are found (e.g., "videomaps/zny-maps.json.zst")</td>
+              </tr>
+            </tbody>
+              </table>
+
+          </section><!--//section-->
+          <section class="docs-section" id="fe-airports">
+            <h2 class="section-heading">Airports and Departures</h2>
+
+            <p>The airports in a scenario group are specified via the "airports" member of the scenario group.
+              Each airports is a separate member, named according to the airport's ICAO code (e.g., "KJFK").
+              The airport object then has the following member variables:
+            </p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"approaches"</td>
+                <td>Object</td>
+                <td>Defines all of the approaches to the airport that may be used by aircraft.
+                  Member names give the abbreviated name of the approach, as used in <i>vice</i>'s <a href="#commands">ATC commands</a>.
+                  Each approach is then defined by the following members:
+                  <ul>
+                    <li>"full_name": a string giving the full name of the approach (e.g., "RNAV Z Runway 13L")</li>
+                    <li>"type": a string indicating the type of the approach; it must be either "ILS" or "RNAV"</li>
+                    <li>"waypoints": an array of one or more strings giving the approach's route.</li>
+                  </ul>
+                  Multiple strings can be provided for "waypoints" for approaches with multiple IAFs (e.g. an RNAV "T" configuration).
+                  Arriving aircraft are removed from the simulation when they reach their last approach waypoint.
+                  Thus, for all of the routes specified, the last waypoint should generally be at the runway threshold with a ground-level altitude restriction.
+                </td>
+              </tr>
+              <tr>
+                <td>"departure_routes"</td>
+                <td>Object</td>
+                <td>Each member is an object that defines routes for the specified a departure runway.
+                  These routes are followed by aircraft departing that runway, organized by exit fix.
+                  See below for documentation of the per-runway departure route object.</td>
+              </tr>
+              <tr>
+                <td>"departures"</td>
+                <td>Array of objects</td>
+                <td>Each object in the array defines a departure to a destination, including one or more airlines that fly that departure,
+                  the type of aircraft flown, and information about the aircraft's path.  See below for details of the departure object.</td>
+              </tr>
+              <tr>
+                <td>"elevation"</td>
+                <td>Number</td>
+                <td>The airport's elevation in feet</td>
+              </tr>
+              <tr>
+                <td>"exit_categories"</td>
+                <td>Object</td>
+                <td>Each member corresponds to a fix used as an exit for departures in the scenario group and allows associating a string category
+                  name with each exit. (These categories are used so that users can control the mix of exits used in a scenario.)
+                  Example: <code>"ARD": "Southwest"</code></td>
+              </tr>
+              <tr>
+                <td>"location"</td>
+                <td>String</td>
+                <td>The airport's location</td>
+              </tr>
+              <tr>
+                <td>"tower_list"</td>
+                <td>Number</td>
+                <td>Gives which of the three STARS tower lists the airport should be associated with, if any. If present, should have the value 1, 2, or 3.</td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>There are two pieces for specifying departures: their initial route leaving the airport, which depends on the active departure runway,
+              and their subsequent route out of the TRACON, which does not. These two parts are specified separately.</p>
+            <p>The "departure_routes" object gives the initial routing for departures, based both on the runway they are departing as well
+              as their exit fix.  Here is an excerpt from the KJFK departure routes:
+              </p>
+            <pre>
+  "departure_routes": {
+    "13R": {
+      "ARD,DIXIE,RBV,WHITE": {
+        "cleared_altitude": 5000,
+        "route": "JFK5",
+        "waypoints": "_JFK_13R _JFK_31L #185"
+      },
+      ...
+            </pre>
+            <p>The members of "departure_routes" are strings identifying the departure runway; each departure runway's routes
+              are then represented by an object with one or more members that specify comma-separated lists of exit fixes.
+              (Thus, the specification above applies to departures with exit ARD, DIXIE, RBV, or WHITE, departing runway 13R.)
+              The departure route specification has three members:
+              <ul>
+                <li>"cleared_altitude": the initial altitude that aircraft are cleared to</li>
+                <li>"route": a string naming the route that is added to the start of aircraft's route as shown in flight strips, etc.
+                <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
+                  at the ends of the runway.</li>
+              </ul>
+              On departure the aircraft will fly the specified waypoints and then the waypoints specified in the route
+              to its destination. In this case, aircraft will remain on a 185 heading until vectored by the controller
+              (as explained in <a href="#fe-routes">Routes</a>, above.)
+              </p>
+
+            <p>The other half of specifying departures is the array of objects stored in "departures". Each one describes a departure
+              to a particular destination. Here is a KJFK departure to Paris Charles de Gaulle:
+              </p>
+            <pre>
+    {
+      "airlines": [
+        {
+          "fleet": "long",
+          "icao": "AFR"
+        }
+      ],
+      "destination": "LPFG",
+      "exit": "HAPIE",
+      "route": "HAPIE YAHOO WHALE N251A JOOPY NATZ MALOT NATZ GISTI LESLU M142 LND N160 NAKID M25 ANNET UM25 UVSUV UM25 INGOR UM25 LUKIP LUKIP9E"
+    },
+  ...
+            </pre>
+            <p>Four things must be specified with each departure:
+              <ul>
+                <li>"airlines": The airlines that fly the route and which part of their fleet of aircraft is used; see <a href="#fe-airlines-aircraft">airlines
+                    and aircraft</a> below for more information</li>
+                <li>"destination": the ICAO airport code for the destination. This is only used in flight strips and for the aircraft's datablock on the
+                  radar scope; it does not affect its routing.</li>
+                <li>"exit": the exit fix for the departure. In conjunction with the departure runway, this is used to determine the aircraft's
+                  route leaving the airport using "departure_routes".</li>
+                <li>"route": the aircraft's route to the destination. This is mostly used so that flight strips have plausible routes, though
+                  <i>vice</i> does its best to have the aircraft follow the given route after it reaches the exit fix.
+              </ul>
+            </p>
+
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-arrivals">
+            <h2 class="section-heading">Arrivals</h2>
+
+            <p>Arrivals are specified via the "arrival_groups" variable, which allows specifying one or more STARs that
+              bring aircraft to the TRACON.  Members of "arrival_groups" give the names of arrival groups; each one stores
+              an array of one or more arrival objects.
+            </p>
+            <p>
+              Because arrival rates are specified per-arrival group rather than per-STAR,
+              <i>vice</i> can simulate center controllers sequencing multiple STARs into a single arrival flow rather than
+              spawning arrivals on two STARs that follow nearby routes and thus should be sequences.
+            </p>
+            <p>Each object stored in an "arrival_groups" array corresponds to a STAR.
+              These objects have the following members:
+              </p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"airlines"</td>
+                <td>Object</td>
+                <td>Destination airports and airlines for the arrivals. See example below.</td>
+              </tr>
+              <tr>
+                <td>"cleared_altitude"</td>
+                <td>Number</td>
+                <td>The altitude to which the aircraft is descending when first spawned.</td>
+              </tr>
+              <tr>
+                <td>"initial_altitude"</td>
+                <td>Number</td>
+                <td>The aircraft's altitude when first spawned.</td>
+              </tr>
+              <tr>
+                <td>"initial_controller"</td>
+                <td>String</td>
+                <td>The callsign of the controller who is initially tracking the aircraft.</td>
+              </tr>
+              <tr>
+                <td>"initial_speed"</td>
+                <td>Number</td>
+                <td>The aircraft's initial speed when first spawned.</td>
+              </tr>
+              <tr>
+                <td>"route"</td>
+                <td>String</td>
+                <td>Route to show for aircraft in flight strips. Not used for navigation.</td>
+              </tr>
+              <tr>
+                <td>"runway_waypoints"</td>
+                <td>Object</td>
+                <td>This specifies runway-specific waypoints, if applicable.  See example below.</td>
+              </tr>
+              <tr>
+                <td>"speed_restriction"</td>
+                <td>Number</td>
+                <td>If present, gives a speed restriction in knots</td>
+              </tr>
+              <tr>
+                <td>"waypoints"</td>
+                <td>String</td>
+                <td>The series of waypoints that aircraft should fly. New aircraft are spawned at the first waypoint. These waypoints
+                  should include a "@" directive at the point where the aircraft should be handed off from the virtual controller
+                  to the user.
+                </td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>STARs are sometimes able to deliver aircraft to multiple airports. Therefore, the "airlines" member
+              is an object with airport names as members.  Each of the airports is associated with an array of objects
+              that specify departure airports, airlines, and (optionally) airline fleets.  Here is an excerpt from the
+              CAMRN4 arrival group at KJFK:
+            </p>
+            <pre>
+  "airlines": {
+    "KFRG": [
+      {
+        "airport": "KDCA",
+        "icao": "EJA"
+      },
+      ...
+    ],
+    "KJFK": [
+      {
+        "airport": "MMMY",
+        "fleet": "long",
+        "icao": "AMX"
+      },
+      ...
+    ]
+  }
+            </pre>
+            <p>We can see that CAMRN4 applies to both the KFRG and KJFK airports, though with different airlines
+              and different departure airports for the arrivals. The specified departure airports (here, KDCA and MMMY)
+              are only used so that flight strips and data blocks on the scope are realistic, but the specified airlines
+              are used to select the type of aircraft from their fleets.  As elsewhere, a value for "fleet" may be specified
+              to limit which types of aircraft may be chosen.
+            </p>
+
+            <p>The "runway_waypoints" member can be used for STARs that have different routes depending on the runway.
+              When the user instructs the aircraft to expect a particular approach then the corresponding waypoints are
+              added to its route. As an example, here are some of the entries for the JIIMS3 arrival at KPHL:
+            </p>
+            <pre>
+  "runway_waypoints": {
+    "27R": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 BEELZ WOJIK@s190 PSOUT #87",
+    "35": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 SNEDE",
+    "9L": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 TLUKS CHEAZ@s190 STAYK #266",
+  }
+            </pre>
+            
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-airspace">
+            <h2 class="section-heading">Airspace</h2>
+
+            <p>Airspace volumes may optionally be specified using the "airspace" object in the scenario group.
+              These volumes may be assigned to controllers in scenarios, in which case <i>vice</i> will show an
+              alert when aircraft are outside of the controller's airspace.  The airspace object has two members: 
+            </p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"boundaries"</td>
+                <td>Object</td>
+                <td>Defines all of the airports that are included in the scenarios. See the <a href="#fe-airports">airports section</a> for details.</td>
+              </tr>
+              <tr>
+                <td>"volumes"</td>
+                <td>Object</td>
+                <td>Defines all of the airports that are included in the scenarios. See the <a href="#fe-airports">airports section</a> for details.</td>
+              </tr>
+            </tbody>
+            </table>
+            <p>Each member in "boundaries" names a polyline of one or more line segments.  Polylines are specified by arrays of locations.
+              The first and second points specify the first line, the second and third points specify the second line, and so forth.
+              Here is an example from the KPHL airspace:
+              </p>
+<pre>
+  "PHL_DQO27_33": [
+    "N039.21.58.949,W075.28.55.977",
+    "N039.25.56.240,W075.29.47.255",
+    "N039.26.20.204,W075.27.28.196",
+    "N039.22.24.699,W075.26.48.535",
+    "N039.21.58.949,W075.28.55.977"
+  ]
+</pre>
+            <p>Note that the first point and the last point are at the same location and thus, "PHL_DQO27_33" is a closed polygon.
+              Airspace boundaries do not have to be polygons like this; because boundaries are generally shared between different
+              volumes of airspace, it's often useful to define boundaries just as polylines and to assemble multiple boundaries
+              to define the lateral extent of a volume of airspace.
+            </p>
+            <p>Given the boundaries, "volumes" specifies full 3D volumes of airspace.  Airspace volumes have three members; "boundaries"
+              is an array of strings that names the boundaries that give the airspace's lateral extent, and "lower" and "upper" specify the
+              altitude range of the airspace.  Here is an example from KPHL that uses the boundary defined above:
+              </p>
+            <pre>
+  "PHL_DU_APP27": [
+    {
+      "boundaries": [
+        "PHL_DQO27_33"
+      ],
+      "lower": 5000,
+      "upper": 6000
+    }
+</pre>
+
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-scenarios">
+            <h2 class="section-heading">Scenarios</h2>
+
+            <p>Scenarios pull together components from the definitions in scenario groups in order to present specific
+              control scenarios to the user.  The scenarios object's members are the names of the scenarios.
+              Each of these scenarios may have the following members:
+            </p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"approach_airspace"</td>
+                <td>Array of strings</td>
+                <td>If <a href="#fe-airspace">airspace</a> has been specified in the scenario group, then these strings give the names
+                of the airspace volumes that arrivals should remain inside.</td>
+              </tr>
+              <tr>
+                <td>"arrival_runways"</td>
+                <td>Object</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>"arrivals"</td>
+                <td>Object</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>"callsign"</td>
+                <td>String</td>
+                <td>The callsign for the user's control position. (This must be present in "control_positions" in the scenario group.)</td>
+              </tr>
+              <tr>
+                <td>"controllers"</td>
+                <td>Array of strings</td>
+                <td>Callsigns of the other controllers who are online. (These also must be in "control_positions".)</td>
+              </tr>
+              <tr>
+                <td>"default_map"</td>
+                <td>String</td>
+                <td>TODO</td>
+              </tr>
+              <tr>
+                <td>"departure_airspace"</td>
+                <td>Array of strings</td>
+                <td>Similar to "approach_airspace", if present, this gives the names of airspace volumes that departure aircraft must
+                remain inside.</td>
+              </tr>
+              <tr>
+                <td>"departure_runways"</td>
+                <td>Array of objects</td>
+                <td>
+                  <ul>
+                    <li>"airport": </li>
+                    <li>"runway": </li>
+                    <li>"rate": </li>
+                    <li>"category": optional</li>
+                </td>
+              </tr>
+              <tr>
+                <td>"name"</td>
+                <td>String</td>
+                <td>The name of the scenario</td>
+              </tr>
+              <tr>
+                <td>"wind"</td>
+                <td>Object</td>
+                <td>This specifies the current winds for the scenario.  Winds are included in the simulation and affect aircraft similarly to how they do in the real world.
+                  <ul>
+                    <li>"direction": the wind's direction, expressed as a number giving the heading</li>
+                    <li>"speed": the wind speed in knots</li>
+                    <li>"gust": if present, gives the wind gust speed</li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+            </table>
+          </section><!--//section-->
+
+          </article>
 
         <!--
         <article class="docs-article" id="section-faqs">
