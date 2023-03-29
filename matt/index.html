@@ -46,7 +46,7 @@
                         <a href="https://pbrt.org">Physically Based Rendering: From Theory to Implementation,</a>
                         is widely used in university courses and by graphics researchers and developers. Greg Humphreys, Pat Hanrahan, and I were awarded a
                         <a href="https://www.oscars.org/sci-tech/ceremonies/2014">Scientific and Technical Academy Award</a>
-                        in recognition of the book's impact on CGI in movies—never before has a book received an Academy Award. The third edition of the book was released in the Fall of 2016 and work on the fourth edition of the book is my main focus at the moment; the print edition will be available in February 2023.
+                        in recognition of the book's impact on CGI in movies—never before has a book received an Academy Award. The third edition of the book was released in the Fall of 2016 and work on the fourth edition of the book was released on March 28, 2023.
                     </p>
                     <p class="lead mb-3">I have previously worked at Google, co-founded Neoptica (which was acquired by Intel), and co-founded Exluna (which was acquired by NVIDIA). I have a Ph.D. from the Stanford Graphics Lab under the supervision of Pat Hanrahan and a B.S. in Computer Science from Yale.</p>
                 </div>
@@ -61,10 +61,12 @@
                             <p>
                                 Greg Humphreys, Wenzel Jakob, and I are the authors of the book
                                 <i>Physically Based Rendering: From Theory to Implementation.</i>
-                                The book dates to the late 1990s, when Greg and I were graduate students and Pat Hanrahan suggested that we write a book on how to write a ray tracer. He offered to use it in the rendering class he was teaching at Stanford and Greg and I agreed, having no idea what we were getting ourselves into. The manuscript greatly benefitted from both Pat's approach to rendering as well as being battle tested in the course. The first edition was published in 2004 and the second edition came out in 2010. Wenzel joined for the third edition in 2016, and a fourth is currently in the works.
+                                The book dates to the late 1990s, when Greg and I were graduate students and Pat Hanrahan suggested that we write a book on how to write a ray tracer. He offered to use it in the rendering class he was teaching at Stanford and Greg and I agreed, having no idea what we were getting ourselves into. The manuscript greatly benefitted from both Pat's approach to rendering as well as being battle tested in the course. The first edition was published in 2004 and the second edition came out in 2010. Wenzel joined for the third edition in 2016, and the fourth edition was recently released.
                             </p>
                             <span class="d-lg-none">
-                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/bookcover.jpg" alt="" width="367" height="454" /></div>
+                                <div class="text-center">
+                                    <a href="assets/img/cover-full.jpg"><img class="img-fluid img-paper" src="assets/img/cover.jpg" alt="" width="384" height="495" /></a>
+                                </div>
                             </span>
                             <p>
                                 The book is distinguished by being a
@@ -87,7 +89,9 @@
                         </div>
                         <div class="flex-shrink-0">
                             <span class="d-none d-lg-block">
-                                <div><img class="img-fluid img-paper" src="assets/img/bookcover.jpg" alt="" width="367" height="454" /></div>
+                                <div>
+                                    <a href="assets/img/cover-full.jpg"><img class="img-fluid img-paper" src="assets/img/cover.jpg" alt="" width="384" height="495" /></a>
+                                </div>
                                 <div>
                                     <a href="assets/img/kitchen.png"><img class="img-fluid img-paper" src="assets/img/kitchen-thumb.jpg" alt="" width="384" height="240" /></a>
                                 </div>
@@ -101,6 +105,35 @@
             <section class="resume-section" id="papers">
                 <div class="resume-section-content">
                     <h2 class="mb-5">Papers</h2>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Rendering</h3>
+                            <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
+                            <div><a href="https://arxiv.org/abs/2303.15762">arxiv cs.GR</a></div>
+                            <div class="mb-3"><a href="https://arxiv.org/pdf/2303.15762.pdf">[PDF]</a></div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/waveoptics.jpg" alt="" width="388" height="380" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Under ray-optical light transport, the classical ray serves as a local and linear “point query” of light’s behaviour. Such point queries are useful, and sophisticated path tracing and sampling techniques enable efficiently computing solutions to light transport problems in complex, real-world settings and environments. However, such formulations are firmly confined to the realm of ray optics, while many applications of interest, in computer graphics and computational optics, demand a more precise understanding of light. We rigorously formulate the generalized ray, which enables local and linear point queries of the wave-optical phase space. Furthermore, we present sample-solve: a simple method that serves as a novel link between path tracing and computational optics. We will show that this link enables the application of modern path tracing techniques for wave-optical rendering, improving upon the state-of-the-art in terms of the generality and accuracy
+                                of the formalism, ease of application, as well as performance. Sampling using generalized rays enables interactive rendering under rigorous wave optics, with orders-of-magnitude faster performance compared to existing techniques.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                ...
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr. 2023. A Generalized Ray Formulation For Wave-Optics Rendering. arXiv: 2303.15762 [cs.GR]
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/waveoptics.jpg" alt="" width="388" height="380" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
                             <h3 class="mb-0">ReSTIR GI: Path Resampling for Real-Time Path Tracing</h3>
