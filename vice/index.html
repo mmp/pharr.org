@@ -921,7 +921,6 @@ how it simulates aircraft or the STARS interface.
             </pre>
           </section><!--//section-->
 
-          </section><!--//section-->
           <section class="docs-section" id="fe-airlines-aircraft">
             <h2 class="section-heading">Airlines and Aircraft</h2>
 
@@ -1209,20 +1208,22 @@ how it simulates aircraft or the STARS interface.
               are then represented by an object with one or more members that specify comma-separated lists of exit fixes.
               (Thus, the specification above applies to departures with exit ARD, DIXIE, RBV, or WHITE, departing runway 13R.)
               The departure route specification has three members:
+              </p>
               <ul>
                 <li>"cleared_altitude": the initial altitude that aircraft are cleared to</li>
                 <li>"route": a string naming the route that is added to the start of aircraft's route as shown in flight strips, etc.
                 <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
                   at the ends of the runway.</li>
               </ul>
+              <p>
               On departure the aircraft will fly the specified waypoints and then the waypoints specified in the route
               to its destination. In this case, aircraft will remain on a 185 heading until vectored by the controller
               (as explained in <a href="#fe-routes">Routes</a>, above.)
-              </p>
+            </p>
 
             <p>The other half of specifying departures is the array of objects stored in "departures". Each one describes a departure
               to a particular destination. Here is a KJFK departure to Paris Charles de Gaulle:
-              </p>
+            </p>
             <pre>
     {
       "airlines": [
@@ -1237,7 +1238,7 @@ how it simulates aircraft or the STARS interface.
     },
   ...
             </pre>
-            <p>Four things must be specified with each departure:
+            <p>Four things must be specified with each departure:</p>
               <ul>
                 <li>"airlines": The airlines that fly the route and which part of their fleet of aircraft is used; see <a href="#fe-airlines-aircraft">airlines
                     and aircraft</a> below for more information</li>
@@ -1248,7 +1249,6 @@ how it simulates aircraft or the STARS interface.
                 <li>"route": the aircraft's route to the destination. This is mostly used so that flight strips have plausible routes, though
                   <i>vice</i> does its best to have the aircraft follow the given route after it reaches the exit fix.
               </ul>
-            </p>
 
           </section><!--//section-->
 
@@ -1266,7 +1266,7 @@ how it simulates aircraft or the STARS interface.
             </p>
             <p>Each object stored in an "arrival_groups" array corresponds to a STAR.
               These objects have the following members:
-              </p>
+            </p>
             <table class="table">
             <thead>
               <tr>
@@ -1510,6 +1510,7 @@ how it simulates aircraft or the STARS interface.
                     <li>"category": an optional string that specifies an exit category. If present, then only departures that have an exit
                       that is associated with the category will be launched from this runway.
                     </li>
+                    </ul>
                 </td>
               </tr>
               <tr>
