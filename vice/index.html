@@ -59,12 +59,6 @@
   
   <div class="docs-wrapper">
     <div id="docs-sidebar" class="docs-sidebar">
-      <div class="top-search-box d-lg-none p-3">
-        <form class="search-form">
-	  <input type="text" placeholder="Search the docs..." name="search" class="form-control search-input">
-	  <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-	</form>
-      </div>
       <nav id="docs-nav" class="docs-nav navbar">
 	<ul class="section-items list-unstyled nav flex-column pb-3">
 	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
@@ -72,10 +66,8 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
 	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-scenarios"><span class="theme-icon-holder me-2"><i class="fas fa-earth-americas"></i></span>Scenarios</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#ewr">KEWR</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#jfk">KJFK</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#phl">KPHL</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#lib">LIB</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#f11">F11 TRACON</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#n90">N90 TRACON</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
@@ -100,11 +92,11 @@
       <div class="container">
 	<article class="docs-article" id="section-using">
 	  <header class="docs-header">
-<div class="text-center">
-<img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
-</div>
-    <br>
-	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-03-13</span></h1>
+            <div class="text-center">
+              <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
+            </div>
+            <br>
+	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-04-08</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is (now) an air traffic control simulator, focused on TRACON.
@@ -114,13 +106,14 @@
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> currently supports departure and arrival control
-                scenarios at KEWR, KJFK and KPHL, as well as Liberty Departure scenarios.
+                scenarios in the N90 TRACON (KEWR, KJFK and KPHL, Liberty Departure) and
+                in the F11 TRACON (KMCO, KSFB, KISM, KORL...).
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
-                and please <a href="mailto:matt@pharr.org">get in touch</a> if you'd like to contribute!
+                and please join the <a href="https://discord.gg/y993vgQxhY">vice discord</a> if you'd like to contribute!
               </p>
               <p>
-                There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of the system.
+                There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of <i>vice</i>.
               </p>
 	    </section><!--//docs-intro-->
 	  </header>
@@ -315,11 +308,11 @@
           </article>
 
 	<article class="docs-article" id="section-scenarios">
+	  <header class="docs-header">
 	  <h1 class="docs-heading">Scenarios</h1>
 
 	  <section class="docs-intro">
-            <p>Departure and arrival scenarios are available at a number of ZNY airports as well as for Liberty departure,
-              which merges departures from multiple airports.
+            <p>Departure and arrival scenarios are available in both the New York N90 TRACON and the Jacksonville F11 TRACON.
               For all of these, the identifiers used for approaches with the "expect approach" and "cleared approach"
               commands are the same as the ones used for scratchpads.
               (Thus, you can practice scratchpad assignment while you're at it!)
@@ -327,9 +320,158 @@
 	    </section><!--//docs-intro-->
 	  </header>
 
+	  <section class="docs-intro" id="f11">
+            <h2 class="section-heading">F11 TRACON Scenarios</h2>
 
-	  <section class="docs-intro" id="ewr">
-            <h2 class="section-heading">KEWR Scenarios</h2>
+            <p>
+              Scenarios are available for both North and South Operations at Orlando (MCO).
+              You control both departures and arrivals for KMCO, KSFB, KISM, and KORL and
+              departures for KMLB.
+            </p>
+
+            <h3>KMCO</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>17L</td>
+                    <td><code>I7L</code></td>
+                    <td><code>R7L</code></td>
+                  </tr>
+                  <tr>
+                    <td>17R</td>
+                    <td><code>I7R</code></td>
+                    <td><code>R7R</code></td>
+                  </tr>
+                  <tr>
+                    <td>18L</td>
+                    <td><code>I8L</code></td>
+                    <td><code>R8L</code></td>
+                  </tr>
+                  <tr>
+                    <td>18R</td>
+                    <td><code>I8R</code></td>
+                    <td><code>R8R</code></td>
+                  </tr>
+                  <tr>
+                    <td>35L</td>
+                    <td><code>I5L</code></td>
+                    <td><code>R5L</code></td>
+                  </tr>
+                  <tr>
+                    <td>35R</td>
+                    <td><code>I5R</code></td>
+                    <td><code>R5R</code></td>
+                  </tr>
+                  <tr>
+                    <td>36L</td>
+                    <td>&mdash;</td>
+                    <td><code>R6L</code></td>
+                  </tr>
+                  <tr>
+                    <td>36R</td>
+                    <td><code>I6R</code></td>
+                    <td><code>R6R</code></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h3>KORL</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>7</td>
+                    <td><code>I7</code></td>
+                    <td><code>R7</code></td>
+                  </tr>
+                  <tr>
+                    <td>25</td>
+                    <td><code>I25</code></td>
+                    <td><code>R25</code></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h3>KSFB</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>9L</td>
+                    <td><code>I9L</code></td>
+                    <td><code>R9L</code></td>
+                  </tr>
+                  <tr>
+                    <td>9R</td>
+                    <td><code>I9R</code></td>
+                    <td><code>R9R</code></td>
+                  </tr>
+                  <tr>
+                    <td>27L</td>
+                    <td>&mdash;</td>
+                    <td><code>R7H</code></td>
+                  </tr>
+                  <tr>
+                    <td>27R</td>
+                    <td><code>I7G</code></td>
+                    <td><code>R7G</code></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h3>KISM</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>6</td>
+                    <td>&mdash;</td>
+                    <td><code>R6</code></td>
+                  </tr>
+                  <tr>
+                    <td>15</td>
+                    <td><code>I15</code></td>
+                    <td><code>R15</code></td>
+                  </tr>
+                  <tr>
+                    <td>33</td>
+                    <td>&mdash;</td>
+                    <td><code>R33</code></td>
+                  </tr>
+                </tbody>
+              </table>
+              
+            </section>
+
+	  <section class="docs-intro" id="n90">
+            <h2 class="section-heading">N90 TRACON Scenarios</h2>
+
+            <h3>KEWR</h3>
 
             <p>
               Scenarios are available for all of the usual airport configurations, at both KEWR and KTEB.
@@ -404,11 +546,7 @@
                 </tbody>
                 </table>
 
-              </section>
-
-	  <section class="docs-intro" id="jfk">
-            <h2 class="section-heading">KJFK Scenarios</h2>
-
+            <h3>KJFK</h3>
             <p>
               Scenarios are available for all of the usual JFK configurations.
               It is also possible to include
@@ -506,10 +644,7 @@
                 </tbody>
                 </table>
 
-            </section>
-
-	  <section class="docs-intro" id="phl">
-            <h2 class="section-heading">KPHL Scenarios</h2>
+            <h3>KPHL</h3>
 
             <p><i>vice</i> offers scenarios at KPHL for both West and East ops.
               There is also a "KPHL 27R Final" scenario that has flows of traffic from the
@@ -568,10 +703,7 @@
                 </tbody>
                 </table>
 
-          </section>
-          
-	  <section class="docs-intro" id="lib">
-            <h2 class="section-heading">Liberty Departure</h2>
+            <h3>Liberty Departure</h3>
 
             <p>
               Not surprisingly, the Liberty departure scenarios only include departures.
@@ -606,7 +738,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.5.1/Vice-v0.5.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v.0.5.1/Vice-v.0.5.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.5.1 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -615,7 +747,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.5.1/Vice-v0.5.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.5.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v.0.5.1/Vice-v.0.5.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.5.1 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -633,7 +765,8 @@
 It would be of great help if you would send in a report if <i>vice</i> crashes or if you see mistakes in
 how it simulates aircraft or the STARS interface.
             </p>
-<p>The best way to report bugs is vie email at <i>matt@pharr.org</i>. Alternatively, if you have a github account, you can
+<p>The best way to report bugs is via the "bugs" channel on the <a href="https://discord.gg/y993vgQxhY">vice discord</a>.
+  Alternatively, if you have a github account, you can
   file bugs directly in <a href="https://github.com/mmp/vice/issues">vice's issue tracker</a>.
   </p>
           </section><!--//section-->
@@ -650,6 +783,7 @@ how it simulates aircraft or the STARS interface.
               <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
               <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
               <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
+              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB, KISM, KORL...). Thanks to Mike K!</li>
             </ul>
 
           </section><!--//section-->
@@ -677,21 +811,29 @@ how it simulates aircraft or the STARS interface.
                 in order to examine their contents, you'll want to install zstandard or another decompression program that supports that
                 format.
               </p>
-              <p>When developing new scenarios, you'll want to open a command prompt and run <i>vice</i> from the command line.
-                With the command line there are two options make it possible to specify additional files for testing:
+              <p>When developing scenarios, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations,
+                or you or might specify completely new scenario and video map files if you're working on support for a new TRACON.
+                While you're doing this, there are two ways to point <i>vice</i> at the file you're working on:
               </p>
               <ul>
-                <li>The <tt>-scenario</tt> command line option takes a single filename.
-                The scenario specified file is loaded at startup time; if it has the same name as an existing scenario, it replaces
-                  that scenario's definition.
-                </li>
-                <li>In a similar manner, the <tt>-videomap</tt> command line option also takes a single filename that specifies a file
-                  with video map definitions.
+                <li>Via the command-line: if you open a command prompt and run <i>vice</i> from the command line,
+                  there are two options make it possible to specify additional files for testing:
+                  <ul>
+                    <li>The <tt>-scenario</tt> command line option takes a single filename.
+                      The scenario specified file is loaded at startup time; if it has the same name as an existing scenario, it replaces
+                      that scenario's definition.
+                    </li>
+                    <li>In a similar manner, the <tt>-videomap</tt> command line option also takes a single filename that specifies a file
+                      with video map definitions.
+                    </li>
+                  </ul>
+                <li>Alternatively, select the "Settings..." menu item in <i>vice</i> and then expand the "Developer" section.
+                  You can select a scenario file and or a video map file to use.
                 </li>
               </ul>
-              <p>
-                Thus, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations, or you
-                or might specify completely new scenario and video map files if you're working on support for a new ARTCC.
+              <p>When you're working on a new scenario, you may omit the "video_map_file" specifier in its JSON file.
+                In this case, <i>vice</i> will automatically use the video map file you specified via <tt>-videomap</tt>
+                or via the UI.
               </p>
 
             </section><!--//docs-intro-->
@@ -701,9 +843,9 @@ how it simulates aircraft or the STARS interface.
             <h2 class="section-heading">Specifying Locations</h2>
 
             <p>Throughout the <i>vice</i> configuration files, it's often necessary to specify various locations on the Earth.
-              <i>vice</i> has a built-in database of all of the VORs, NDBs, and fixes in the United States (courtesy of the FAA),
+              <i>vice</i> has a built-in database of all of the airports, VORs, NDBs, and fixes in the United States (courtesy of the FAA),
               which allows using these directly for specifying locations.  Locations can also be specified via
-              latitude-longitude positions, given as strings. For convenience, three latitude-longitude formats are supported.
+              latitude-longitude positions, given as strings. For convenience, multiple latitude-longitude formats are supported.
             </p>
               <table class="table">
                 <thead>
@@ -716,13 +858,13 @@ how it simulates aircraft or the STARS interface.
                 <tbody>
                   <tr>
                     <td>Name of VOR/NDB/fix</td>
-                    <td>A string giving the name of a VOR, NDB, or fix in the United States.</td>
+                    <td>A string giving the name of an airport, VOR, NDB, or fix in the United States.</td>
                     <td><code>"JFK"</code></td>
                   </tr>
                   <tr>
                     <td>Decimal value pair</td>
                     <td>A pair of decimal numbers where the first specifies the longitude and the second specifies the latitude.</td>
-                    <td><code>"40.6328888, -73.771385"</code></td>
+                    <td><code>"40.6328888,-73.771385"</code></td>
                   </tr>
                   <tr>
                     <td>Degrees, minutes, seconds</td>
@@ -767,7 +909,9 @@ how it simulates aircraft or the STARS interface.
             <pre>
   "PZULU CATOD@a3000@s210 IGIDE@a1900 _JFK_31R@a50",
             </pre>
-            <p>Finally, a handoff point can be specified using a single "@".  Here is an example from the CAMRN4 arrival at KJFK.
+            <p>Finally, a handoff point can be specified using a single "@".  When an aircraft reaches that point in the route, it is
+              handed off from the virtual controller to the user.
+              Here is an example from the CAMRN4 arrival at KJFK.
               Immediately after the aircraft reaches KARRS it will be handed off from the virtual controller that is tracking it (NY_CTR in this case)
               to the user's control position.  The aircraft will continue to CAMRN and then fly a 041 heading until the user gives
               it vectors.
@@ -931,7 +1075,7 @@ how it simulates aircraft or the STARS interface.
                 <td>"radar_sites"</td>
                 <td>Object</td>
                 <td>Specification of all of the radar sites.
-                  (A good source of data for these is the <code>RadarSites</code> section of your ARTCC's vSTARs configuration file.)
+                  (A good source of data for these is the <code>RadarSites</code> section of your ARTCC's vSTARS configuration file.)
                   Each object member describes a radar site; the member's name gives the site's identifier.
                   Each radar site has the following configuration values:
                   <ul>
@@ -1315,13 +1459,24 @@ how it simulates aircraft or the STARS interface.
               </tr>
               <tr>
                 <td>"arrival_runways"</td>
-                <td>Object</td>
-                <td></td>
+                <td>Array of objects</td>
+                <td>Each object has two values that specify an airport and one of its runways
+                  <ul>
+                    <li>"airport": string that gives an airport name</li>
+                    <li>"runway": string that specifies a runway at the given airport</li>
+                  </ul>
+                  The specified airport must be present in the "airports" member of the scenario group,
+                  and the specified runway must be one of its runways.
+                </td>
               </tr>
               <tr>
                 <td>"arrivals"</td>
                 <td>Object</td>
-                <td></td>
+                <td>Each member specifies an arrival group and is an object that contains one or more members
+                  that specifies an airport name and a default arrival rate for the arrival group to the airport.
+                  It can be useful to specify an arrival rate of zero&mdash;in this case, the arrival group will still be
+                  included in the UI shown to the user, which allows the user to enable it.
+                </td>
               </tr>
               <tr>
                 <td>"callsign"</td>
@@ -1336,7 +1491,7 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"default_map"</td>
                 <td>String</td>
-                <td>TODO</td>
+                <td>The name of the initial video map that should be selected when this scenario is selected.</td>
               </tr>
               <tr>
                 <td>"departure_airspace"</td>
@@ -1347,18 +1502,15 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"departure_runways"</td>
                 <td>Array of objects</td>
-                <td>
+                <td>Each object specifies information about departures at a runway at an airport in the scenario.
                   <ul>
-                    <li>"airport": </li>
-                    <li>"runway": </li>
-                    <li>"rate": </li>
-                    <li>"category": optional</li>
+                    <li>"airport": string giving the airport's name</li>
+                    <li>"runway": string specifying one of the airport's runways</li>
+                    <li>"rate": number giving the number of departures per hour</li>
+                    <li>"category": an optional string that specifies an exit category. If present, then only departures that have an exit
+                      that is associated with the category will be launched from this runway.
+                    </li>
                 </td>
-              </tr>
-              <tr>
-                <td>"name"</td>
-                <td>String</td>
-                <td>The name of the scenario</td>
               </tr>
               <tr>
                 <td>"wind"</td>
@@ -1374,56 +1526,15 @@ how it simulates aircraft or the STARS interface.
             </tbody>
             </table>
           </section><!--//section-->
-
-          </article>
-
-        <!--
-        <article class="docs-article" id="section-faqs">
-          <header class="docs-header">
-            <h1 class="docs-heading">FAQs</h1>
-
-            <section class="docs-intro">
-              <p>No FAQs yet!</p>
-            </section><!--//docs-intro-->
-          <!--</header>
-          <h5 class="pt-3"><i class="fas fa-question-circle me-1"></i>What's sit amet quam eget lacinia?</h5>
-          <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
-          -->
-
-          <!--
           
-          <div class="callout-block callout-block-success">
-            <div class="content">
-              <h4 class="callout-title">
-	        <span class="callout-icon-holder me-1">
-	          <i class="fas fa-thumbs-up"></i>
-	        </span>
-	        Tip
-              </h4>
-              <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. <a href="#">Link example</a> aenean commodo ligula eget dolor.</p>
-            </div>
-          </div>
-          
-          <div class="callout-block callout-block-danger me-1">
-            <div class="content">
-              <h4 class="callout-title">
-	        <span class="callout-icon-holder">
-	          <i class="fas fa-exclamation-triangle"></i>
-	        </span><
-	                 Danger
-	                 </h4>
-              <p>Morbi eget interdum sapien. Donec sed turpis sed nulla lacinia accumsan vitae ut tellus. Aenean vestibulum <a href="#">Link example</a> maximus ipsum vel dignissim. Morbi ornare elit sit amet massa feugiat, viverra dictum ipsum pellentesque. </p>
-            </div>
-          </div>
-
-        </article><!--//docs-article-->
+</article>
 
         <footer class="footer">
           <div class="container text-center py-5">
             <!-- Bootstrap template licensed from themes.3rdwavemedia.com -->
             <small class="copyright">
               <a href="https://github.com/mmp/vice-website"><span><i class="fa-brands fa-github"></i></span></a>
-              Vice documentation (c)2023 Matt Pharr, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
+              vice documentation (c)2023 Matt Pharr, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
           </div>
         </footer>
       </div> 
