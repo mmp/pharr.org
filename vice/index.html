@@ -738,7 +738,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.0/Vice-v0.6.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.6.0 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.6.1/Vice-v0.6.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.6.1 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -747,7 +747,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.0/Vice-v0.6.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.5.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.6.1/Vice-v0.6.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.6.1 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -783,7 +783,10 @@ how it simulates aircraft or the STARS interface.
               <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
               <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
               <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
-              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB, KISM, KORL...). Thanks to Mike K!</li>
+              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB,
+                KISM, KORL...). Thanks to Mike K!</li>
+              <li>0.6.1: Fixed a crash related to handed off aircraft and sped up
+                launching vice.</li>
             </ul>
 
           </section><!--//section-->
@@ -1010,9 +1013,11 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"control_positions"</td>
                 <td>Object</td>
-                <td>Information about all of the controllers that are used in the scenarios in the group.  For each controller, the following members should be specified:
+                <td>Information about all of the controllers that are used
+                in the scenarios in the group.  Each member specifies a
+                controller with the corresponding callsign.  For each
+                controller, the following members should be specified:
                   <ul>
-                    <li>"callsign": a string giving the position's callsign (e.g., "NY_CTR")</li>
                     <li>"frequency": the controller's radio frequency, expressed as an integer (e.g., 125325 for 125.325)</li>
                     <li>"scope_char": a string giving a single character to use on radar scopes for tracks owned by this position (e.g., "C")</li>
                     <li>"sector_id": the controller's sector id, as used for handoffs, etc. (e.g., "N56")</li>
