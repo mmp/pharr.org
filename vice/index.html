@@ -107,7 +107,7 @@
               </p>
               <p><i>vice</i> currently supports departure and arrival control
                 scenarios in the N90 TRACON (KEWR, KJFK and KPHL, Liberty Departure) and
-                in the F11 TRACON (KMCO, KSFB, KISM, KORL...).
+                in the F11 TRACON (KJAX, KMCO, KSFB, KISM, KORL...).
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
                 and please join the <a href="https://discord.gg/y993vgQxhY">vice discord</a> if you'd like to contribute!
@@ -325,9 +325,42 @@
 
             <p>
               Scenarios are available for both North and South Operations at Orlando (MCO).
-              You control both departures and arrivals for KMCO, KSFB, KISM, and KORL and
+              You control both departures and arrivals for KJAX, KMCO, KSFB, KISM, and KORL and
               departures for KMLB.
             </p>
+
+            <h3>KJAX</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>8</td>
+                    <td><code>I8</code></td>
+                    <td><code>RZ8</code></td>
+                  </tr>
+                  <tr>
+                    <td>14</td>
+                    <td><code>I14</code></td>
+                    <td><code>R14</code></td>
+                  </tr>
+                  <tr>
+                    <td>26</td>
+                    <td><code>I26</code></td>
+                    <td><code>R26</code></td>
+                  </tr>
+                  <tr>
+                    <td>32</td>
+                    <td>&mdash;</td>
+                    <td><code>R32</code></td>
+                  </tr>
+                </tbody>
+              </table>
 
             <h3>KMCO</h3>
               <table class="table">
@@ -777,7 +810,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.2/Vice-v0.6.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.6.2 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.6.3/Vice-v0.6.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.6.3 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -786,7 +819,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.2/Vice-v0.6.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.6.2 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.6.3/Vice-v0.6.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.6.3 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -827,6 +860,7 @@ how it simulates aircraft or the STARS interface.
               <li>0.6.1: Fixed a crash related to handed off aircraft and sped up
                 launching vice.</li>
               <li>0.6.2: Added go arounds and ABE TRACON scenarios.</li>
+              <li>0.6.3: Added KJAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
             </ul>
 
           </section><!--//section-->
