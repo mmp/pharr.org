@@ -1257,6 +1257,11 @@ how it simulates aircraft or the STARS interface.
                   the type of aircraft flown, and information about the aircraft's path.  See below for details of the departure object.</td>
               </tr>
               <tr>
+                <td>"departure_controller"</td>
+                <td>String</td>
+                <td>If specified, gives the virtual controller initially controlling the aircraft.</td>
+              </tr>
+              <tr>
                 <td>"elevation"</td>
                 <td>Number</td>
                 <td>The airport's elevation in feet</td>
@@ -1377,6 +1382,14 @@ how it simulates aircraft or the STARS interface.
                 <td>"cleared_altitude"</td>
                 <td>Number</td>
                 <td>The altitude to which the aircraft is descending when first spawned.</td>
+              </tr>
+              <tr>
+                <td>"cruise_altitude"</td>
+                <td>Number</td>
+                <td>The aircraft's final cruise altitude. (This is only
+                used in the aircraft's flight strip.) If
+                unspecified, <i>vice</i> tries to choose a reasonable
+                cruise altitude based on the distance and direction of flight.</td>
               </tr>
               <tr>
                 <td>"initial_altitude"</td>
