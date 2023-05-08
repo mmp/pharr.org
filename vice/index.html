@@ -106,7 +106,7 @@
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> currently supports departure and arrival control
-                scenarios in the N90 TRACON (KEWR, KJFK and KPHL, Liberty Departure) and
+                scenarios in the N90 TRACON (KEWR, KJFK, KLGA, and KPHL, Liberty Departure) and
                 in the F11 TRACON (KJAX, KMCO, KSFB, KISM, KORL...).
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
@@ -716,6 +716,39 @@
                 </tbody>
                 </table>
 
+            <h3>KLGA</h3>
+            <p>
+              Scenarios are available for both departure and arrival
+              configurations at LGA. The following approaches are available:
+            </p>
+
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Runway</th>
+                    <th>ILS</th>
+                    <th>RNAV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>4</td>
+                    <td><code>I4</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>22</td>
+                    <td><code>I22</code></td>
+                    <td>&mdash;</td>
+                  </tr>
+                  <tr>
+                    <td>31</td>
+                    <td>&mdash;</td>
+                    <td>RNAV X 31</td>
+                  </tr>
+                </tbody>
+                </table>
+
             <h3>KPHL</h3>
 
             <p><i>vice</i> offers scenarios at KPHL for both West and East ops.
@@ -810,7 +843,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.6/Vice-v0.6.6-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.6.6 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.7.0/Vice-v0.7.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.7.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -819,7 +852,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.6.6/Vice-v0.6.6-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.6.6 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.7.0/Vice-v0.7.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.7.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -864,7 +897,10 @@ how it simulates aircraft or the STARS interface.
               <li>0.6.4: Fixed a bug with intercepting the localizer that occasionally led to aircraft hanging in the air for a while
                 before proceeding.</li>
               <li>0.6.5: Fixed <emph>another</emph> bug with intercepting the localizer.</li>
-              <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN arrivals/departures to the JFK scenario.</li>
+              <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN
+                arrivals/departures to the JFK scenario.</li>
+              <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various
+              small bug fixes.</li>
             </ul>
 
           </section><!--//section-->
