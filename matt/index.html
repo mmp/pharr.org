@@ -107,6 +107,35 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Stochastic Texture Filtering</h3>
+                            <div class="authors">Marcos Fajardo, Bartlomiej Wronski, Marco Salvi, and Matt Pharr</div>
+                            <div><a href="https://arxiv.org/abs/2305.05810">arxiv cs.GR</a></div>
+                            <div class="mb-3"><a href="https://arxiv.org/pdf/2305.05810.pdf">[PDF]</a></div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                2D texture maps and 3D voxel arrays are widely used to add rich detail to the surfaces and volumes of rendered scenes, and filtered texture lookups are integral to producing high-quality imagery. We show that filtering textures after evaluating lighting, rather than before BSDF evaluation as is current practice, gives a more accurate solution to the rendering equation. These benefits are not merely theoretical, but are apparent in common cases. We further show that stochastically sampling texture filters is crucial for enabling this approach, which has not been possible previously except in limited cases. Stochastic texture filtering offers additional benefits, including efficient implementation of high-quality texture filters and efficient filtering of textures stored in compressed and sparse data structures, including neural representations. We demonstrate applications in both real-time and offline rendering and show that the additional stochastic
+                                error is minimal. Furthermore, this error is handled well by either spatiotemporal denoising or moderate pixel sampling rates.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                Rejected by HPG 2023(!).
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Marcos Fajardo, Bartlomiej Wronski, Marco Salvi, and Matt Pharr. 2023. Stochastic Texture Filtering. arXiv: 2305.05810 [cs.GR]
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Rendering</h3>
                             <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
                             <div><a href="https://arxiv.org/abs/2303.15762">arxiv cs.GR</a></div>
