@@ -99,21 +99,21 @@
 	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-04-08</span></h1>
 
 	    <section class="docs-intro">
-	      <p><i>vice</i> is (now) an air traffic control simulator, focused on TRACON.
+	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
                 Its goal is to provide a training experience similar to a VATSIM sweatbox with an instructor, 
                 just without the instructor, making it possible to better
                 prepare for sweatboxes and to practice vectoring and traffic handling techniques without being on the network.
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> currently supports departure and arrival control
-                scenarios in the N90 TRACON (KEWR, KJFK, KLGA, and KPHL, Liberty Departure) and
-                in the F11 TRACON (KJAX, KMCO, KSFB, KISM, KORL...).
+                scenarios in the N90 TRACON (KEWR, KJFK, KLGA, KPHL, Liberty Departure) and
+                in the F11 TRACON (KJAX, KMCO, KSFB, KISM, KORL, ...).
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
-                and please join the <a href="https://discord.gg/y993vgQxhY">vice discord</a> if you'd like to contribute!
+                and please join the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a> if you'd like to contribute!
               </p>
               <p>
-                There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of <i>vice</i>.
+                There is a short <a href="https://youtu.be/MNFpFaT1k7s">video overview</a> that gives a tour of <i>vice</i>. (Note: this video was recorded with an older version of <i>vice</i>, so some details are different in the latest version.)
               </p>
 	    </section><!--//docs-intro-->
 	  </header>
@@ -126,49 +126,65 @@
               The appearance of <i>vice</i> can be similarly configured using the DCB buttons at the top of the window.
             </p>
             <p>
-              When <i>vice</i> is launched, a window is shown for configuring the simulation.
+              The first time you launch <i>vice</i>, a window is shown for configuring the simulation.
+              (After the first time, the window can be brought up by clicking the "replay" button in the menubar: <i class="fas fa-redo"></i>.)
               A number of scenarios are available, some departure-only and
               some including both departures and arrivals.
-              Here is the window for KJFK:
+              Here is the configuration window for KLGA:
             </p>
             <div class="text-center">
               <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="593" class="img-fluid" alt="configuration dialog box">
             </div>
             <br>
             <p>
-              Scenarios may offer one or more control positions; KJFK offers both approach and departure.
+              Scenarios may offer one or more control positions; for example, KLGA offers both approach and departure.
               Once a control position is chosen, you can choose a specific runway configuration.
               </p>
             <p>
-              In addition to the total number of aircraft to launch in the simulation, it is possible to set the average departure rate (ADR)
+              In the configuration window, you can set the average departure rate (ADR)
               for all of the airports that may have departures in the scenario as well as the average arrival rate (AAR) for all of the
-              active arrival airports.
-              (Here, we have the option of also having arrivals to Republic,
-              KFRG, a JFK satellite airport.)
-              Both of these rates are specified in terms of aircraft per hour, so an ADR of 30 corresponds to an aircraft  departing
+              arrival airports.
+              (The KLGA scenario only includes Laguardia Airport, though other scenarios include both a primary airport as well as satellites.)
+              Both of these rates are specified in terms of aircraft per hour, so an ADR of 30 corresponds to one aircraft departing
               every two minutes (on average).
               If you'd like an arrival-only scenario, for example, just set all of the departure rates to zero.
+            </p>
+            <p>
               The "Sequencing challenge" slider controls how challenging the departure sequence is&mdash;the higher it is, the more likely it is
               that successive departures will be to the same gate or to the same fix.
+              For arrivals, the "Go around probability" slider allows setting the probability that each arrival goes around.
             </p>
             <p>
               After you have configured the simulation, click "Ok" and you will have a STARS scope and flight strip window to work with.
               Use the usual STARS commands as appropriate (to initiate track, accept handoffs, handoff to other controllers, etc.),
               and the additional <a href="#commands">ATC commands below</a> to issue control commands to aircraft.
             </p>
-            <p>
-              During the simulation, the "Settings" menu offers a few options, including pausing and resuming.
-              If "Restart..." is selected, the configuration window is shown again, allowing a new scenario to be selected.
-              Finally, "Settings..." allows configuring a number of details, including the flight strips shown at the right and
-              in which situations sounds are played (and which sounds to play for them.)
-              </p>
-            <div class="text-center">
-              <img src="menu.jpg" srcset="menu-2x.jpg 2x" width="133" height="107" class="img-fluid" alt="configuration dialog box">
-            </div>
-            <br>
             <p>To adjust the amount of space used for flight strips, right click the line separating the flight strips from the
               radar window and drag left or right with your mouse.
+            </p>
+            <p>
+              A number of buttons are available in the menu bar at the top of the window:
+              <ul>
+                <li> <i class="fas fa-pause-circle"></i> / <i class="fas fa-play-circle"></i>: pause or resume the simulation.</li>
+                <li> <i class="fas fa-redo"></i>: opens the window to select a new scenario and set its parameters.</li>
+                <li> <i class="fas fa-cog"></i>: open a window that allows changing various settings. The most useful one is the simulation rate: you can speed up time during boring times or to increase the challenge.</li>
+                <li> <i class="fas fa-question-circle"></i>: open this webpage to review <i>vice</i>'s documentation</li>
+                <li> <i class="fas fa-info-circle"></i>: display information about the version of <i>vice</i> you have installed.</li>
+                <li> <i class="fab fa-discord"></i>: join the <i>vice</i> Discord.</li>
+              </ul>
+            </p>
+            <p>
+              When you exit <i>vice</i>, it remembers everything going on&mdash;all of the aircraft in flight, the instructions they have been given, etc.
+              The next time you launch <i>vice</i>, it loads all of that back in and you can continue where you left off.
+              If you'd like to start something new, just click <i class="fas fa-redo"></i> and configure a new scenario.
+            </p>
+            <p>
+              When <i>vice</i> is paused, you can hover the mouse above a radar track to see information about the instructions the aircraft has been given so far&mdash;for example, altitude and speed assignments, whether it has been sent direct to a fix, the approach it has been assigned, etc.  An example is shown below.  This information is especially useful when resuming a <i>vice</i> session after you have been away from it for a while.
               </p>
+            <div class="text-center">
+              <img src="hover-info.jpg" srcset="hover-info-2x.jpg 2x" width="255" height="140" class="img-fluid" alt="configuration dialog box">
+            </div>
+            <br>
           </section>
           
 	  <section class="docs-intro" id="commands">
@@ -245,14 +261,14 @@
                     <td><code>E</code><i>approach</i></td>
                     <td>Tells the aircraft to expect the specified
                     approach. This command must be used before an aircraft
-                    is cleared for an approach.  It also adds the approach
+                    is cleared for an approach and it also adds the approach
                     fixes to the end of the aircraft's route.</td>
                     <td><code>EI2L</code></td>
                   </tr>
                   <tr>
                     <td><code>C</code><i>approach</i></td>
                     <td>Clears the aircraft for the specified
-                    approach. The aircraft must be told to expect the approach before it is cleared for it.</td>
+                    approach. The aircraft must have been told to expect the approach before it is cleared for it.</td>
                     <td><code>CI2L</code></td>
                   </tr>
                   <tr>
@@ -823,7 +839,7 @@
             <h1 class="docs-heading">Installation</h1>
 
             <section class="docs-intro">
-              <p>Installing <i>vice</i> is straightforward, at least on Windows and Macs; on Linux, more work is needed.
+              <p>Installing <i>vice</i> is straightforward, at least on Windows and Macs; on Linux, you need to do a little more work.
               </p>
             </section><!--//docs-intro-->
           </header>
@@ -843,7 +859,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.7.0/Vice-v0.7.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.7.0 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.8.0/Vice-v0.8.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.8.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -852,7 +868,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.7.0/Vice-v0.7.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.7.0 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.8.0/Vice-v0.8.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v.0.8.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -900,7 +916,10 @@ how it simulates aircraft or the STARS interface.
               <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN
                 arrivals/departures to the JFK scenario.</li>
               <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various
-              small bug fixes.</li>
+                small bug fixes.</li>
+              <li>0.8.0: When you quit vice, now it remembers all of the aircraft; when you launch it again, you can resume right where you left off.
+                When the sim is paused, hovering the mouse on a radar track displays information about its routing and assignments.
+                Many additional small bugfixes.
             </ul>
 
           </section><!--//section-->
@@ -1218,6 +1237,11 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
+                <td>"range"</td>
+                <td>Number</td>
+                <td>Default radar scope center range in nautical miles. If unspecified, a 50 mile range is the default.</td>
+              </tr>
+              <tr>
                 <td>"scenarios"</td>
                 <td>Object</td>
                 <td>This defines all of the ATC scenarios that are available in the scenario group. See the <a href="#fe-scenarios">scenarios section</a> for details.</td>
@@ -1272,6 +1296,7 @@ how it simulates aircraft or the STARS interface.
                   Each approach is then defined by the following members:
                   <ul>
                     <li>"full_name": a string giving the full name of the approach (e.g., "RNAV Z Runway 13L")</li>
+                    <li>"runway": a string describing the runway the approach ends at (e.g., "13L")</li>
                     <li>"type": a string indicating the type of the approach; it must be either "ILS" or "RNAV"</li>
                     <li>"waypoints": an array of one or more strings giving the approach's route.</li>
                   </ul>
@@ -1451,7 +1476,9 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"runway_waypoints"</td>
                 <td>Object</td>
-                <td>This specifies runway-specific waypoints, if applicable.  See example below.</td>
+                <td>This specifies runway-specific waypoints.  After an approach is assigned to an aircraft, the corresponding
+                  runway waypoints are added to its route. Note that the first waypoint in each entry in "runway_waypoints"
+                  must match the last waypoint in "waypoints". (See the example below.)</td>
               </tr>
               <tr>
                 <td>"speed_restriction"</td>
@@ -1502,14 +1529,21 @@ how it simulates aircraft or the STARS interface.
 
             <p>The "runway_waypoints" member can be used for STARs that have different routes depending on the runway.
               When the user instructs the aircraft to expect a particular approach then the corresponding waypoints are
-              added to its route. As an example, here are some of the entries for the JIIMS3 arrival at KPHL:
+              added to its route. As an example, the specification of the KPHL <a href="https://aeronav.faa.gov/d-tpp/2305/00320JIIMS.PDF">JIIMS4 arrival</a>
+              starts with the following string for "waypoints": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000".
+              (The second point is used to set the handoff point to be between HEKMN and JIIMS.)
+              It then has the following "runway_waypoints", corresponding to the runway-specific routes.
+              Note that all start with JIIMS, the same fix at the end of "waypoints".
             </p>
             <pre>
   "runway_waypoints": {
-    "27R": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 BEELZ WOJIK@s190 PSOUT #87",
-    "35": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 SNEDE",
-    "9L": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000 TLUKS CHEAZ@s190 STAYK #266",
-  }
+    "27L": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD #87",
+    "27R": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD #87",
+    "17": "JIIMS@a8000 SNEDE #312",
+    "35": "JIIMS@a8000 SNEDE #312",
+    "9L": "JIIMS@a8000 WUDRR WEVVE ERNYY #268",
+    "9R": "JIIMS@a8000 WUDRR WEVVE ERNYY #268"
+  },
             </pre>
             
           </section><!--//section-->
