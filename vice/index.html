@@ -210,8 +210,9 @@
                 <tbody>
                   <tr>
                     <td><code>H</code><i>heading</i></td>
-                    <td>Directs the aircraft to fly the specified heading. It will turn in whichever direction gets it to that heading most quickly.</td>
-                    <td><code>H050</code></td>
+                    <td>Directs the aircraft to fly the specified heading. It will turn in whichever direction gets it to that heading most quickly.
+                      If no heading is given, the aircraft is instructed to fly present heading.</td>
+                    <td><code>H050</code>, <code>H</code></td>
                   </tr>
                   <tr>
                     <td><code>L</code><i>heading</i></td>
@@ -241,6 +242,18 @@
                     <td><code>DWAVEY</code></td>
                   </tr>
                   <tr>
+                    <td><code>D</code><i>fix</i><code>/H</code><i>heading</i></td>
+                    <td>Directs the aircraft to depart the specified fix at the given heading.
+                    (The specified fix must be in the aircraft's flight plan.)</td>
+                    <td><code>DLENDY/H180</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>C</code><i>fix</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i></td>
+                    <td>Directs the aircraft to cross the specified fix at the given altitude and speed.
+                      Either one or both of <code>A</code> and <code>S</code> may be specified.</td>
+                    <td><code>CCAMRN/A110</code></td>
+                  </tr>
+                  <tr>
                     <td><code>C</code><i>alt</i></td>
                     <td>Directs the aircraft to climb to the specified altitude, which is given in hundreds of feet.</td>
                     <td><code>C170</code></td>
@@ -254,8 +267,9 @@
                   <tr>
                     <td><code>S</code><i>knots</i></td>
                     <td>Gives the aircraft a speed restriction.  If the restriction is given after an aircraft is cleared for an approach,
-                    the speed restriction is in effect until 5 mile final.</td>
-                    <td><code>S210</code></td>
+                      the speed restriction is in effect until 5 mile final.  If no speed is given, then the aircraft is instructed
+                    "cancel speed restrictions".</td>
+                    <td><code>S210</code>, <code>S</code></td>
                   </tr>
                   <tr>
                     <td><code>E</code><i>approach</i></td>
@@ -270,6 +284,13 @@
                     <td>Clears the aircraft for the specified
                     approach. The aircraft must have been told to expect the approach before it is cleared for it.</td>
                     <td><code>CI2L</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>CSI</code><i>approach</i></td>
+                    <td>Clears the aircraft "straight in" for the specified approach.
+                      (This command is only useful for approaches that include procedure turns.)
+                      The aircraft must have been told to expect the approach before it is cleared for it.</td>
+                    <td><code>CSII6</code></td>
                   </tr>
                   <tr>
                     <td><code>X</code></td>
@@ -859,7 +880,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.8.1/Vice-v0.8.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.8.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.9.0/Vice-v0.9.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.9.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -868,7 +889,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.8.1/Vice-v0.8.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.8.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.9.0/Vice-v0.9.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.9.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -895,33 +916,50 @@ how it simulates aircraft or the STARS interface.
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
 
+            <h3>0.9.0 (15 June 2023)</h3>
+                <ul>
+		  <li>All new flight modeling engine supports procedure turns (both racetrack and standard 45/180)
+                    and more accurate turns to intercept localizers, etc.  The approaches in the existing scenarios
+                    have been updated to include their procedure turns, where appropriate.</li>
+                  <li>A number of new <a href="#commands">aircraft control commands</a> have been added:</li>
+                  <ul>
+                    <li>Cancel speed restrictions</li>
+                    <li>Cleared straight in approach</li>
+                    <li>Cross <i>fix</i> at <i>altitude</i> and <i>speed</i></li>
+                    <li>Depart <i>fix</i> at <i>heading</i></li>
+                    <li>Fly present heading</li>
+                  </ul>
+                  <li>When a departure is handed off to a virtual controller, the other controller won't
+                    climb it further until after it is clicked by the user to acknowledge the handoff.</li>
+                  <li>Fixed very small fonts being used on Windows systems with high-DPI displays</li>
+                  <li>Numerous other small fixes and improvements, including in the wind modeling and fixing
+                    a case where arrivals would fly faster than the aircraft is capable.</li>
+                  <li><i>Facility engineering:</i> In addition to new directives to specify procedure turns,
+                    there are a number of changes to how <a href="#fe-routes">routes</a> are specified.</li>
+                </ul>
+
+                <h3>Earlier Releases</h3>
             <ul>
-              <li>0.2.1: Initial release</li>
-              <li>0.3.1: Added KJFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
-              <li>0.4.0: Added KPHL scenarios, airspace warnings, and KFRG arrivals and intra-TRACON arrivals for KJFK.</li>
-              <li>0.4.1: Fixed bugs in datablock positioning, added "turn left/right X degrees" commands.</li>
-              <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
-              <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
-              <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
-              <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
-              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB,
-                KISM, KORL...). Thanks to Mike K!</li>
-              <li>0.6.1: Fixed a crash related to handed off aircraft and sped up
-                launching vice.</li>
-              <li>0.6.2: Added go arounds and ABE TRACON scenarios.</li>
-              <li>0.6.3: Added KJAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
-              <li>0.6.4: Fixed a bug with intercepting the localizer that occasionally led to aircraft hanging in the air for a while
-                before proceeding.</li>
-              <li>0.6.5: Fixed <emph>another</emph> bug with intercepting the localizer.</li>
-              <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN
-                arrivals/departures to the JFK scenario.</li>
-              <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various
-                small bug fixes.</li>
+              <li>0.8.1: fixed a bug where the STARS window wouldn't show anything.</li>
               <li>0.8.0: When you quit vice, now it remembers all of the aircraft; when you launch it again, you can resume right where you left off.
                 When the sim is paused, hovering the mouse on a radar track displays information about its routing and assignments.
-                Many additional small bugfixes.
-              </li>
-              <li>0.8.1: fixed a bug where the STARS window wouldn't show anything.</li>
+                Many additional small bugfixes.</li>
+              <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various small bug fixes.</li>
+              <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN arrivals/departures to the JFK scenario.</li>
+              <li>0.6.5: Fixed <emph>another</emph> bug with intercepting the localizer.</li>
+              <li>0.6.4: Fixed a bug with intercepting the localizer that occasionally led to aircraft hanging in the air for a while before proceeding.</li>
+              <li>0.6.3: Added KJAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
+              <li>0.6.2: Added go arounds and ABE TRACON scenarios.</li>
+              <li>0.6.1: Fixed a crash related to handed off aircraft and sped up launching vice.</li>
+              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB, KISM, KORL...). Thanks to Mike K!</li>
+              <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
+              <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
+              <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
+              <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
+              <li>0.4.1: Fixed bugs in datablock positioning, added "turn left/right X degrees" commands.</li>
+              <li>0.4.0: Added KPHL scenarios, airspace warnings, and KFRG arrivals and intra-TRACON arrivals for KJFK.</li>
+              <li>0.3.1: Added KJFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
+              <li>0.2.1: Initial release</li>
             </ul>
 
           </section><!--//section-->
@@ -1034,29 +1072,38 @@ how it simulates aircraft or the STARS interface.
             </p>
             <p>Here is an example route from a JFK departure. The first two waypoints are custom fixes at the start and end of the KJFK 31L runway,
               specified via the "fixes" object in the <a href="#fe-scenario-groups">scenario group</a>, while the next three are standard
-              fixes.  The "#223" at the end leaves the aircraft on a 223 heading as it departs RNGRR.  It will maintain that heading until it
-              is further vectored by the controller.  If there's are further fixes after such a heading, the aircraft may be sent direct to one of
+              fixes.  The "/h223" after "RNGRR" specifies that the aircraft should fly a 223 heading as departing RNGRR.
+              It will maintain that heading until it
+              is further vectored by the controller.  If there are further fixes after such a heading, the aircraft may be sent direct to one of
               those fixes by the controller.
             <pre>
-  "_JFK_31L _JFK_13R SKORR METSS RNGRR #223"
+  "_JFK_31L _JFK_13R SKORR METSS RNGRR/h223"
             </pre>
-            <p>
-              Altitude and speed restrictions can be specified at fixes.  Here's an example from a JFK arrival.  The "@a3000" after CATOD specifies
-              a 3,000' altitude restriction at the crossing and "@s210" specifies a 210 kts speed restriction. 
-              </p>
-            <pre>
-  "PZULU CATOD@a3000@s210 IGIDE@a1900 _JFK_31R@a50",
-            </pre>
-            <p>Finally, a handoff point can be specified using a single "@".  When an aircraft reaches that point in the route, it is
-              handed off from the virtual controller to the user.
-              Here is an example from the CAMRN4 arrival at KJFK.
-              Immediately after the aircraft reaches KARRS it will be handed off from the virtual controller that is tracking it (NY_CTR in this case)
-              to the user's control position.  The aircraft will continue to CAMRN and then fly a 041 heading until the user gives
-              it vectors.
-            </p>
-            <pre>
-  "N039.46.43.120,W074.03.15.529 KARRS @ CAMRN #41"
-            </pre>
+            <p>A number of items like headings can be specified with a fix:</p>
+            <ul>
+              <li> <code>/a</code><i>altitude</i>: cross the fix at the given altitude (specified in 100s of feet)</li>
+              <li> <code>/h</code><i>heading</i>: depart the fix at specified heading</li>
+              <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
+              <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>              
+            </ul>
+            <p>For approach fixes that have procedure turns, a number of additional items can be specified:</p>
+            <ul>
+              <li><code>/hilpt</code>: there is a hold in lieu of procedure turn (i.e., a racetrack procedure turn) associated with the fix.
+                The default is right turns and a 1 minute limit for ILS approaches and a 4 nm limit for RNAV approaches.
+                Different limits can be specified directly; for example <code>/hilpt6nm</code> gives a procedure turn with a 6 nm limit and
+                <code>/hilpt2min</code> specifies a 2 minute limit.  For left turns, add a <code>l</code> after the slash, like
+                <code>/lhilpt</code>.</li>
+              <li><code>/pt45</code>: specifies that there is a standard 45 degree procedure turn at the fix. (This has the same defaults&mdash;
+                right turns, 1 minute (ILS) / 4 nm (RNAV)&mdash;as HILPTs. Alternative values are specified the same way.)</li>
+              <li><code>/pta</code><i>altitude</i>: if the aircraft should descend during the procedure turn, this can be used to specify
+              the final altitude it should have at the end of the turn. (The altitude should be given in 100s of feet.)</li>
+              <li><code>/nopt180</code>: specifies that aircraft approaching the fix in the 180 degree semicircle of directions aligned
+                with the final approach course should not perform the procedure turn. (As an example, see the <a href="https://aeronav.faa.gov/d-tpp/2305/05570RZ8.PDF">KJAX RNAV Z 8</a> approach; this applies for aircraft between heading 346 and 166
+              arriving at UDAQI.)</li>
+              <li><code>/nopt</code>: when specified at a fix prior to one with a procedure turn, indicates that aircraft that
+              pass that fix should not fly the procedure turn.</li>
+            </ul>
+            
           </section><!--//section-->
 
           <section class="docs-section" id="fe-airlines-aircraft">
