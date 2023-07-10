@@ -1,5 +1,75 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2023-07-05T11:18:01+02:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
-</subtitle><entry><title type="html">Some News About the 4th Edition of Physically Based Rendering</title><link href="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html" rel="alternate" type="text/html" title="Some News About the 4th Edition of Physically Based Rendering" /><published>2022-12-22T00:00:00+01:00</published><updated>2022-12-22T00:00:00+01:00</updated><id>https://pharr.org/matt/blog/2022/12/22/pbr-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html">&lt;p&gt;I’m delighted to report that the final laid-out pages of the 4th edition of
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.3.1">Jekyll</generator><link href="https://pharr.org/matt/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pharr.org/matt/blog/" rel="alternate" type="text/html" /><updated>2023-07-10T16:04:32+02:00</updated><id>https://pharr.org/matt/blog/feed.xml</id><title type="html">Matt Pharr’s blog</title><subtitle>It seemed worth writing up at the time.
+</subtitle><entry><title type="html">A Visit to the Sponza Palace’s Atrium</title><link href="https://pharr.org/matt/blog/2023/07/10/sponza-atrium.html" rel="alternate" type="text/html" title="A Visit to the Sponza Palace's Atrium" /><published>2023-07-10T00:00:00+02:00</published><updated>2023-07-10T00:00:00+02:00</updated><id>https://pharr.org/matt/blog/2023/07/10/sponza-atrium</id><content type="html" xml:base="https://pharr.org/matt/blog/2023/07/10/sponza-atrium.html">&lt;p&gt;Back in the early 2000s, the &lt;a href=&quot;http://hdri.cgtechniques.com&quot;&gt;CGTechniques
+website&lt;/a&gt; had a “rendering challenge”, where
+an interesting model would be posted and then artists would try to make the
+best rendering they could of it.  I remember how remarkable the images were
+in those early days of global illumination–seeing complex 3D models
+coupled with beautiful lighting was incredibly inspiring, especially when
+there were few especially interesting scenes available for use in rendering
+research.  One of the models used for the challenge was the now-famous
+“Sponza Atrium,” created by Marko Dabrovic.  The CGTechniques website is
+remarkably still online, but the &lt;a href=&quot;http://hdri.cgtechniques.com/~sibenik2/&quot;&gt;contest
+pages&lt;/a&gt; are missing images, though
+&lt;a href=&quot;https://web.archive.org/web/20030221053202/http://hdri.cgtechniques.com/~sibenik2/&quot;&gt;archive.org delivers some of them at
+least&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In those days of the rendering challenge, Greg Humphreys and I were in the
+thick of working on the first edition of &lt;em&gt;Physically Based Rendering&lt;/em&gt;.  We
+were desperate for good scenes to render.  I got in touch with Marko and he
+was more than happy to give us permission to use the Sponza Atrium model in
+the book and to help with the conversion.  In addition to the atrium and a
+model of the Šibenik Cathedral, less famous though still wonderful, Marko
+and his colleague Mihovil Odak had a nice model of an Audi TT that we made
+extensive use of as well.  They were all great scenes, especially for those
+days; we kept using them in the book through the third edition, only now
+moving on to new ones, two decades later.&lt;/p&gt;
+
+&lt;p&gt;I was recently able to visit Croatia, home to the originals for the Sponza
+Atrium and Šibenik Cathedral models.  I didn’t make it to Šibenik, so
+missed the cathedral, but I did visit Dubrovnik, home of the Sponza
+Palace.  You get a nice postcard when you pay the entrance fee.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;a href=&quot;/matt/blog/images/sponza-palace-postcard.jpg&quot;&gt;
+    &lt;img src=&quot;/matt/blog/images/sponza-palace-postcard.jpg&quot; width=&quot;453&quot; height=&quot;605&quot; alt=&quot;Postcard of the Sponza Palace&quot; /&gt;
+&lt;/a&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The Sponza Place is now home to the &lt;a href=&quot;https://en.wikipedia.org/wiki/Dubrovnik_Archive&quot;&gt;Dubrovnik State
+Archive&lt;/a&gt;. A room at the
+entrance has a memorial to the 200 soldiers who died defending Dubrovnik
+during the &lt;a href=&quot;https://en.wikipedia.org/wiki/Siege_of_Dubrovnik&quot;&gt;Siege of
+Dubrovnik&lt;/a&gt;.  The Palace
+itself was damaged then, hit by a number of shells.  You couldn’t tell now,
+nor do you see any hint of the broader devastation to the city, just 30
+years ago.&lt;/p&gt;
+
+&lt;p&gt;It was quiet when I visited the Palace, even though the streets of
+Dubrovnik outside were packed with tourists.  And by quiet I mean that no
+one else was in the Atrium most of the time I was there, not that I’m
+complaining.  I’m happy to confirm that the GI effects are impressive to
+see in person.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;a href=&quot;/matt/blog/images/mmp-sponza-atrium.jpg&quot;&gt;
+    &lt;img src=&quot;/matt/blog/images/mmp-sponza-atrium.jpg&quot; width=&quot;453&quot; height=&quot;605&quot; alt=&quot;Matt in the Sponza Palace Atrium&quot; /&gt;
+&lt;/a&gt;
+&lt;/p&gt;
+
+&lt;p&gt;I took advantage of the emptiness and recorded &lt;a href=&quot;https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/sponza%20atrium.MOV&quot;&gt;a three-minute long
+video&lt;/a&gt;,
+walking about and panning my camera around to capture the details as well
+as I could.  Here’s a low-resolution GIF of the first 20 seconds of it.
+(Caution: I find it a little nausea-inducing to view the video now; the
+goal was a thorough capture rather than something pleasing for human
+consumption.)  I offer it up as fodder for a fun NeRF, or at least as
+reference to the original.&lt;/p&gt;
+
+&lt;p align=&quot;center&quot;&gt;
+&lt;a href=&quot;/matt/blog/images/sponza-atrium.gif&quot;&gt;
+    &lt;img src=&quot;/matt/blog/images/sponza-atrium.gif&quot; width=&quot;320&quot; height=&quot;180&quot; alt=&quot;Short video of the Sponza Palace Atrium&quot; /&gt;
+&lt;/a&gt;
+&lt;/p&gt;</content><author><name></name></author><summary type="html">Croatia's must-see tourist destination.</summary></entry><entry><title type="html">Some News About the 4th Edition of Physically Based Rendering</title><link href="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html" rel="alternate" type="text/html" title="Some News About the 4th Edition of Physically Based Rendering" /><published>2022-12-22T00:00:00+01:00</published><updated>2022-12-22T00:00:00+01:00</updated><id>https://pharr.org/matt/blog/2022/12/22/pbr-4ed</id><content type="html" xml:base="https://pharr.org/matt/blog/2022/12/22/pbr-4ed.html">&lt;p&gt;I’m delighted to report that the final laid-out pages of the 4th edition of
 &lt;em&gt;Physically Based Rendering&lt;/em&gt; are now on their way to the printer.  As they
 say, it’s been a journey, but I think that all involved are thrilled with
 the final result.  It has been a delight working with MIT Press this time
@@ -2530,230 +2600,4 @@ end-to-end tests fit in for testing renderers.&lt;/p&gt;
             operations. &lt;a href=&quot;#fnref:atomicfloat&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
     &lt;/li&gt;
   &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning, now with intention, to write up some thoughts about how to effectively debug a renderer.</summary></entry><entry><title type="html">Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth</title><link href="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html" rel="alternate" type="text/html" title="Swallowing the Elephant (Part 12): A Postscript On Disk Bandwidth" /><published>2021-08-07T00:00:00+02:00</published><updated>2021-08-07T00:00:00+02:00</updated><id>https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note</id><content type="html" xml:base="https://pharr.org/matt/blog/2021/08/07/moana-bandwidth-note.html">&lt;p&gt;At the ostensible &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html&quot;&gt;end of these
-updates&lt;/a&gt; about
-pbrt-v4’s performance when rendering &lt;a href=&quot;https://www.disneyanimation.com/resources/moana-island-scene/&quot;&gt;Disney’s Moana Island
-scene&lt;/a&gt;,
-there was an unresolved question about why CPU utilization wasn’t better at
-the very start when pbrt was parsing the scene description.  As a
-refresher, with 64 threads on a 32-core AMD 3970X CPU and pbrt’s GPU-based
-rendering path, it looked like this. (As before, the vertical dashed line
-indicates when rendering begins.)&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-cpu-64-truefin-rescaled.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
-
-&lt;p&gt;Starting at the 17 second mark, low CPU utilization isn’t necessarily bad
-since that’s when the GPU starts getting involved building acceleration
-structures, but before that it’s all on the CPU.  For the first twelve or so
-seconds, total CPU utilization is between 0.2 and 0.4, which corresponds to
-roughly 13–26 of those 64 threads actually making something of themselves;
-that’s not enough of them to be satisfying.&lt;/p&gt;
-
-&lt;p&gt;It started to nag at me whether limited disk bandwidth might have something
-to do with that—i.e., is the issue that threads are stalled waiting for
-I/O?  I made a few measurements to try to answer that question and learned
-enough along the way that here we go again.&lt;/p&gt;
-
-&lt;h2 id=&quot;how-far-we-have-come&quot;&gt;How Far We Have Come&lt;/h2&gt;
-
-&lt;p&gt;Three years ago when I &lt;a href=&quot;/matt/blog/2018/07/08/moana-island-pbrt-1.html&quot;&gt;first looked at pbrt’s performance with Moana
-Island&lt;/a&gt; I was using a
-Google Compute Engine instance with a spinny disk for benchmarks.  Nowadays
-you might hope for around 100 MB/s of read bandwidth from such a disk.
-pbrt-v4 reads a total of 27,766 MB from disk when loading this
-scene and it takes a lot of 100 MBs to get through all of that.  Therefore,
-when I was doing benchmarks then I was careful to flush the OS’s buffer
-cache between runs so that the true cost of I/O was measured
-and everything didn’t come out of RAM after the first time at rates much
-better than 100 MB/s.&lt;/p&gt;
-
-&lt;p&gt;This time around, I didn’t mention the disk on the system I used for
-benchmarking and I didn’t worry about the buffer cache.  That wasn’t an
-oversight, but was more of a “I’m pretty sure this doesn’t matter”&lt;sup id=&quot;fnref:ps&quot;&gt;&lt;a href=&quot;#fn:ps&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; sort of
-thing, like which version of the Linux kernel was running or whether it was
-DDR4 3200 or DDR4 3600 RAM in the system.  (For the record, 5.8.0 and the
-former.)&lt;/p&gt;
-
-&lt;p&gt;The disk I’m using now is an NVMe disk; a quick benchmark showed that it
-delivers a peak of 2,022 MB/s of read bandwidth.  I didn’t think that could
-be a bottleneck, though if you distribute those 2,022 MB/s evenly to 64
-threads, it’s just 32 MB/s per thread.  Thinking about it in those terms
-made me worry that bandwidth might be tight, so I decided to make some
-direct measurements and see what they had to show.&lt;/p&gt;
-
-&lt;h2 id=&quot;starting-position&quot;&gt;Starting Position&lt;/h2&gt;
-
-&lt;p&gt;First, I measured pbrt’s disk bandwidth use over time to get a sense of
-whether it ever approached the peak and to see how disk reads were
-distributed over the course of loading the scene.  (This and following
-measurements were made with an empty buffer cache, just to be safe.)
-&lt;code class=&quot;highlighter-rouge&quot;&gt;iostat&lt;/code&gt; made that easy to do, though sadly it doesn’t seem to be able to
-report I/O with less than one second granularity, which is more coarse than
-one would like given 30 seconds time to first pixel.  In any case, here is
-a graph of what it had to say; the disk’s measured maximum I/O bandwidth is
-marked with a dashed horizontal line.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/moana-io.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
-
-&lt;p&gt;For the first 20 or seconds, pbrt is mostly parsing text *.pbrt scene
-description files; it starts out consuming plenty of bandwidth but then
-slows as there are fewer files left to get through.  The second wave
-of I/O starting at 20 seconds corresponds to reading all of the PLY files for the
-object instances in the scene.  The news in this graph is mostly good: pbrt
-doesn’t seem to ever top out at the maximum bandwidth, suggesting that
-it’s not I/O bound, though it’s close enough at 9 seconds there that it’s
-not possible to be sure from these measurements.&lt;/p&gt;
-
-&lt;p&gt;This data also makes it possible to compute an alternative speed of light
-measurement for time to first pixel.  If we divide the total size of data
-read, 27,766 MB, by the peak read bandwidth of 2,022 MB/s, we can see that we
-can’t hope to have a time to first pixel under 13.7 seconds.  That’s already an
-interesting result, as it shows that the &lt;a href=&quot;/matt/blog/2021/08/01/moana-once-more-unto-the-beach.html#speed-of-light&quot;&gt;earlier speed of light
-calculation&lt;/a&gt;
-that only considered the CPU didn’t tell the whole story: then, 
-neglecting I/O limits, we estimated 7.2 seconds as the best possible time
-to first pixel.&lt;/p&gt;
-
-&lt;p&gt;Another thing this graph shows is that pbrt is close enough to being I/O
-bound at the start that there isn’t a lot of reason to worry about the
-relatively low CPU utilization then.  We might improve
-it some by finding more things to start reading sooner, but the benefit
-would be limited since we would soon hit peak disk bandwidth and be limited
-by that.  Further performance improvements would then require a better
-balance of I/O requests over time.&lt;/p&gt;
-
-&lt;h2 id=&quot;turning-the-bandwidth-screw&quot;&gt;Turning The Bandwidth Screw&lt;/h2&gt;
-
-&lt;p&gt;The data already seemed fairly conclusive about not being I/O bound, but I
-was curious about how performance varied with disk read bandwidth—how
-crucial is that lovely abundant NVMe bandwidth to pbrt’s performance with
-this scene?  One way to find out is to start reducing the amount of disk
-read bandwidth available to pbrt and to see how that affects performance.&lt;/p&gt;
-
-&lt;p&gt;Once you find &lt;a href=&quot;https://unix.stackexchange.com/a/393798&quot;&gt;the right trick&lt;/a&gt;
-it’s surprisingly easy, at least on Linux, to use &lt;code class=&quot;highlighter-rouge&quot;&gt;systemd-run&lt;/code&gt; to launch a
-process that has a limited amount of disk read bandwidth available to it.
-I did a quick study, dialing the bandwidth down from the 2,000 MB/s that my
-NVMe drive offers to the sad 50 MB/s that a middling spinning disk today
-might provide.&lt;/p&gt;
-
-&lt;p&gt;Here is a graph of pbrt-v4’s time to first pixel with the Moana Island
-scene as a function of available disk bandwidth, running with both 8
-threads on 4 cores and 64 threads on 32 cores. Note that the y axis has a
-logarithmic scale, the better to fit the sadness that is a nearly 600
-second time to first pixel given 50 MB/s.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-vs-read-bandwidth.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
-
-&lt;p&gt;There are a number of things to see in this graph.  First, it offers
-further confirmation that pbrt-v4 is not bandwidth limited for this scene:
-the fact that performance doesn’t immediately decrease as bandwidth starts
-to decrease from 2,000 MB/s indicates that more bandwidth isn’t going to make things
-faster.  Both lines seem to have hit their asymptote, though the 64 thread
-one just barely so.&lt;/p&gt;
-
-&lt;p&gt;This graph also shows how much bandwidth can decrease before performance is
-meaningfully affected.  With 64 threads, you only have to go to 1400 MB/s
-to slow down time to first pixel by 10%, but with 8 threads you can go all
-the way to 800 MB/s before there’s a 10% drop.  This isn’t surprising—the
-more threads you’ve got, the more bandwidth you’re capable of
-consuming—but it’s nevertheless interesting to see how much farther one
-can go with fewer threads.&lt;/p&gt;
-
-&lt;p&gt;Finally, note that below 500 MB/s, the two curves are
-effectively the same.  Here, too, there’s no big surprise: if you’re trying
-to drink through a narrow straw, having more thirsty people waiting in line
-on the end of it isn’t going to get the water through more quickly, to grossly
-overstretch a metaphor.&lt;/p&gt;
-
-&lt;h2 id=&quot;deflate-deflate-deflate&quot;&gt;DEFLATE, DEFLATE, DEFLATE&lt;/h2&gt;
-
-&lt;p&gt;Compression algorithms make it possible to trade off bandwidth for
-computation, so my last experiment was to look at performance with the
-scene description compressed using &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;.  Thanks to a recent &lt;a href=&quot;https://github.com/mmp/pbrt-v4/commit/6577a325a4cb934efac3b10f3b33847cf0d93ea4&quot;&gt;patch from
-Jim
-Price&lt;/a&gt;,
-pbrt-v4 now supports reading &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;-compressed scene description files, and
-&lt;a href=&quot;https://w3.impa.br/~diego/software/rply/&quot;&gt;RPly&lt;/a&gt;, the PLY file reader by Diego Nehab that
-pbrt uses, already supported &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip&lt;/code&gt;-compressed PLY files.
-All of that made it easy to run the same experiments with a compressed
-scene description.&lt;/p&gt;
-
-&lt;p&gt;With the *.pbrt and PLY files compressed using &lt;code class=&quot;highlighter-rouge&quot;&gt;gzip -5&lt;/code&gt;, pbrt-v4 reads a
-total of just 5,570 MB from disk—nearly 5x less than with the
-uncompressed scene description.  Using &lt;a href=&quot;https://zlib.net/&quot;&gt;zlib&lt;/a&gt; for
-decompression with 64 threads and the full NVMe disk bandwidth, pbrt takes
-40 seconds to first pixel with a compressed scene—12 seconds slower than
-with everything uncompressed.  Given that it wasn’t bandwidth-limited
-before, that isn’t surprising—we have just increased the amount of CPU
-work that needs to be done to get the scene into memory.&lt;/p&gt;
-
-&lt;p&gt;Here is the graph of disk I/O consumption over those 40 seconds; it shows
-that now there is plenty of headroom with never more than 500 MB/s of
-bandwidth used.&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/moana-io-gz.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
-
-&lt;p&gt;As we were going to press, I saw that Aras Pranckevičius just put up a nice
-series of &lt;a href=&quot;https://aras-p.info/blog/2021/08/04/EXR-Lossless-Compression/&quot;&gt;blog posts about compression in
-OpenEXR&lt;/a&gt;.
-Those led me down all sorts of ratholes, and one of them reminded me about
-&lt;a href=&quot;https://github.com/ebiggers/libdeflate&quot;&gt;libdeflate&lt;/a&gt;, a highly optimized
-library that can decompress gzip-encoded files (among others).  It wasn’t too
-much code to swap that in for zlib in pbrt and &lt;strong&gt;bam&lt;/strong&gt;: down to 34 seconds
-to first pixel with a compressed scene.  And that’s actually only using
-libdeflate for the *.pbrt files but still using zlib for the 1,152 MB worth
-of compressed PLY files, since using libdeflate with RPly would have
-required more complicated plumbing.&lt;/p&gt;
-
-&lt;p&gt;Anyway, here’s a graph that shows time to first pixel with all three
-options, again with 64 threads. libdeflate gets an asterisk, since it
-isn’t being used for PLY files (and there is thus presumably some
-performance being left on the floor.)&lt;/p&gt;
-
-&lt;p align=&quot;center&quot;&gt; &lt;img src=&quot;/matt/blog/images/ttfp-vs-read-gz.svg&quot; alt=&quot;CPU utilization (64 threads, with more use of Import)&quot; /&gt; &lt;/p&gt;
-
-&lt;p&gt;There’s lots of good stuff to see there.  As advertised, libdeflate is
-certainly faster than zlib. It starts being the fastest option overall at
-around 1,300 MB/s of bandwidth.  From there on down, the additional CPU
-work to do decompression is worth the disk bandwidth savings in return. (In
-contrast, zlib doesn’t make up for its computational overhead until
-around 1,000 MB/s.)&lt;/p&gt;
-
-&lt;p&gt;Both decompressors have more or less constant performance all the way down
-to roughly 300 MB/s from the disk.  Past there, their performance
-converges: at that point, data is coming in so slowly that how quickly it’s
-decompressed doesn’t make much difference.  We can also see that
-compression is especially helpful way down at 50 MB/s, where it’s leads to
-a spritely 127 seconds to first pixel—4.6x faster than the uncompressed
-scene is with that little bandwidth.&lt;/p&gt;
-
-&lt;h2 id=&quot;discussion&quot;&gt;Discussion&lt;/h2&gt;
-
-&lt;p&gt;For once we have gotten through these investigations without finding any
-surprising bottlenecks and so today has not brought any changes to pbrt’s
-implementation, though I suspect pbrt will switch from zlib to libdeflate
-fairly soon.&lt;/p&gt;
-
-&lt;p&gt;Perhaps the most useful result from today is a more accurate estimate of
-pbrt’s best possible performance when preparing to render this scene:
-13.7 seconds given the disk I/O limits of the system.  With that limit
-known, it’s easier to accept the 28 seconds to first pixel that the system
-delivers today—apparently only 2x off the maximum attainable
-performance—and to stop fiddling with the details.&lt;/p&gt;
-
-&lt;p&gt;And yet… I hope that the attentive reader might quibble with the logic
-behind that conclusion: with the compressed scene, we found ourselves with
-a mere 5,570 MB of disk I/O, and that’s something this computer can deliver
-in 2.75 seconds, which puts us once again 10x off the mark.  It seems that
-part of speed of light is in how you define it, but nevertheless I think
-it’s time to leave things where they lie for now.&lt;/p&gt;
-
-&lt;h2 id=&quot;note&quot;&gt;note&lt;/h2&gt;
-&lt;div class=&quot;footnotes&quot;&gt;
-  &lt;ol&gt;
-    &lt;li id=&quot;fn:ps&quot;&gt;
-      &lt;p&gt;The road to disastrous performance is paved with “pretty sure” assumptions about a system’s behavior, so that assumption was admittedly not wise. &lt;a href=&quot;#fnref:ps&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
-    &lt;/li&gt;
-  &lt;/ol&gt;
-&lt;/div&gt;</content><author><name></name></author><summary type="html">A few concluding notes (this time for real) about the effect of disk bandwidth when preparing to render the Moana Island scene with pbrt-v4.</summary></entry></feed>
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Returning, now with intention, to write up some thoughts about how to effectively debug a renderer.</summary></entry></feed>
