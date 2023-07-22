@@ -64,10 +64,9 @@
 	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#launches">Launching Aircraft</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#multi-controller">Multiple Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
-	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-scenarios"><span class="theme-icon-holder me-2"><i class="fas fa-earth-americas"></i></span>Scenarios</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#f11">F11 TRACON</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#n90">N90 TRACON</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
@@ -96,7 +95,7 @@
               <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-04-08</span></h1>
+	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-07-22</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -106,8 +105,9 @@
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> currently supports departure and arrival control
-                scenarios in the N90 TRACON (KEWR, KJFK, KLGA, KPHL, Liberty Departure) and
-                in the F11 TRACON (KJAX, KMCO, KSFB, KISM, KORL, ...).
+                scenarios in multiple TRACONs, including N90 (EWR, JFK, LGA, Liberty Departure),
+                F11 (JAX, MCO, SFB, ISM, ORL), C90 (ORD, MDW), as well as the ABE, CLE, CLT, DAB, JAX, and PHL ATCT/TRACONs.
+                New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
                 and please join the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a> if you'd like to contribute!
@@ -123,28 +123,27 @@
             <p>The radar client interface that <i>vice</i> provides is based on STARS, by way of reimplementing most of the functionality in 
               <a href="https://vstars.rosscarlson.dev">vSTARS</a>. In general, all of the keyboard and menu commands that are available in vSTARS
               are available in <i>vice</i> (though quicklook and CRDA are not yet implemented).  See the <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS Command Reference</a> for a summary of the commands supported.
-              The appearance of <i>vice</i> can be similarly configured using the DCB buttons at the top of the window.
+              The appearance and functionality of the radar scope can be similarly configured using the DCB buttons at the top of the window.
             </p>
             <p>
               The first time you launch <i>vice</i>, a window is shown for configuring the simulation.
               (After the first time, the window can be brought up by clicking the "replay" button in the menubar: <i class="fas fa-redo"></i>.)
               A number of scenarios are available, some departure-only and
               some including both departures and arrivals.
-              Here is the configuration window for KLGA:
+              Here is the configuration window for LGA:
             </p>
             <div class="text-center">
-              <img src="config.jpg" srcset="config-2x.jpg 2x" width="517" height="593" class="img-fluid" alt="configuration dialog box">
+              <img src="config.jpg" srcset="config-2x.jpg 2x" width="515" height="689" class="img-fluid" alt="configuration dialog box">
             </div>
             <br>
             <p>
-              Scenarios may offer one or more control positions; for example, KLGA offers both approach and departure.
-              Once a control position is chosen, you can choose a specific runway configuration.
-              </p>
+              Each scenario usually offers multiple runway configurations.
+            </p>
             <p>
               In the configuration window, you can set the average departure rate (ADR)
               for all of the airports that may have departures in the scenario as well as the average arrival rate (AAR) for all of the
               arrival airports.
-              (The KLGA scenario only includes Laguardia Airport, though other scenarios include both a primary airport as well as satellites.)
+              (The LGA scenario only includes Laguardia Airport, though other scenarios include both a primary airport as well as satellites.)
               Both of these rates are specified in terms of aircraft per hour, so an ADR of 30 corresponds to one aircraft departing
               every two minutes (on average).
               If you'd like an arrival-only scenario, for example, just set all of the departure rates to zero.
@@ -159,6 +158,16 @@
               Use the usual STARS commands as appropriate (to initiate track, accept handoffs, handoff to other controllers, etc.),
               and the additional <a href="#commands">ATC commands below</a> to issue control commands to aircraft.
             </p>
+            <p>
+              When the simulation starts, <i>vice</i> also displays a small window listing the available approaches.
+              For this LGA scenario, there is just one approach, though other scenarios may have multiple runways and or multiple airports active.
+              The approach code&mdash;here, "I22"&mdash; is used in <i>vice</i>'s aircraft control commands like "expect approach"
+              and "cleared approach".
+            </p>
+            <div class="text-center">
+              <img src="approaches.jpg" srcset="approaches-2x.jpg 2x" width="246" height="91" class="img-fluid" alt="approach list">
+            </div>
+            <br>
             <p>To adjust the amount of space used for flight strips, right click the line separating the flight strips from the
               radar window and drag left or right with your mouse.
             </p>
@@ -167,8 +176,10 @@
               <ul>
                 <li> <i class="fas fa-pause-circle"></i> / <i class="fas fa-play-circle"></i>: pause or resume the simulation.</li>
                 <li> <i class="fas fa-redo"></i>: opens the window to select a new scenario and set its parameters.</li>
-                <li> <i class="fas fa-cog"></i>: open a window that allows changing various settings. The most useful one is the simulation rate: you can speed up time during boring times or to increase the challenge.</li>
-                <li> <i class="fas fa-question-circle"></i>: open this webpage to review <i>vice</i>'s documentation</li>
+                <li> <i class="fas fa-cog"></i>: open a window that allows changing various settings. The most useful one is the simulation rate: you can speed up time during slow times or to increase the challenge.</li>
+                <li> <i class="fas fa-question-circle"></i>: show the window that lists the available approaches.</li>
+                <li> <i class="fas fa-plane-departure"></i>: open a window with controls for launching aircraft, either automatically or manually.</li>
+                <li> <i class="fas fa-book"></i>: open this webpage to review <i>vice</i>'s documentation.</li>
                 <li> <i class="fas fa-info-circle"></i>: display information about the version of <i>vice</i> you have installed.</li>
                 <li> <i class="fab fa-discord"></i>: join the <i>vice</i> Discord.</li>
               </ul>
@@ -182,15 +193,78 @@
               When <i>vice</i> is paused, you can hover the mouse above a radar track to see information about the instructions the aircraft has been given so far&mdash;for example, altitude and speed assignments, whether it has been sent direct to a fix, the approach it has been assigned, etc.  An example is shown below.  This information is especially useful when resuming a <i>vice</i> session after you have been away from it for a while.
               </p>
             <div class="text-center">
-              <img src="hover-info.jpg" srcset="hover-info-2x.jpg 2x" width="255" height="140" class="img-fluid" alt="configuration dialog box">
+              <img src="hover-info.jpg" srcset="hover-info-2x.jpg 2x" width="255" height="140" class="img-fluid" alt="aircraft information">
             </div>
             <br>
           </section>
-          
+
+	  <section class="docs-intro" id="launches">
+            <h2 class="section-heading">Launching Aircraft</h2>
+            <p>When a new scenario starts, <i>vice</i> automatically launches new departures and arrivals based on the
+              departure and arrival rates set in the "New Simulation" window.
+              During a simulation, clicking on the departing plane icon in the menubar <i class="fas fa-plane-departure"></i>
+              opens a window that allows more control over aircraft launches.
+              (Note that when <i>vice</i> is used with multiple controllers in the same simulation, then only one controller
+              may have this window open at a time.)
+            </p>
+            <p>The rates for automatic launches can be adjusted in this window. Alternatively, aircraft can be launched manually.  If manual launches are selected,
+              the window shows all of the available departure runways and exits as
+              well as all of the arrivals, as shown below. Clicking the aircraft icon for a departure or arrival
+              causes the aircraft shown to be launched.  If you'd like a different aircraft for the
+              next launch (for example, to have a heavy aircraft), click the redo icon <i class="fas fa-redo"></i> until you're happy with the selection.
+              The window also shows the elapsed time since the launch of each type as well as how many
+              miles in trail (MIT) there would be if the next aircraft was launched.
+              To clear out all of the current aircraft and restart, click the trash icon:
+<i class="fas fa-trash"></i>.
+            </p>
+            <div class="text-center">
+              <img src="manual-launch.jpg" srcset="manual-launch-2x.jpg 2x" width="623" height="354" class="img-fluid" alt="manual aircraft launch window">
+            </div>
+            <br>
+          </section>
+
+	  <section class="docs-intro" id="multi-controller">
+            <h2 class="section-heading">Multiple Controllers</h2>
+
+            <p>With <i>vice</i> you can also have multiple controllers working aircraft together.
+              Select "Create multi-controller" in the "New Simulation" window and
+              you can select a scenario and set its parameters in more or less the same way
+              that you do with a single controller.
+              Here is the top part of the multi-controller configuration window;
+             all of the settings that are the same as for single-controller aren't shown.
+            </p>
+            <div class="text-center">
+              <img src="create-multi.jpg" srcset="create-multi-2x.jpg 2x" width="519" height="225" class="img-fluid" alt="create multi-controller window">
+            </div>
+            <br>
+            <p>
+              Each multi-controller simulation has a name associated with it;
+              <i>vice</i> chooses a random one by default (above, it's "following-nature").
+              You're welcome to choose a different name if you prefer.
+              These names can be used so that you can tell other people which
+              simulation to choose in order to join you.
+            </p>
+            <p>
+              Selecting "Join multi-controller" shows a list of the simulations
+              that are currently available, including how many controllers
+              are signed into each one.
+              Note that the simulation names are shown in the first column.
+              After selecting one, you can choose one of the available control
+              positions and join.
+              <i>vice</i> also allows you to join a simulation as an observer,
+              in which case you have no control capabilities.
+            </p>
+            <div class="text-center">
+              <img src="join-multi.jpg" srcset="join-multi-2x.jpg 2x" width="518" height="323" class="img-fluid" alt="create multi-controller window">
+            </div>
+            <br>
+
+          </section>
+
 	  <section class="docs-intro" id="commands">
             <h2 class="section-heading">ATC Commands</h2>
             <p>In order to issue control commands to aircraft, type the appropriate command from the table below
-              and click on an aircraft's track. After you issue a command, the virtual pilot's readback is shown at the top of the window.
+              and click on an aircraft's track. After you issue a command, the virtual pilot's readback is shown at the bottom of the window.
               The aircraft will then start following that instruction, to the best of its abilities.
               Unlike VATSIM, the pilots will always do exactly what you tell them to.
             </p>
@@ -286,6 +360,11 @@
                     <td><code>CI2L</code></td>
                   </tr>
                   <tr>
+                    <td><code>CAC</code></td>
+                    <td>Cancels approach clearance for an aircraft.</td>
+                    <td><code>CAC</code></td>
+                  </tr>
+                  <tr>
                     <td><code>CSI</code><i>approach</i></td>
                     <td>Clears the aircraft "straight in" for the specified approach.
                       (This command is only useful for approaches that include procedure turns.)
@@ -307,7 +386,7 @@
             <p>
               <i>vice</i> is able to indicate when aircraft are outside of the departure or approach airspace,
               if it has information about the airspace boundaries.
-              (This information is currently only available for KPHL.)
+              (This information is not available at all airports.)
               If an aircraft is outside of its assigned airspace, a red "AS" error will be printed at the
               top of its datablock, as shown below.
               The valid altitudes for the aircraft are shown as well, if there are any valid altitudes
@@ -344,517 +423,6 @@
           </section>
           </article>
 
-	<article class="docs-article" id="section-scenarios">
-	  <header class="docs-header">
-	  <h1 class="docs-heading">Scenarios</h1>
-
-	  <section class="docs-intro">
-            <p>Departure and arrival scenarios are available in both the New York N90 TRACON and the Jacksonville F11 TRACON.
-              For all of these, the identifiers used for approaches with the "expect approach" and "cleared approach"
-              commands are the same as the ones used for scratchpads.
-              (Thus, you can practice scratchpad assignment while you're at it!)
-              </p>
-	    </section><!--//docs-intro-->
-	  </header>
-
-	  <section class="docs-intro" id="f11">
-            <h2 class="section-heading">F11 TRACON Scenarios</h2>
-
-            <p>
-              Scenarios are available for both North and South Operations at Orlando (MCO).
-              You control both departures and arrivals for KJAX, KMCO, KSFB, KISM, and KORL and
-              departures for KMLB.
-            </p>
-
-            <h3>KJAX</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>8</td>
-                    <td><code>I8</code></td>
-                    <td><code>RZ8</code></td>
-                  </tr>
-                  <tr>
-                    <td>14</td>
-                    <td><code>I14</code></td>
-                    <td><code>R14</code></td>
-                  </tr>
-                  <tr>
-                    <td>26</td>
-                    <td><code>I26</code></td>
-                    <td><code>R26</code></td>
-                  </tr>
-                  <tr>
-                    <td>32</td>
-                    <td>&mdash;</td>
-                    <td><code>R32</code></td>
-                  </tr>
-                </tbody>
-              </table>
-
-            <h3>KMCO</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>17L</td>
-                    <td><code>I7L</code></td>
-                    <td><code>R7L</code></td>
-                  </tr>
-                  <tr>
-                    <td>17R</td>
-                    <td><code>I7R</code></td>
-                    <td><code>R7R</code></td>
-                  </tr>
-                  <tr>
-                    <td>18L</td>
-                    <td><code>I8L</code></td>
-                    <td><code>R8L</code></td>
-                  </tr>
-                  <tr>
-                    <td>18R</td>
-                    <td><code>I8R</code></td>
-                    <td><code>R8R</code></td>
-                  </tr>
-                  <tr>
-                    <td>35L</td>
-                    <td><code>I5L</code></td>
-                    <td><code>R5L</code></td>
-                  </tr>
-                  <tr>
-                    <td>35R</td>
-                    <td><code>I5R</code></td>
-                    <td><code>R5R</code></td>
-                  </tr>
-                  <tr>
-                    <td>36L</td>
-                    <td>&mdash;</td>
-                    <td><code>R6L</code></td>
-                  </tr>
-                  <tr>
-                    <td>36R</td>
-                    <td><code>I6R</code></td>
-                    <td><code>R6R</code></td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h3>KORL</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>7</td>
-                    <td><code>I7</code></td>
-                    <td><code>R7</code></td>
-                  </tr>
-                  <tr>
-                    <td>25</td>
-                    <td><code>I25</code></td>
-                    <td><code>R25</code></td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h3>KSFB</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>9L</td>
-                    <td><code>I9L</code></td>
-                    <td><code>R9L</code></td>
-                  </tr>
-                  <tr>
-                    <td>9R</td>
-                    <td><code>I9R</code></td>
-                    <td><code>R9R</code></td>
-                  </tr>
-                  <tr>
-                    <td>27L</td>
-                    <td>&mdash;</td>
-                    <td><code>R7H</code></td>
-                  </tr>
-                  <tr>
-                    <td>27R</td>
-                    <td><code>I7G</code></td>
-                    <td><code>R7G</code></td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h3>KISM</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>6</td>
-                    <td>&mdash;</td>
-                    <td><code>R6</code></td>
-                  </tr>
-                  <tr>
-                    <td>15</td>
-                    <td><code>I15</code></td>
-                    <td><code>R15</code></td>
-                  </tr>
-                  <tr>
-                    <td>33</td>
-                    <td>&mdash;</td>
-                    <td><code>R33</code></td>
-                  </tr>
-                </tbody>
-              </table>
-              
-            </section>
-
-	  <section class="docs-intro" id="n90">
-            <h2 class="section-heading">N90 TRACON Scenarios</h2>
-
-            <h3>KABE</h3>
-            <p>
-              Two scenarios are available at KABE, N90's training TRACON,
-              one landing/departing runway 6 and the other
-              landing/departing runway 24.
-              The following approaches are available:
-              </p>
-            <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>6</td>
-                    <td><code>I6</code></td>
-                    <td><code>R6</code></td>
-                  </tr>
-                  <tr>
-                    <td>13</td>
-                    <td><code>I13</code></td>
-                    <td><code>R13</code></td>
-                  </tr>
-                  <tr>
-                    <td>24</td>
-                    <td><code>I24</code></td>
-                    <td><code>R24</code></td>
-                  </tr>
-                  <tr>
-                    <td>31</td>
-                    <td><code>&mdash;</code></td>
-                    <td><code>R31</code></td>
-                  </tr>
-                </tbody>
-            </table>
-
-            <h3>KEWR</h3>
-
-            <p>
-              Scenarios are available for all of the usual airport configurations, at both KEWR and KTEB.
-              The following approaches are available at KEWR:
-            </p>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>4L</td>
-                    <td><code>I4L</code></td>
-                    <td><code>R4L</code></td>
-                  </tr>
-                  <tr>
-                    <td>4R</td>
-                    <td><code>I4R</code></td>
-                    <td><code>R4R</code></td>
-                  </tr>
-                  <tr>
-                    <td>11</td>
-                    <td><code>I11</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>22L</td>
-                    <td><code>I2L</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>22R</td>
-                    <td><code>I2R</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>29</td>
-                    <td>&mdash;</td>
-                    <td>X: <code>R29</code>, Y: <code>RY9</code>, Z: <code>RZ9</code></td>
-                  </tr>
-                </tbody>
-                </table>
-              <p>And these are the KTEB approaches:</p>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>6</td>
-                    <td><code>I06</code></td>
-                    <td>X: <code>RX6</code>, Y: <code>RY6</code>, Z: <code>RZ6</code></td>
-                  </tr>
-                  <tr>
-                    <td>19</td>
-                    <td><code>I19</code></td>
-                    <td>X: <code>RX9</code>, Y: <code>RY9</code>, Z: <code>RZ9</code></td>
-                  </tr>
-                  <tr>
-                    <td>24</td>
-                    <td>&mdash;</td>
-                    <td><code>R24</code></td>
-                  </tr>
-                </tbody>
-                </table>
-
-            <h3>KJFK</h3>
-            <p>
-              Scenarios are available for all of the usual JFK configurations.
-              It is also possible to include
-              KFRG arrivals, KLGA departures to the Southwest and to water gates, and KISP departures
-              to the North gate, if desired.
-              The "intra-TRACON" arrivals are flights from nearby
-              airports that don't arrive via STARS but are instead inbound from COL, ZIGGI, and DPK.
-            </p>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>4L</td>
-                    <td><code>I4L</code></td>
-                    <td><code>R4L</code></td>
-                  </tr>
-                  <tr>
-                    <td>4R</td>
-                    <td><code>I4R</code></td>
-                    <td><code>R4R</code></td>
-                  </tr>
-                  <tr>
-                    <td>13L</td>
-                    <td><code>I3L</code></td>
-                    <td><code>R3L</code></td>
-                  </tr>
-                  <tr>
-                    <td>13R</td>
-                    <td>&mdash;</td>
-                    <td><code>R3R</code></td>
-                  </tr>
-                  <tr>
-                    <td>22L</td>
-                    <td><code>I2L</code></td>
-                    <td><code>R2L</code></td>
-                  </tr>
-                  <tr>
-                    <td>22R</td>
-                    <td><code>I2R</code></td>
-                    <td><code>R2R</code></td>
-                  </tr>
-                  <tr>
-                    <td>31L</td>
-                    <td><code>I1L</code></td>
-                    <td><code>R1L</code></td>
-                  </tr>
-                  <tr>
-                    <td>31R</td>
-                    <td><code>I1R</code></td>
-                    <td><code>R1R</code></td>
-                  </tr>
-                </tbody>
-                </table>
-
-            <p>
-             These are the supported KFRG approaches:
-              </p>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>1</td>
-                    <td>&mdash;</td>
-                    <td><code>R1</code></td>
-                  </tr>
-                  <tr>
-                    <td>14</td>
-                    <td><code>I14</code></td>
-                    <td><code>R14</code></td>
-                  </tr>
-                  <tr>
-                    <td>19</td>
-                    <td>&mdash;</td>
-                    <td><code>R19</code></td>
-                  </tr>
-                  <tr>
-                    <td>32</td>
-                    <td>&mdash;</td>
-                    <td><code>R32</code></td>
-                  </tr>
-                </tbody>
-                </table>
-
-            <h3>KLGA</h3>
-            <p>
-              Scenarios are available for both departure and arrival
-              configurations at LGA. The following approaches are available:
-            </p>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>4</td>
-                    <td><code>I4</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>22</td>
-                    <td><code>I22</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>31</td>
-                    <td>&mdash;</td>
-                    <td><code>R31</code></td>
-                  </tr>
-                </tbody>
-                </table>
-
-            <h3>KPHL</h3>
-
-            <p><i>vice</i> offers scenarios at KPHL for both West and East ops.
-              There is also a "KPHL 27R Final" scenario that has flows of traffic from the
-              North and South that need to be merged in the approach.
-            </p>
-            <p>
-              As with the other airports, the identifiers used for the "expect approach" and "cleared approach"
-              commands correspond to the scratchpad labels used at KPHL.
-              For now only the ILS approaches are available (except for runway 35, where there is no localizer.)
-              They are summarized for reference below:
-            </p>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Runway</th>
-                    <th>ILS</th>
-                    <th>RNAV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>9L</td>
-                    <td><code>I9L</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>9R</td>
-                    <td><code>I9R</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>17</td>
-                    <td><code>17Z</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>26</td>
-                    <td><code>I26</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>27L</td>
-                    <td><code>27L</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>27R</td>
-                    <td><code>27R</code></td>
-                    <td>&mdash;</td>
-                  </tr>
-                  <tr>
-                    <td>35</td>
-                    <td>&mdash;</td>
-                    <td><code>G35</code></td>
-                  </tr>
-                </tbody>
-                </table>
-
-            <h3>Liberty Departure</h3>
-
-            <p>
-              Not surprisingly, the Liberty departure scenarios only include departures.
-              Departures from KEWR, KJFK, and KLGA can be simulated.
-            </p>
-
-          </section>
-        </article>
-
         <article class="docs-article" id="section-installation">
           <header class="docs-header">
             <h1 class="docs-heading">Installation</h1>
@@ -880,7 +448,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.9.2/Vice-v0.9.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.9.2 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.0/Vice-v0.10.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -889,7 +457,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.9.2/Vice-v0.9.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.9.2 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.0/Vice-v0.10.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -915,6 +483,44 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.0 (22 July 2023)</h3>
+                <ul>
+                  <li>Vice now supports multiple controllers working in the
+                  same simulation. In the "New Simulation" window, choose
+                    "Create multi-controller" to create a new simulation or
+                    "Join multi-controller" to join an existing one.
+                  </li>
+                  <ul>
+                    <li>Facility engineering changes: removed
+                    "default_controller" and renamed "callsign" in
+                    scenarios to "solo_controller". Scenarios now take an
+                    optional "multi_controllers" object to specify a
+                    multi-controller scenario. Added "full_name" to
+                    controller specifications for better radio readback text.</li>
+                  </ul>
+                  <li>Launches of arrivals and departures can be controlled
+                  manually; click on the departing aircraft icon <i class="fas fa-plane-departure"></i> in the
+                  menu bar to open a window with launch
+                  controls. Alternatively, launch rates can be controlled
+                  during a session via that same window.</li>
+                  <li>Various improvements to the accuracy of the STARS
+                    radar scope simulation.</li>
+                  <li>Available approaches are now shown by <i>vice</i> at initial
+                  connection time and via the <i class="fas fa-question-circle"></i> button
+                    in the menu bar.</li>
+                  <li>Many small bug fixes to aircraft flight modeling.</li>
+                  <li>New scenarios and improvements:</li>
+                  <ul>
+                    <li>Added C90, including O'Hare East and West
+                    ops, MDW all configs</li>
+                    <li>Added CLE TRACON, including final, feeder, and
+                    North/South scenarios</li>
+                    <li>Added CLT TRACON, North and South configs</li>
+                    <li>JAX: added DAB and the TEBOW1 arrival</li>
+                    <li>N90: added multi-controller scenarios at JFK and PHL</li>
+                  </ul>
+                  </ul>
 
             <h3>0.9.2 (3 July 2023)</h3>
                 <ul>
@@ -968,20 +574,20 @@ how it simulates aircraft or the STARS interface.
                 When the sim is paused, hovering the mouse on a radar track displays information about its routing and assignments.
                 Many additional small bugfixes.</li>
               <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various small bug fixes.</li>
-              <li>0.6.6: Small KJAX scenario fixes and added ISP and HVN arrivals/departures to the JFK scenario.</li>
+              <li>0.6.6: Small JAX scenario fixes and added ISP and HVN arrivals/departures to the JFK scenario.</li>
               <li>0.6.5: Fixed <emph>another</emph> bug with intercepting the localizer.</li>
               <li>0.6.4: Fixed a bug with intercepting the localizer that occasionally led to aircraft hanging in the air for a while before proceeding.</li>
-              <li>0.6.3: Added KJAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
+              <li>0.6.3: Added JAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
               <li>0.6.2: Added go arounds and ABE TRACON scenarios.</li>
               <li>0.6.1: Fixed a crash related to handed off aircraft and sped up launching vice.</li>
-              <li>0.6.0: Added scenarios in the F11 TRACON (KMCO, KSFB, KISM, KORL...). Thanks to Mike K!</li>
+              <li>0.6.0: Added scenarios in the F11 TRACON (MCO, SFB, ISM, ORL...). Thanks to Mike K!</li>
               <li>0.5.1: Fixed bug with RNAV approaches not descending, improved JFK arrival spawn and route details.</li>
               <li>0.5.0: Added new scenarios for EWR and LIB departure (thanks to Adam Bolek!)</li>
               <li>0.4.3: Allow specifying JSON config on the command line, to make it easier to develop new scenarios.</li>
               <li>0.4.2: Fixed a crash at first launch, updated syntax for "turn left/right X degrees" commands.</li>
               <li>0.4.1: Fixed bugs in datablock positioning, added "turn left/right X degrees" commands.</li>
-              <li>0.4.0: Added KPHL scenarios, airspace warnings, and KFRG arrivals and intra-TRACON arrivals for KJFK.</li>
-              <li>0.3.1: Added KJFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
+              <li>0.4.0: Added PHL scenarios, airspace warnings, and FRG arrivals and intra-TRACON arrivals for JFK.</li>
+              <li>0.3.1: Added JFK approach scenarios, improved aircraft flight model, routes, and airlines.</li>
               <li>0.2.1: Initial release</li>
             </ul>
 
@@ -1233,17 +839,12 @@ how it simulates aircraft or the STARS interface.
                 controller with the corresponding callsign.  For each
                 controller, the following members should be specified:
                   <ul>
+                    <li>"full_name": the name of the control position, used in radio readbacks (e.g., "Philadelphia approach")</li>
                     <li>"frequency": the controller's radio frequency, expressed as an integer (e.g., 125325 for 125.325)</li>
                     <li>"scope_char": a string giving a single character to use on radar scopes for tracks owned by this position (e.g., "C")</li>
                     <li>"sector_id": the controller's sector id, as used for handoffs, etc. (e.g., "N56")</li>
                     </ul>
                   </td>
-              </tr>
-              <tr>
-                <td>"default_controller"</td>
-                <td>String</td>
-                <td>A default to use for the initial selected control position when the scenario group is chosen.
-                  There must be at least one scenario for this controller in "scenarios".</td>
               </tr>
               <tr>
                 <td>"default_scenario"</td>
@@ -1453,7 +1054,7 @@ how it simulates aircraft or the STARS interface.
             </p>
 
             <p>The other half of specifying departures is the array of objects stored in "departures". Each one describes a departure
-              to a particular destination. Here is a KJFK departure to Paris Charles de Gaulle:
+              to a particular destination. Here is a JFK departure to Paris Charles de Gaulle:
             </p>
             <pre>
     {
@@ -1727,14 +1328,9 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
-                <td>"callsign"</td>
-                <td>String</td>
-                <td>The callsign for the user's control position. (This must be present in "control_positions" in the scenario group.)</td>
-              </tr>
-              <tr>
                 <td>"controllers"</td>
                 <td>Array of strings</td>
-                <td>Callsigns of the other controllers who are online. (These also must be in "control_positions".)</td>
+                <td>Callsigns of the other virtual controllers who are online. (These also must be in "control_positions".)</td>
               </tr>
               <tr>
                 <td>"default_map"</td>
@@ -1760,6 +1356,39 @@ how it simulates aircraft or the STARS interface.
                     </li>
                     </ul>
                 </td>
+              </tr>
+              <tr>
+                <td>"multi_controllers"</td>
+                <td>Object</td>
+                <td>(<i>Optional</i>) If specified, this provides
+                information about the control positions that are available
+                for multi-controller scenarios. Each member specifies a
+                controller with the corresponding callsign.  For each
+                controller, the following members may be specified:
+                  <ul>
+                    <li>"arrivals": An optional array of strings
+                    specifying which arrival groups the controller is
+                      covering. (Used to determine where handoffs from
+                    center go.)</li>
+                    <li>"backup": Specifies another controller in "multi_controllers" that covers
+                    the controller's position if the controller is not
+                    signed in.</li>
+                    <li>"departure": Boolean value that indicates whether
+                    the controller is responsible for departures.  Must be
+                    given for exactly one controller. </li>
+                    <li>"primary": Boolean value that indicates that the
+                    controller is the primary controller. Must be given for
+                    exactly one controller. If no other controllers
+                      are signed in, the primary controller covers all
+                    of the other control positions. The simulation
+                    pauses if the primary controller's position is not covered </li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>"solo_controller"</td>
+                <td>String</td>
+                <td>The control position to use for single-user. (This must be present in "control_positions" in the scenario group.)</td>
               </tr>
               <tr>
                 <td>"wind"</td>
