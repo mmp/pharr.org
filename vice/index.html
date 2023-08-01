@@ -61,12 +61,13 @@
     <div id="docs-sidebar" class="docs-sidebar">
       <nav id="docs-nav" class="docs-nav navbar">
 	<ul class="section-items list-unstyled nav flex-column pb-3">
-	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>Using Vice</a></li>
+	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>About Vice</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#launches">Launching Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#multi-controller">Multiple Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars">STARS Emulation</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
@@ -92,10 +93,12 @@
 	<article class="docs-article" id="section-using">
 	  <header class="docs-header">
             <div class="text-center">
-              <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1198" height="548" class="img-fluid" alt="screen capture of demo">
+              <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x"
+                   width="1069" height="512" class="img-fluid" alt="screen
+                   capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">Using Vice <span class="docs-time">Last updated: 2023-07-28</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-08-01</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -121,12 +124,10 @@
 	  <section class="docs-intro" id="started">
             <h2 class="section-heading">Getting Started</h2>
             <p>The radar client interface that <i>vice</i> provides is based on STARS.
-              It is fairly complete, though currently lacks support for quicklook and CRDA.
-              For users familiar with actual STARS, feedback on places where <i>vice</i>'s behavior
-              differs from STARS is welcome!
-              For familiarity to VATSIM controllers, <i>vice</i> follows the keyboard command scheme implemented
-              in <a href="https://vstars.rosscarlson.dev">vSTARS</a>.
-              See the <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS Command Reference</a> for a summary of the key bindings.
+              For familiarity to VATSIM controllers, <i>vice</i> generally follows the keyboard command scheme implemented
+              in <a href="https://vstars.rosscarlson.dev">vSTARS</a>; see
+              the discussion of <a href="#stars"><i>vice</i>'s STARS
+              emulation</a> below for more information.
             </p>
             <p>
               The first time you launch <i>vice</i>, a window is shown for configuring the simulation.
@@ -194,7 +195,7 @@
             <p>
               When you exit <i>vice</i>, it remembers everything going on&mdash;all of the aircraft in flight, the instructions they have been given, etc.
               The next time you launch <i>vice</i>, it loads all of that back in and you can continue where you left off.
-              If you'd like to start something new, just click <i class="fas fa-redo"></i> and configure a new scenario.
+              If you'd like to start something new, just click <i class="fas fa-redo"></i> and configure a new simulation.
             </p>
             <p>
               When <i>vice</i> is paused, you can hover the mouse above a radar track to see information about the instructions the aircraft has been given so far&mdash;for example, altitude and speed assignments, whether it has been sent direct to a fix, the approach it has been assigned, etc.  An example is shown below.  This information is especially useful when resuming a <i>vice</i> session after you have been away from it for a while.
@@ -428,6 +429,72 @@
               </table>
 
           </section>
+
+	  <section class="docs-intro" id="stars">
+            <h2 class="section-heading">STARS Emulation</h2>
+            <p><i>vice</i> attempts to present a reasonably accurate
+            representation of
+            the <a href="https://en.wikipedia.org/wiki/Standard_Terminal_Automation_Replacement_System">Standard
+                Terminal Automation Replacement System</a>.
+              Its focus is to provide the STARS functionality that is
+            useful for regular TRACON controlling; thus, obscure features like
+              military operations area commands are not supported.
+              If you are familiar with the actual STARS system, suggestions
+            about how to improve <i>vice</i>'s accuracy would be happily accepted! Head on over
+            to the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a>...
+            </p>
+            <p>
+              <i>vice</i> mostly follows the keybindings
+              used in <a href="https://vstars.rosscarlson.dev">vSTARS</a>; the 
+              <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS
+              Command Reference</a> provides a summary.
+            </p>
+            <h3 class="section-heading">Differences from vSTARS</h3>
+            <p><i>vice</i> is currently missing the following functionality
+            from both STARS and vSTARS:
+            </p>
+            <ul>
+              <li>The Converging Runway Display Aid (CRDA) System is not
+                yet implemented in <i>vice</i> (but is coming soon).</li>
+            </ul>
+            <p><i>vice</i> supports the following features from STARS that
+            are not present in vSTARS:
+            </p>
+            <ul>
+              <li><i>vice</i> supports the STARS "dwell" mode, which draws
+                the datablock and leaderline of track under the mouse more
+                brightly when it is enabled. Dwell mode can be configured
+                by choosing "SHIFT" from the main DCB menu and then
+                selecting the "DWELL" button, or via the following keyboard
+                commands:
+                <ul>
+                  <li><code>[multifunc] D E</code>: enable dwell mode.</li>
+                  <li><code>[multifunc] D L</code>: lock dwell
+                  mode&mdash;the selected aircraft remains highlighted
+                  even if it or the mouse cursor moves.</li>
+                  <li><code>[multifunc] D I</code>: inhibit (disable) dwell mode.</li>
+                </ul>
+              </li>
+              <li>To quicklook a controller, <i>vice</i> does not
+              support entering the controller id and hitting enter to
+              toggle quicklook. Rather, the <code>[multifunc] Q [id]</code>
+                command must be used.</li>
+              <li><i>vice</i> supports the "plus" specifier for quicklook:
+                if a plus sign is specified after a controller id
+                when enabling quicklook, the datablocks for that controller's tracks will
+                be white, not green. (Similarly, <code>ALL+</code> can be
+                  specified to quick look all controllers' traffic in this
+                way.)</li>
+              <li><i>vice</i> allows placing DCB at the top, left, right,
+             or bottom of the window using the "DCB TOP", "DCB LEFT", "DCB
+             RIGHT", and "DCB BOTTOM" buttons.</li>
+              <li><i>vice</i> supports displaying the current weather radar
+              for the selected location (though not yet with shading that
+              matches STARS.)</li>
+              </ul>
+            </section>
+
+
           </article>
 
         <article class="docs-article" id="section-installation">
@@ -455,7 +522,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.2/Vice-v0.10.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.2 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.3/Vice-v0.10.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.3 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -464,7 +531,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.2/Vice-v0.10.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.2 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.3/Vice-v0.10.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.3 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -490,6 +557,16 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.3 (1 August 2023)</h3>
+                <ul>
+                  <li>Added "quick look" support to the STARS implementation.</li>
+                  <li>Added support for STARS dwell mode.</li>
+                  <li>Fixed a rare crash when manually adjusting launch rates.</li>
+                  <li>Various small improvements to the JAX and CLT scenario files.</li>
+                  <li>Many additional small cosmetic and functionality
+                    improvements to the STARS radar scope.</i>
+                </ul>
 
             <h3>0.10.2 (28 July 2023)</h3>
                 <ul>
@@ -633,10 +710,9 @@ how it simulates aircraft or the STARS interface.
               <p>In the following, the use of terms like "element", "object", "member", "array", etc.,
                 correspond to their use in the JSON specification.  See <a href="https://www.json.org/json-en.html">this page</a> for reference.
                 </p>
-              <p>Scenarios are directly included in <i>vice</i> when a release is made.
-                See the <a href="https://github.com/mmp/vice/tree/master/scenarios"><tt>scenarios/</tt> directory</a> in the 
+              <p>See the <a href="https://github.com/mmp/vice/tree/master/resources/scenarios"><tt>resources/scenarios/</tt> directory</a> in the 
                   vice source code for the scenarios that are currently available and the
-                <a href="https://github.com/mmp/vice/tree/master/videomaps"><tt>videomaps/</tt> directory</a> for
+                <a href="https://github.com/mmp/vice/tree/master/resources/videomaps"><tt>resources/videomaps/</tt> directory</a> for
                 the video map definitions.
                 Files in those directories with names ending with a "zst" suffix have been compressed using <a href="https://facebook.github.io/zstd/">zstandard</a>;
                 in order to examine their contents, you'll want to install zstandard or another decompression program that supports that
@@ -778,7 +854,7 @@ how it simulates aircraft or the STARS interface.
               file.
             </p>
             <p>As is probably obvious, both of these databases are by way of <a href="https://github.com/openscope/openscope">openScope</a>,
-              which made them available under the MIT license.
+              which kindly made them available under the MIT license.
             </p>
           </section><!--//section-->
 
@@ -824,7 +900,7 @@ how it simulates aircraft or the STARS interface.
               a control position (departure, approach, etc.), and airport configurations&mdash;the runways that are active at each
               airport.  Scenarios are organized in <i>scenario groups</i>, which generally collect multiple control scenarios at a single
               airport.
-              Each scenario group is specified by its own JSON file; see the <a href="https://github.com/mmp/vice/tree/master/scenarios"><tt>scenarios/</tt> directory</a> in the
+              Each scenario group is specified by its own JSON file; see the <a href="https://github.com/mmp/vice/tree/master/resources/scenarios"><tt>resources/scenarios/</tt> directory</a> in the
               <i>vice</i> source code distribution for examples.
             </p>
             <p>These are the elements of a scenario group:</p>
