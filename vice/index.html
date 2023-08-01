@@ -71,7 +71,7 @@
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Linux</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#install-linux">Linux</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-engineering"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Engineering</a></li>
@@ -121,7 +121,7 @@
 	    </section><!--//docs-intro-->
 	  </header>
 
-	  <section class="docs-intro" id="started">
+	  <section class="docs-section" id="started">
             <h2 class="section-heading">Getting Started</h2>
             <p>The radar client interface that <i>vice</i> provides is based on STARS.
               For familiarity to VATSIM controllers, <i>vice</i> generally follows the keyboard command scheme implemented
@@ -181,6 +181,7 @@
             </p>
             <p>
               A number of buttons are available in the menu bar at the top of the window:
+            </p>
               <ul>
                 <li> <i class="fas fa-pause-circle"></i> / <i class="fas fa-play-circle"></i>: pause or resume the simulation.</li>
                 <li> <i class="fas fa-redo"></i>: opens the window to select a new scenario and set its parameters.</li>
@@ -191,7 +192,6 @@
                 <li> <i class="fas fa-info-circle"></i>: display information about the version of <i>vice</i> you have installed.</li>
                 <li> <i class="fab fa-discord"></i>: join the <i>vice</i> Discord.</li>
               </ul>
-            </p>
             <p>
               When you exit <i>vice</i>, it remembers everything going on&mdash;all of the aircraft in flight, the instructions they have been given, etc.
               The next time you launch <i>vice</i>, it loads all of that back in and you can continue where you left off.
@@ -206,7 +206,7 @@
             <br>
           </section>
 
-	  <section class="docs-intro" id="launches">
+	  <section class="docs-section" id="launches">
             <h2 class="section-heading">Launching Aircraft</h2>
             <p>When a new scenario starts, <i>vice</i> automatically launches new departures and arrivals based on the
               departure and arrival rates set in the "New Simulation" window.
@@ -231,7 +231,7 @@
             <br>
           </section>
 
-	  <section class="docs-intro" id="multi-controller">
+	  <section class="docs-section" id="multi-controller">
             <h2 class="section-heading">Multiple Controllers</h2>
 
             <p>With <i>vice</i> you can also have multiple controllers working aircraft together.
@@ -269,7 +269,7 @@
 
           </section>
 
-	  <section class="docs-intro" id="commands">
+	  <section class="docs-section" id="commands">
             <h2 class="section-heading">ATC Commands</h2>
             <p>In order to issue control commands to aircraft, type the appropriate command from the table below
               and click on an aircraft's track. After you issue a command, the virtual pilot's readback is shown at the bottom of the window.
@@ -389,7 +389,7 @@
 
 	    </section><!--//docs-intro-->
 
-	  <section class="docs-intro" id="airspace">
+	  <section class="docs-section" id="airspace">
             <h2 class="section-heading">Airspace</h2>
             <p>
               <i>vice</i> is able to indicate when aircraft are outside of the departure or approach airspace,
@@ -430,7 +430,7 @@
 
           </section>
 
-	  <section class="docs-intro" id="stars">
+	  <section class="docs-section" id="stars">
             <h2 class="section-heading">STARS Emulation</h2>
             <p><i>vice</i> attempts to present a reasonably accurate
             representation of
@@ -565,7 +565,7 @@ how it simulates aircraft or the STARS interface.
                   <li>Fixed a rare crash when manually adjusting launch rates.</li>
                   <li>Various small improvements to the JAX and CLT scenario files.</li>
                   <li>Many additional small cosmetic and functionality
-                    improvements to the STARS radar scope.</i>
+                    improvements to the STARS radar scope.</li>
                 </ul>
 
             <h3>0.10.2 (28 July 2023)</h3>
@@ -594,14 +594,16 @@ how it simulates aircraft or the STARS interface.
                     "Create multi-controller" to create a new simulation or
                     "Join multi-controller" to join an existing one.
                   </li>
-                  <ul>
-                    <li>Facility engineering changes: removed
-                    "default_controller" and renamed "callsign" in
-                    scenarios to "solo_controller". Scenarios now take an
-                    optional "multi_controllers" object to specify a
-                    multi-controller scenario. Added "full_name" to
-                    controller specifications for better radio readback text.</li>
-                  </ul>
+                  <li>Facility engineering changes: 
+                    <ul>
+                      <li>Removed
+                        "default_controller" and renamed "callsign" in
+                        scenarios to "solo_controller". Scenarios now take an
+                        optional "multi_controllers" object to specify a
+                        multi-controller scenario. Added "full_name" to
+                        controller specifications for better radio readback text.</li>
+                    </ul>
+                  </li>
                   <li>Launches of arrivals and departures can be controlled
                   manually; click on the departing aircraft icon <i class="fas fa-plane-departure"></i> in the
                   menu bar to open a window with launch
@@ -613,16 +615,17 @@ how it simulates aircraft or the STARS interface.
                   connection time and via the <i class="fas fa-question-circle"></i> button
                     in the menu bar.</li>
                   <li>Many small bug fixes to aircraft flight modeling.</li>
-                  <li>New scenarios and improvements:</li>
-                  <ul>
-                    <li>Added C90, including O'Hare East and West
-                    ops, MDW all configs</li>
-                    <li>Added CLE TRACON, including final, feeder, and
-                    North/South scenarios</li>
-                    <li>Added CLT TRACON, North and South configs</li>
-                    <li>JAX: added DAB and the TEBOW1 arrival</li>
-                    <li>N90: added multi-controller scenarios at JFK and PHL</li>
-                  </ul>
+                  <li>New scenarios and improvements:
+                    <ul>
+                      <li>Added C90, including O'Hare East and West
+                        ops, MDW all configs</li>
+                      <li>Added CLE TRACON, including final, feeder, and
+                        North/South scenarios</li>
+                      <li>Added CLT TRACON, North and South configs</li>
+                      <li>JAX: added DAB and the TEBOW1 arrival</li>
+                      <li>N90: added multi-controller scenarios at JFK and PHL</li>
+                    </ul>
+                    </li>
                   </ul>
 
             <h3>0.9.2 (3 July 2023)</h3>
@@ -653,14 +656,16 @@ how it simulates aircraft or the STARS interface.
 		  <li>All new flight modeling engine supports procedure turns (both racetrack and standard 45/180)
                     and more accurate turns to intercept localizers, etc.  The approaches in the existing scenarios
                     have been updated to include their procedure turns, where appropriate.</li>
-                  <li>A number of new <a href="#commands">aircraft control commands</a> have been added:</li>
-                  <ul>
-                    <li>Cancel speed restrictions</li>
-                    <li>Cleared straight in approach</li>
-                    <li>Cross <i>fix</i> at <i>altitude</i> and <i>speed</i></li>
-                    <li>Depart <i>fix</i> at <i>heading</i></li>
-                    <li>Fly present heading</li>
-                  </ul>
+                  <li>A number of new <a href="#commands">aircraft control
+                      commands</a> have been added:
+                    <ul>
+                      <li>Cancel speed restrictions</li>
+                      <li>Cleared straight in approach</li>
+                      <li>Cross <i>fix</i> at <i>altitude</i> and <i>speed</i></li>
+                      <li>Depart <i>fix</i> at <i>heading</i></li>
+                      <li>Fly present heading</li>
+                    </ul>
+                  </li>
                   <li>When a departure is handed off to a virtual controller, the other controller won't
                     climb it further until after it is clicked by the user to acknowledge the handoff.</li>
                   <li>Fixed very small fonts being used on Windows systems with high-DPI displays</li>
