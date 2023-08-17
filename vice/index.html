@@ -98,7 +98,7 @@
                    capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-08-01</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-08-16</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -108,8 +108,9 @@
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
               </p>
               <p><i>vice</i> supports departure and arrival control
-                scenarios in many TRACONs, including A80 (ATL), A90 (BOS), N90 (EWR, JFK, LGA, Liberty Departure),
-                F11 (JAX, MCO, SFB, ISM, ORL), C90 (ORD, MDW), as well as the ABE, CLE, CLT, DAB, JAX, and PHL ATCT/TRACONs.
+                scenarios in a number of TRACONs: A80 (ATL), A90 (BOS), C90 (ORD, MDW), F11 (JAX, MCO, SFB, ISM, ORL), 
+                N90 (EWR, JFK, LGA, FRG, ISP, HVN),
+                as well as the ABE, CLE, CLT, DAB, JAX, and PHL ATCT/TRACONs.
                 New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
                 see <a href="#section-facility-engineering">below</a> for documentation about how scenarios are described
@@ -450,13 +451,6 @@
               Command Reference</a> provides a summary.
             </p>
             <h3 class="section-heading">Differences from vSTARS</h3>
-            <p><i>vice</i> is currently missing the following functionality
-            from both STARS and vSTARS:
-            </p>
-            <ul>
-              <li>The Converging Runway Display Aid (CRDA) System is not
-                yet implemented in <i>vice</i> (but is coming soon).</li>
-            </ul>
             <p><i>vice</i> supports the following features from STARS that
             are not present in vSTARS:
             </p>
@@ -522,7 +516,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.3/Vice-v0.10.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.3 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.4/Vice-v0.10.4-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.4 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -531,7 +525,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.3/Vice-v0.10.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.3 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.4/Vice-v0.10.4-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.4 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -557,6 +551,30 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.4 (16 August 2023)</h3>
+            <ul>
+              <li>Added support for STARS Converging Runways Display Aid (CRDA).</li>
+              <li>Made multiple improvements to aircraft flight modeling,
+                including more accurate climbs at departure and better
+                handling of wind.</li>
+              <li>Tuned up pilot radio communications, including adding
+                initial contact messages.</li>
+              <li>Fixed a bug where after quitting and later resuming a
+                simulation, some aircraft would forget their routing.</li>
+              <li>Added support for the STARS Maps system list.</li>
+              <li>Facility engineering changes:
+                <ul>
+                  <li>Added "reporting_points" to scenarios: fixes aircraft may use
+                    when reporting their current position.</li>
+                  <li>Added support for specifying volumes of space
+                    where collision alerts are inhibited.</li>
+                  <li>Altitude restrictions at fixes are now more flexible:
+                  rather than just "at", they may be "between", "at or
+                    above," or "at or below."</li>
+                </ul>
+              </li>
+            </ul>
 
             <h3>0.10.3 (1 August 2023)</h3>
                 <ul>
@@ -817,7 +835,15 @@ how it simulates aircraft or the STARS interface.
             </pre>
             <p>A number of items like headings can be specified with a fix:</p>
             <ul>
-              <li> <code>/a</code><i>altitude</i>: cross the fix at the given altitude (specified in 100s of feet)</li>
+              <li> <code>/a</code><i>restriction</i>: cross the fix with the specified altitude restriction (with altitudes specified in 100s of feet).
+                The following options are available for specifying altitude restrictions:
+                <ul>
+                  <li><i>low</i><code>-</code><i>high</i>: cross at an altitude between <i>low</i> and <i>high</i>.</li>
+                  <li><i>alt</i><code>-</code>: cross at or below <i>alt</i>
+                  <li><i>alt</i><code>+</code>: cross at or above <i>alt</i>
+                  <li><i>alt</i>: cross at <i>alt</i>
+                </ul>
+              </li>
               <li> <code>/h</code><i>heading</i>: depart the fix at specified heading</li>
               <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
               <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>              
@@ -968,6 +994,35 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
+                <td>"inhibit_ca_volumes"</td>
+                <td>Array of objects</td>
+                <td>Each entry specifies a volume of space where collision
+                  alerts are inhibited. It can be useful to specify these
+                  around airports so that alerts aren't issued for aircraft
+                  arriving/departing on parallel runways. Each object has
+                  the following members:
+                  <ul>
+                    <li>"name": a string used to identify the volume in
+                      system lists.</li>
+                    <li>"type": either "circle" or "polygon"</li>
+                    <li>"floor": number giving the minimum altitude of the volume.</li>
+                    <li>"ceiling": number giving the maximum altitude of
+                      the volume.</li>
+                  </ul>
+                  For "circle" volumes, there are two additional members:
+                  <ul>
+                    <li>"center": the location of the center of the volume.</li>
+                    <li>"radius": the radius of the volume, in nautical miles.</li>
+                  </ul>
+                  For "polygon" volumes, an additional parameter specifies
+                  its extent:
+                  <ul>
+                    <li>"vertices": an array of locations specifying the
+                    outline of the volume.</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
                 <td>"magnetic_variation"</td>
                 <td>Number</td>
                 <td>Number of degrees difference between true North and magnetic North.
@@ -1020,6 +1075,13 @@ how it simulates aircraft or the STARS interface.
                 <td>"range"</td>
                 <td>Number</td>
                 <td>Default radar scope center range in nautical miles. If unspecified, a 50 mile range is the default.</td>
+              </tr>
+              <tr>
+                <td>"reporting_points"</td>
+                <td>Array of strings</td>
+                <td>Each entry specifies a fix that aircraft may use at
+                initial contact when reporting their position ("AAL411, 5
+                  miles Northeast of LENDY...").</td>
               </tr>
               <tr>
                 <td>"scenarios"</td>
@@ -1083,6 +1145,67 @@ how it simulates aircraft or the STARS interface.
                   Multiple strings can be provided for "waypoints" for approaches with multiple IAFs (e.g. an RNAV "T" configuration).
                   Arriving aircraft are removed from the simulation when they reach their last approach waypoint.
                   Thus, for all of the routes specified, the last waypoint should generally be at the runway threshold with a ground-level altitude restriction.
+                </td>
+              </tr>
+              <tr>
+                <td>"approach_regions"</td>
+                <td>Object</td>
+                <td>
+                  <p>Each member name specifies information about the region of space associated with a runway
+                  when CRDA is used and it is one of the converging runways.  See the
+                  <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Facility%20Engineer's%20Guide.PDF">vSTARS Facility Engineer's Guide</a>
+                  for details about their semantics.  Note that if you have a vSTARS XML file for a facility with a CRDA
+                  specification, each of these corresponds to a value in the XML file.
+                  </p>
+                  <p>
+                    The following members specify the lateral extent that
+                    an aircraft must be inside for a ghost aircraft to be generated for it:
+                    </p>
+                  <ul>
+                    <li>"reference_point": position with respect to which the lateral and vertical extents are defined. (Often, the threshold
+                      of the runway.)</li>
+                    <li>"reference_heading": heading that is opposite to the runway heading.</li>
+                    <li>"reference_length": length in nm of the reference line.</li>
+                    <li>"heading_tolerance": maximum difference between an aircraft's heading and the runway's heading for a ghost aircraft to be displayed.</li>
+                    <li>"near_distance": distance from the reference point along the reference heading where the lateral volume begins.</li>
+                    <li>"near_half_width": half of the width of the reference volume at the near distance.</li>
+                    <li>"region_length": length of the lateral volume along the reference heading, starting from the near distance point.</li>
+                    <li>"far_half_width": half of the width of the reference volume at the far distance.</li>
+                  </ul>
+                  <p>These members specify the vertical extent that an aircraft must be inside to have a ghost aircraft:
+                  </p>
+                  <ul>
+                    <li>"descent_distance": distance from the reference point in nm where aircraft are expected to start its final descent.</li>
+                    <li>"reference_altitude": altitude of the reference point.</li>
+                    <li>"descent_altitude": expected aircraft altitude when it's at the descent distance.</li>
+                    <li>"above_altitude_tolerance": maximum distance in feet an aircraft may be above its expected altitude and still have a ghost be drawn for it.</li>
+                    <li>"below_altitude_tolerance": maximum distance in feet an aircraft may be below its expected altitude and still have a ghost be drawn for it.</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>"converging_runways"</td>
+                <td>Array of objects</td>
+                <td>Each object specifies a pair of converging runways that
+                  will be included in the STARS CRDA list. Each object has
+                  the following members:
+                  <ul>
+                    <li>"runways": array of two strings referencing two runways
+                      specified in "approach_regions".</li>
+                    <li>"leader_directions": array of two strings
+                      specifying the compass direction ("N", "NE", "E",
+                      ...) that will be used for leader lines for ghost
+                      aircraft from the two respective runways.</li>
+                    <li>"tie_symbol": A single-character string giving the
+                    symbol to use on the STARS display for ghost aircraft
+                    when CRDA "tie" mode is used.</li>
+                    <li>"stagger_symbol": A single-character string giving the
+                    symbol to use on the STARS display for ghost aircraft
+                    when CRDA "stagger" mode is used.</li>
+                    <li>"tie_offset": number giving an offset in nautical
+                      miles to add to ghost aircraft's distance from the airport when
+                      "tie" mode is used.</li>
+                  </ul>
                 </td>
               </tr>
               <tr>
