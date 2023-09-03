@@ -2,6 +2,13 @@
 <html lang="en"> 
 <head>
   <title>Vice Documentation</title>
+  <style>
+    svg {
+       width: 1em;   /* Match the width to the text height */
+       height: 1em;  /* Match the height to the text height */
+       vertical-align: middle; /* Vertically align with the text */
+    }
+  </style>
   
   <!-- Meta -->
   <meta charset="utf-8">
@@ -55,7 +62,13 @@
       </div><!--//container-->
     </div><!--//branding-->
   </header><!--//header-->
-  
+
+  <svg style="display:none;">
+    <symbol id="radar" viewBox="0 0 512 512">
+      <path fill="currentColor" d="M400 256c0 57.28-33.92 109.1-86.41 132c-8.094 3.531-11.8 12.97-8.25 21.06c2.625 6 8.5 9.594 14.67 9.594c2.125 0 4.297-.4375 6.391-1.344C390.5 389.3 432 326 432 256c0-8.844-7.156-16-16-16S400 247.2 400 256zM232 416c0 13.25 10.75 24 24 24s24-10.75 24-24c0-13.26-10.75-24-24-24S232 402.7 232 416zM496 240C487.2 240 480 247.2 480 256c0 123.5-100.5 224-224 224s-224-100.5-224-224s100.5-224 224-224c54.36 0 105.8 19.52 146.5 54.88l-34.44 34.44C336.5 95.03 297.5 80 256 80c-69.98 0-133.3 41.44-161.3 105.6C91.11 193.7 94.81 203.1 102.9 206.7C104.1 207.6 107.2 208 109.3 208c6.172 0 12.05-3.594 14.67-9.594C146.9 145.9 198.7 112 256 112c32.97 0 63.97 11.64 89.39 31.98l-33.96 33.96C295.3 166.5 276.2 160 256 160C203.1 160 160 203.1 160 256s43.06 96 96 96s96-43.06 96-96c0-8.844-7.156-16-16-16S320 247.2 320 256c0 35.28-28.7 64-64 64S192 291.3 192 256s28.7-64 64-64c11.58 0 22.62 3.271 32.36 9.02l-43.67 43.67c-6.25 6.25-6.25 16.38 0 22.62C247.8 270.4 251.9 272 256 272s8.188-1.562 11.31-4.688l240-240c6.25-6.25 6.25-16.38 0-22.62s-16.38-6.25-22.62 0L425.2 64.22C378.3 22.87 318.9 0 256 0C114.8 0 0 114.8 0 256s114.8 256 256 256s256-114.8 256-256C512 247.2 504.8 240 496 240zM185.6 417.3c2.094 .9062 4.266 1.344 6.391 1.344c6.172 0 12.05-3.594 14.67-9.594c3.547-8.094-.1562-17.53-8.25-21.06C165 373.4 138.6 347 123.1 313.6C120.5 305.5 111 301.8 102.9 305.3C94.81 308.9 91.11 318.3 94.66 326.4C112.5 367.2 144.8 399.5 185.6 417.3zM120 256c0-13.26-10.75-24-24-24S72 242.7 72 256c0 13.25 10.75 24 24 24S120 269.3 120 256z"/>
+    </symbol>
+    </svg>
+
   
   <div class="docs-wrapper">
     <div id="docs-sidebar" class="docs-sidebar">
@@ -67,7 +80,15 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#launches">Launching Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#multi-controller">Multiple Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars">STARS Emulation</a></li>
+	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-stars"><span class="theme-icon-holder me-2"><svg><use xlink:href="#radar"></use></svg></span>STARS Emulation</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-overview">Overview</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-keyboard">Key Mappings</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-quickref">Quick Reference</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-errors">Error Codes</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-aircraft">Working Aircraft</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-controllers">Coordinating With Other Controllers</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-display">Configuring The Display</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#vstars-differences">Differences from vSTARS</a></li>
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
@@ -431,8 +452,11 @@
 
           </section>
 
-	  <section class="docs-section" id="stars">
-            <h2 class="section-heading">STARS Emulation</h2>
+        <article class="docs-article" id="section-stars">
+          <header class="docs-header">
+            <h1 class="docs-heading">STARS Emulation</h1>
+
+            <section class="docs-intro">
             <p><i>vice</i> attempts to present a reasonably accurate
             representation of
             the <a href="https://en.wikipedia.org/wiki/Standard_Terminal_Automation_Replacement_System">Standard
@@ -440,17 +464,236 @@
               Its focus is to provide the STARS functionality that is
             useful for regular TRACON controlling; thus, obscure features like
               military operations area commands are not supported.
-              If you are familiar with the actual STARS system, suggestions
+              If you are familiar with the real-world STARS system, suggestions
             about how to improve <i>vice</i>'s accuracy would be happily accepted! Head on over
             to the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a>...
             </p>
-            <p>
-              <i>vice</i> mostly follows the keybindings
-              used in <a href="https://vstars.rosscarlson.dev">vSTARS</a>; the 
-              <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS
-              Command Reference</a> provides a summary.
+            </section><!--//docs-intro-->
+          </header>
+
+	  <section class="docs-section" id="stars-overview">
+            <h2 class="section-heading">Overview</h2>
+            <p>Some STARS commands are entirely keyboard based: you enter a
+              command and hit the "enter" key to issue the command.
+              As you type, your input will be shown in the <i>input area</i>,
+              which is by default on the left side of the screen.
+              Entering a space starts a new line.
+              To edit your input, the backspace key can be used.
+              Alternatively, hitting the escape key clears the input (and
+              any errors that are displayed).
+              <p>
+            <p>Many STARS commands involve selecting a target aircraft; in
+              STARS this is called "slewing" the aircraft.  To slew an
+              aircraft in <i>vice</i>, click on its radar track with the
+              left mouse button.  You will often enter a command with the
+              keyboard and then slew an aircraft; if the documentation
+              below, <code>[SLEW]</code> indicates that an aircraft should
+              be slewed to execute the command.
             </p>
-            <h3 class="section-heading">Differences from vSTARS</h3>
+            <p>The center of the radar scope can be moved by clicking the
+            right mouse button and dragging.  Zoom in and out using the
+            mouse wheel; each step increases or decreases the radius shown
+            by one nautical mile.  Holding down the control key while using
+            the mouse wheel gives three mile steps in the radius.
+              </p>
+            <p>Aircraft are shown on the scope as <i>radar tracks</i>;
+              a <i>datablock</i> next to them shows the aircraft's callsign
+              and additional information about it.</p>
+          </section>
+          
+	  <section class="docs-section" id="stars-keyboard">
+            <h2 class="section-heading">Key Mappings</h2>
+            <p>The STARS keyboard has a number of custom keys that are not present on standard keyboards.
+              <i>vice</i> uses the same mappings to regular keys as vSTARS does.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>STARS</th>
+                    <th>Regular</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>[TRIANGLE]</td><td>~</td></tr>
+                  <tr><td>[MIN]</td><td>End</td></tr>
+                  <tr><td>[INIT CNTL]</td><td>F3</td></tr>
+                  <tr><td>[TERM CNTL]</td><td>F4</td></tr>
+                  <tr><td>[HND OFF]</td><td>F5</td></tr>
+                  <tr><td>[VP]</td><td>F6</td></tr>
+                  <tr><td>[MULTIFUNC]</td><td>F7</td></tr>
+                  <tr><td>[FLT DATA]</td><td>F9</td></tr>
+                  <tr><td>[CA]</td><td>F11</td></tr>
+                  <tr><td>[CNTR]</td><td>Ctrl-F1</td></tr>
+                  <tr><td>[MAPS]</td><td>Ctrl-F2</td></tr>
+                  <tr><td>[BRITE]</td><td>Ctrl-F4</td></tr>
+                  <tr><td>[LDR]</td><td>Ctrl-F5</td></tr>
+                  <tr><td>[CHARSIZE]</td><td>Ctrl-F6</td></tr>
+                  <tr><td>[DCB-SHIFT]</td><td>Ctrl-F7</td></tr>
+                  <tr><td>[DCB]</td><td>Ctrl-F8</td></tr>
+                  <tr><td>[RNGRING]</td><td>Ctrl-F9</td></tr>
+                  <tr><td>[RANGE]</td><td>Ctrl-F10</td></tr>
+                  <tr><td>[SITE]</td><td>Ctrl-F11</td></tr>
+                </tbody>
+              </table>
+          </section>
+
+	  <section class="docs-section" id="stars-quickref">
+            <h2 class="section-heading">Quick Reference</h2>
+            <p>For basic controlling, a small number of commands are used frequently.
+              The following table lists them and gives a short description of their operation.
+              See the <a href="#stars-fullref">Full Command Reference</a> for more details.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Command</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>[SLEW]</code></td><td><p>Whichever of the
+                  following first applied:</p>
+                      <ul>
+                        <li>Acknowledge a conflict alert (CA) for an aircraft.</li>
+                        <li>If an aircraft is being handed off by another
+                          controller, accept the handoff.</li>
+                        <li>If a handoff of an aircraft has been offered to
+                          another controller but the other controller has
+                          not yet accepted it, cancel the offer.</li>
+                        <li>Acknowledge a pointout from another controller.</li>
+                  </td></tr>
+                  <tr><td><code>[INIT CNTL][SLEW]</code></td><td>Initiate control of an aircraft that isn't being tracked by another controller.</td></tr>
+                  <tr><td><code>[TERM CNTL][SLEW]</code></td><td>Terminates
+                  control of an aircraft being tracked&mdash;drops its track.</td></tr>
+                  <tr><td><code>[HND OFF](id)[SLEW]</code><id></td><td>Offers to handoff the
+                      track of the aircraft to the controller identified by (id).</td></tr>
+                  <tr><td><code>[MULTIFUNC]Y(scratchpad)</code></td><td>Sets
+                  the scratchpad of the aircraft to <code>(scratchpad)</code>.</td></tr>
+                  <tr><td><code>.[SLEW]</code></td><td>Clears the
+                  aircraft's scratchpad.</td></tr>
+                  <tr><td><code>+(###)[SLEW]</code></td><td>Sets the
+                      aircraft's assigned temporary altitude.</td></tr>
+                </tbody>
+              </table>
+            
+          </section>
+
+	  <section class="docs-section" id="stars-errors">
+            <h2 class="section-heading">Error Codes</h2>
+            <p>When issuing a command leads to an error, STARS prints an
+              abbreviated message above the input area. These are the error
+              codes that <i>vice</i> currently uses:
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Code</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+	          <tr>
+                    <td>FORMAT</td>
+                    <td>Error in the format of the command; for example,
+                      specifying a non-numeric value where a number was expected.
+                    </td>
+                  </tr>
+                  <!--
+	          <tr>
+                    <td>DUP BCN</td>
+                    <td>Duplicate beacon code: the same squawk code has
+                    been assigned to multiple aircraft.</td>
+                  </tr> -->
+	          <tr>
+                    <td>ILL ATIS</td>
+                    <td>Illegal ATIS code.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL AIRPORT</td>
+                    <td>Illegal airport: either the airport does not exist
+                    or the command does not apply to it.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL CODE</td>
+                    <td>Illegal beacon code: an illegal squawk code was entered.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL FIX</td>
+                    <td>Illegal fix: the fix specified does not exist.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL FLIGHT</td>
+                    <td>Illegal flight: no flight plan is filed for the specified callsign.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL MAP</td>
+                    <td>Illegal map: an invalid map was specified to be
+                    displayed or hidden.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL PARAM</td>
+                    <td>Illegal parameter: the command specified had an
+                    invalid parameter.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL POS</td>
+                    <td>Illegal position: the control position specified
+                    is invalid or does not exist.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL SCR</td>
+                    <td>Illegal scratchpad: the scratchpad specified for
+                    an aircraft does not meet the requirements of a valid scratchpad.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL SECTOR</td>
+                    <td>Illegal sector: the controller specified is
+                    invalid. </td>
+                  </tr> 
+	          <!-- <tr>
+                    <td>ILL TEXT</td>
+                    <td>ErrSTARSIllegalText</td>
+                  </tr> -->
+	          <tr>
+                    <td>ILL TRK</td>
+                    <td>Illegal track: another controller owns the
+                    aircraft's track, so the command is disallowed.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL VALUE</td>
+                    <td>Illegal value: the value specified is
+                    illegal (e.g., an impossible altitude).</td>
+                  </tr>
+	          <tr>
+                    <td>NO FLIGHT</td>
+                    <td>No flight: there is no aircraft with the specified callsign.</td>
+                  </tr>
+                </tbody>
+                </table>
+          </section>            
+
+	  <section class="docs-section" id="stars-aircraft">
+            <h2 class="section-heading">Working Aircraft</h2>
+            <p>Aircraft may
+              be <i>tracked</i> by a specific controller; when a controller
+              is tracking an aircraft, other controllers cannot issue
+              control commands to it.  When an aircraft is leaving a
+              controller's airspace, they will generally hand it off to
+              another controller.</p>
+          </section>
+
+	  <section class="docs-section" id="stars-control">
+            <h2 class="section-heading">Coordinating With Other Controllers</h2>
+            <p>quickref</p>
+          </section>
+
+	  <section class="docs-section" id="stars-display">
+            <h2 class="section-heading">Configuring The Display</h2>
+            <p>quickref</p>
+          </section>
+
+	  <section class="docs-section" id="vstars-differences">
+            <h2 class="section-heading">Differences from vSTARS</h2>
             <p><i>vice</i> supports the following features from STARS that
             are not present in vSTARS:
             </p>
@@ -462,16 +705,16 @@
                 selecting the "DWELL" button, or via the following keyboard
                 commands:
                 <ul>
-                  <li><code>[multifunc] D E</code>: enable dwell mode.</li>
-                  <li><code>[multifunc] D L</code>: lock dwell
+                  <li><code>[MULTIFUNC] D E</code>: enable dwell mode.</li>
+                  <li><code>[MULTIFUNC] D L</code>: lock dwell
                   mode&mdash;the selected aircraft remains highlighted
                   even if it or the mouse cursor moves.</li>
-                  <li><code>[multifunc] D I</code>: inhibit (disable) dwell mode.</li>
+                  <li><code>[MULTIFUNC] D I</code>: inhibit (disable) dwell mode.</li>
                 </ul>
               </li>
               <li>To quicklook a controller, <i>vice</i> does not
               support entering the controller id and hitting enter to
-              toggle quicklook. Rather, the <code>[multifunc] Q [id]</code>
+              toggle quicklook. Rather, the <code>[MULTIFUNC] Q [id]</code>
                 command must be used.</li>
               <li><i>vice</i> supports the "plus" specifier for quicklook:
                 if a plus sign is specified after a controller id
@@ -487,7 +730,6 @@
               matches STARS.)</li>
               </ul>
             </section>
-
 
           </article>
 
