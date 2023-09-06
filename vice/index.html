@@ -98,7 +98,7 @@
                    capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-08-16</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-09-06</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -516,7 +516,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.4/Vice-v0.10.4-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.4 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.5/Vice-v0.10.5-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.5 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -525,7 +525,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.4/Vice-v0.10.4-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.4 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.5/Vice-v0.10.5-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.5 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -551,6 +551,38 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.5 (6 September 2023)</h3>
+            <ul>
+              <li>Added support for STARS fused mode (updates every second,
+              round markers for radar tracks; choose "FUSED" in the "SITE menu.)
+              <li>It is no longer allowed to issue control commands to
+              departing aircraft before they have checked in.</li>
+              <li>Added multiple new ATC commands:</li>
+              <ul>
+                <li><code>EC</code>/<code>ED</code>: expedite
+                  climb/descent.</li>
+                <li><code>I</code>: intercept the localizer (of the
+                  approach previously given with "expect approach").</li>
+                <li><code>SMIN</code>: maintain slowest practical speed</li>
+                <li><code>SMAX</code>: maintain maximum forward speed</li>
+                <li><code>AFIX/CAPP</code>: at <code>FIX</code>,
+                cleared <code>APP</code> approach.</li>
+                <li>More flexible altitude crossing
+                restrictions<code>CFIX/A100-</code> is cross <code>FIX</code> at or
+                below 10,000, <code>CFIX/A120-150</code> is
+                  cross <code>FIX</code> between 12,000 and 15,000, etc.</li>
+              </ul>
+              <li>Facility engineering changes:</li>
+              <ul>
+                <li>Removed the "elevation" field for airports; it is no
+                  longer needed.</li>
+                <li>Radars must have an "elevation" value specified, unless
+                  their location is given using an ICAO airport code, in
+                  which the airport's elevation is used.</li>
+              </ul>
+              <li>Minor fixes to the ABE scenario.</li>
+            </ul>
 
             <h3>0.10.4 (16 August 2023)</h3>
             <ul>
@@ -1062,7 +1094,9 @@ how it simulates aircraft or the STARS interface.
                   Each radar site has the following configuration values:
                   <ul>
                     <li>"char": a single character string identifier for the radar</li>
-                    <li>"elevation": an integer giving the radar site's elevation in feet</li>
+                    <li>"elevation": an integer giving the radar site's
+                    elevation in feet. (Not required if the position is
+                    specified using an airport ICAO code.)</li>
                     <li>"position": the radar's lateral position</li>
                     <li>"primary_range": an integer giving the range in nautical miles at which the radar can pick up a primary track (typically, 60)</li>
                     <li>"secondary_range": an integer giving the range in nautical miles at which the radar can pick up a secondary track (typically, 120)</li>
@@ -1225,11 +1259,6 @@ how it simulates aircraft or the STARS interface.
                 <td>"departure_controller"</td>
                 <td>String</td>
                 <td>If specified, gives the virtual controller initially controlling the aircraft.</td>
-              </tr>
-              <tr>
-                <td>"elevation"</td>
-                <td>Number</td>
-                <td>The airport's elevation in feet</td>
               </tr>
               <tr>
                 <td>"exit_categories"</td>
