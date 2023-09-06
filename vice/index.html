@@ -332,9 +332,14 @@
                   </tr>
                   <tr>
                     <td><code>C</code><i>fix</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i></td>
-                    <td>Directs the aircraft to cross the specified fix at the given altitude and speed.
-                      Either one or both of <code>A</code> and <code>S</code> may be specified.</td>
-                    <td><code>CCAMRN/A110</code></td>
+                    <td><p>Directs the aircraft to cross the specified fix at the given altitude and speed.
+                      Either one or both of <code>A</code>
+                        and <code>S</code> may be specified.</p>
+                      <p>Altitudes may be given as single altitudes (corresponding to
+                      "at"), an altitude and a plus sign ("at or above"),
+                      an altitude and a minus sign ("at or below"), or a
+                      range of altitudes separated by a minus sign ("between").</p></td>
+                    <td><code>CCAMRN/A110+</code></td>
                   </tr>
                   <tr>
                     <td><code>C</code><i>alt</i></td>
@@ -348,11 +353,33 @@
                     <td><code>D20</code></td>
                   </tr>
                   <tr>
+                    <td><code>ED</code></td>
+                    <td>Directs the aircraft to expedite the descent to its
+                    assigned altitude.</td>
+                    <td><code>ED</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>EC</code></td>
+                    <td>Directs the aircraft to expedite the climb to its
+                    assigned altitude.</td>
+                    <td><code>EC</code></td>
+                  </tr>
+                  <tr>
                     <td><code>S</code><i>knots</i></td>
                     <td>Gives the aircraft a speed restriction.  If the restriction is given after an aircraft is cleared for an approach,
                       the speed restriction is in effect until 5 mile final.  If no speed is given, then the aircraft is instructed
                     "cancel speed restrictions".</td>
                     <td><code>S210</code>, <code>S</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>SMIN</code></td>
+                    <td>Directs the aircraft to maintain its slowest practical speed.</td>
+                    <td><code>SMIN</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>SMAX</code></td>
+                    <td>Directs the aircraft to maintain its maximum forward speed.</td>
+                    <td><code>SMAX</code></td>
                   </tr>
                   <tr>
                     <td><code>E</code><i>approach</i></td>
@@ -369,6 +396,12 @@
                     <td><code>CI2L</code></td>
                   </tr>
                   <tr>
+                    <td><code>A</code><i>fix</i><code>/C</code><i>approach</i></td>
+                    <td>Clears the aircraft for the specified approach when
+                    it passes the given fix.</td>
+                    <td><code>AROSLY/CI2L</code></td>
+                  </tr>
+                  <tr>
                     <td><code>CAC</code></td>
                     <td>Cancels approach clearance for an aircraft.</td>
                     <td><code>CAC</code></td>
@@ -379,6 +412,13 @@
                       (This command is only useful for approaches that include procedure turns.)
                       The aircraft must have been told to expect the approach before it is cleared for it.</td>
                     <td><code>CSII6</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>I</code></td>
+                    <td>Directs the aircraft to intercept the localizer (at
+                    which point it will follow the localizer's lateral path
+                    but not descend until it is cleared for the approach.)</td>
+                    <td><code>I</code></td>
                   </tr>
                   <tr>
                     <td><code>X</code></td>
@@ -455,6 +495,11 @@
             are not present in vSTARS:
             </p>
             <ul>
+              <li><i>vice</i> supports the STARS "FUSED" mode, which
+                features updates of aircraft positions every second (rather
+                than every 5 seconds) and round markers for primary radar
+                tracks.) Select FUSED mode via the "SITE" menu from the
+                primary DCB.</li>
               <li><i>vice</i> supports the STARS "dwell" mode, which draws
                 the datablock and leaderline of track under the mouse more
                 brightly when it is enabled. Dwell mode can be configured
@@ -558,7 +603,7 @@ how it simulates aircraft or the STARS interface.
               round markers for radar tracks; choose "FUSED" in the "SITE menu.)
               <li>It is no longer allowed to issue control commands to
               departing aircraft before they have checked in.</li>
-              <li>Added multiple new ATC commands:</li>
+              <li>Added multiple new <a href="#commands">ATC commands</a>:</li>
               <ul>
                 <li><code>EC</code>/<code>ED</code>: expedite
                   climb/descent.</li>
@@ -566,10 +611,10 @@ how it simulates aircraft or the STARS interface.
                   approach previously given with "expect approach").</li>
                 <li><code>SMIN</code>: maintain slowest practical speed</li>
                 <li><code>SMAX</code>: maintain maximum forward speed</li>
-                <li><code>AFIX/CAPP</code>: at <code>FIX</code>,
-                cleared <code>APP</code> approach.</li>
+                <li><code>A</code><i>fix</i><code>/C</code><i>approach</i>:
+                at the specified fix, cleared for the given approach.</li>
                 <li>More flexible altitude crossing
-                restrictions<code>CFIX/A100-</code> is cross <code>FIX</code> at or
+                restrictions<code>C</code><i>fix</i><code>/A100-</code> is cross <code>FIX</code> at or
                 below 10,000, <code>CFIX/A120-150</code> is
                   cross <code>FIX</code> between 12,000 and 15,000, etc.</li>
               </ul>
