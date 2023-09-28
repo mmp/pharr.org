@@ -98,7 +98,7 @@
                    capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-09-26</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-09-28</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -602,7 +602,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.8/Vice-v0.10.8-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.8 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.9/Vice-v0.10.9-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.9 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -611,7 +611,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.8/Vice-v0.10.8-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.8 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.9/Vice-v0.10.9-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.9 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -638,6 +638,31 @@ how it simulates aircraft or the STARS interface.
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
 
+            <h3>0.10.9 (28 September 2023)</h3>
+            <ul>
+              <li>Many improvements to the AAC scenario's accuracy:</li>
+              <ul>
+                <li>Added turboprop and piston departures and arrivals for AAC.</li>
+                <li>AAC jet arrivals now come in on the TULSA4; turboprops
+                and pistons pass through their approach gate (at lower
+                altitudes) and are routed direct TUL.</li>
+                <li>AAC departures now follow headings after takeoff
+                (props 010 or 190, jets/turboprops 260/310, depending on
+                departure gate.)</li>
+                <li>Inbound handoffs are now 45 miles out.</li>
+              </ul>
+              <li>Fixed a bug where arrivals would sometimes climb after
+                being cleared for the approach.</li>
+              <li>Facility engineering: when exits are specified in
+                "departure_routes", additional text can be included after a
+                period. This text is ignored when determining which exit an
+                aircraft uses.  This can be useful if for example piston
+                aircraft and jets have different departure procedures; 
+                "COLIN.P" and "COLIN.J" departure routes could be specified
+                with the used for piston aircraft and the second used for jets.
+              </li>
+            </ul>
+            
             <h3>0.10.8 (26 September 2023)</h3>
             <ul>
               <li>When altitude and speed instructions are given, aircraft
@@ -1442,13 +1467,25 @@ how it simulates aircraft or the STARS interface.
       "ARD,DIXIE,RBV,WHITE": {
         "cleared_altitude": 5000,
         "route": "JFK5",
-        "waypoints": "_JFK_13R _JFK_31L #185"
+        "waypoints": "_JFK_13R _JFK_31L/h185"
       },
       ...
             </pre>
             <p>The members of "departure_routes" are strings identifying the departure runway; each departure runway's routes
               are then represented by an object with one or more members that specify comma-separated lists of exit fixes.
-              (Thus, the specification above applies to departures with exit ARD, DIXIE, RBV, or WHITE, departing runway 13R.)
+              (Thus, the specification above applies to departures with
+              exit ARD, DIXIE, RBV, or WHITE, departing runway 13R.)</p>
+            <p>
+              The exit fix specifiers may include additional text after a
+              period to allow specifying situation-dependent exits.
+              For example, we might specify one route
+              for "RBV.PISTONS", another for "RBV.TURBOPROPS", and a third
+              for "RBV.JETS".  <i>vice</i> treats all of these as going to
+              the "RBV" exit.  When departures are defined in
+              "departures", they can then refer to the appropriate exit in
+              their "exit" specifier. 
+            </p>
+            <p>
               The departure route specification has three members:
               </p>
               <ul>
@@ -1625,12 +1662,12 @@ how it simulates aircraft or the STARS interface.
             </p>
             <pre>
   "runway_waypoints": {
-    "27L": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD #87",
-    "27R": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD #87",
-    "17": "JIIMS@a8000 SNEDE #312",
-    "35": "JIIMS@a8000 SNEDE #312",
-    "9L": "JIIMS@a8000 WUDRR WEVVE ERNYY #268",
-    "9R": "JIIMS@a8000 WUDRR WEVVE ERNYY #268"
+    "27L": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+    "27R": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+    "17": "JIIMS@a8000 SNEDE/h312",
+    "35": "JIIMS@a8000 SNEDE/h312",
+    "9L": "JIIMS@a8000 WUDRR WEVVE ERNYY/h268",
+    "9R": "JIIMS@a8000 WUDRR WEVVE ERNYY/h268"
   },
             </pre>
             
