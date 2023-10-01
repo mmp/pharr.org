@@ -64,6 +64,7 @@
 	  <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-using"><span class="theme-icon-holder me-2"><i class="fas fa-plane"></i></span>About Vice</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#started">Getting Started</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#commands">ATC Commands</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#draw-routes">Drawing Routes</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#launches">Launching Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#multi-controller">Multiple Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
@@ -98,7 +99,7 @@
                    capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-09-28</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-10-01</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -171,15 +172,20 @@
               and the additional <a href="#commands">ATC commands below</a> to issue control commands to aircraft.
             </p>
             <p>
-              When the simulation starts, <i>vice</i> also displays a small window listing the available approaches.
-              For this LGA scenario, there is just one approach, though other scenarios may have multiple runways and or multiple airports active.
+              When the simulation starts, <i>vice</i> also displays a small
+              window listing the active departures, arrivals, and approaches.
+              For this LGA scenario, three arrivals are active but there is
+              just one approach and one departure.
+              Other scenarios may be more complex.
+            </p>
+            <div class="text-center">
+              <img src="approaches.jpg" srcset="approaches-2x.jpg 2x" width="303" height="338" class="img-fluid" alt="approach list">
+            </div>
+            <br>
+            <p>
               The approach code&mdash;here, "I22"&mdash; is used in <i>vice</i>'s aircraft control commands like "expect approach"
               and "cleared approach".
             </p>
-            <div class="text-center">
-              <img src="approaches.jpg" srcset="approaches-2x.jpg 2x" width="246" height="91" class="img-fluid" alt="approach list">
-            </div>
-            <br>
             <p>To free up space, you can close this window by clicking on the "X" in the upper right corner.
               Clicking on the <i class="fas fa-question-circle"></i> button in the menubar will show
               the window again.
@@ -214,6 +220,30 @@
             <br>
           </section>
 
+	  <section class="docs-section" id="draw-routes">
+            <h2 class="section-heading">Drawing Routes</h2>
+            <p><i>vice</i> can draw the active departures, approaches, and
+            arrivals for the current scenario. This can be helpful when
+            studying those for an airport, since they are drawn directly on
+            the radar scope with annotations that give the fixes, any
+              altitude or speed restrictions, and procedure turns.
+            </p>
+            <p>To toggle whether a route is drawn on the scope, click the checkbox on the left 
+              next to it in the scenario information window that is shown at
+              the start or after clicking on the
+              <i class="fas fa-question-circle"></i> button in the menubar.
+              For example, here is how the HVN RNAV Runway 2 approach is rendered:
+            </p>
+            <div class="text-center">
+              <img src="hvn-rnav2.jpg" srcset="hvn-rnav2-2x.jpg 2x" width="436" height="457" class="img-fluid" alt="manual aircraft launch window">
+            </div>
+            <br>
+            <p>We can see the procedure turn at PEPER and that it is both
+            the IAF and the IF; altitude restrictions at both SALLT and
+            PEPER, that SALLT is the FAF, and that arrivals from KEYED will not fly the procedure
+              turn.</p>
+          </section>
+          
 	  <section class="docs-section" id="launches">
             <h2 class="section-heading">Launching Aircraft</h2>
             <p>When a new scenario starts, <i>vice</i> automatically launches new departures and arrivals based on the
@@ -602,7 +632,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.9/Vice-v0.10.9-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.9 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.10/Vice-v0.10.10-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.10 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -611,7 +641,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.9/Vice-v0.10.9-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.9 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.10/Vice-v0.10.10-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.10 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -637,6 +667,30 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.10 (1 October 2023)</h3>
+            <ul>
+              <li>Fixed a bug in the Windows installer that caused new
+                scenarios (AAC, SAV, SDF) to not be installed locally.</li>
+              <li>Added the ability to <a href="#draw-routes">draw active departure, arrival, and
+              approach routes on</a> the radar scope.
+              </li>
+              <li>Facility engineering updates related to the above:</li>
+              <ul>
+                <li>When specifying fixes in approaches, you can
+                  add <code>/iaf</code>, <code>/if</code>
+                  and/or <code>/faf</code> to specify that a fix is the
+                  initial approach fix, initial fix, or final approach
+                  fix. This is then drawn on the scope when the approach is
+                  shown but isn't used otherwise.
+                </li>
+                <li>For arrivals under "arrival_groups", there is an
+                optional string "description" field that will be shown in
+                the UI. Similarly, for departures in "departure_routes",
+                you can also give a "description" string.
+                  </li>
+              </ul>
+            </ul>
 
             <h3>0.10.9 (28 September 2023)</h3>
             <ul>
@@ -1037,7 +1091,10 @@ how it simulates aircraft or the STARS interface.
               </li>
               <li> <code>/h</code><i>heading</i>: depart the fix at specified heading</li>
               <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
-              <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>              
+              <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>       
+              <li> <code>/iaf</code>: indicates that the fix is an IAF (initial approach fix)</li>
+              <li> <code>/if</code>: indicates that the fix is the IF (intermediate fix)</li>
+              <li> <code>/faf</code>: indicates that the fix is the FAF (final approach fix)</li>
             </ul>
             <p>If the aircraft should follow a DME arc leaving a
               fix, <code>/arc</code> can be given after the fix. It takes
@@ -1486,7 +1543,7 @@ how it simulates aircraft or the STARS interface.
               their "exit" specifier. 
             </p>
             <p>
-              The departure route specification has three members:
+              The departure route specification has three required members:
               </p>
               <ul>
                 <li>"cleared_altitude": the initial altitude that aircraft are cleared to</li>
@@ -1494,6 +1551,10 @@ how it simulates aircraft or the STARS interface.
                 <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
                   at the ends of the runway.</li>
               </ul>
+              <p>It also takes an optional "description" member, which is
+                string-valued. This description is shown in the UI
+                for <a href="#draw-routes">choosing routes to draw on the
+                  radar scope</a>.
               <p>
               On departure the aircraft will fly the specified waypoints and then the waypoints specified in the route
               to its destination. In this case, aircraft will remain on a 185 heading until vectored by the controller
@@ -1577,6 +1638,14 @@ how it simulates aircraft or the STARS interface.
                 used in the aircraft's flight strip.) If
                 unspecified, <i>vice</i> tries to choose a reasonable
                 cruise altitude based on the distance and direction of flight.</td>
+              </tr>
+              <tr>
+                <td>"description"</td>
+                <td>String</td>
+                <td>(<i>Optional</i>) If provided, this string is shown in
+                the UI for <a href="#draw-routes">drawing approaches on
+                the radar scope</a> to give further information about what
+                the route is used for.</td>
               </tr>
               <tr>
                 <td>"initial_altitude"</td>
