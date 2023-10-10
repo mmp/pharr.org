@@ -99,7 +99,7 @@
                    capture of demo">
             </div>
             <br>
-	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-10-01</span></h1>
+	    <h1 class="docs-heading">About Vice <span class="docs-time">Last updated: 2023-10-10</span></h1>
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
@@ -200,7 +200,13 @@
                 <li> <i class="fas fa-pause-circle"></i> / <i class="fas fa-play-circle"></i>: pause or resume the simulation.</li>
                 <li> <i class="fas fa-redo"></i>: opens the window to select a new scenario and set its parameters.</li>
                 <li> <i class="fas fa-cog"></i>: open a window that allows changing various settings. The most useful one is the simulation rate: you can speed up time during slow times or to increase the challenge.</li>
-                <li> <i class="fas fa-question-circle"></i>: show the window that lists the available approaches.</li>
+                <li> <i class="fas fa-question-circle"></i>: show the
+                window that lists the currently active departures,
+                  arrivals, and approaches.</li>
+                <li> <i class="fas fa-keyboard"></i>: opens a window that
+                shows a summary
+                of <i>vice</i>'s <a href="#commands">ATC commands</a>
+                and frequently-used STARS commands.</li>
                 <li> <i class="fas fa-plane-departure"></i>: open a window with controls for launching aircraft, either automatically or manually.</li>
                 <li> <i class="fas fa-book"></i>: open this webpage to review <i>vice</i>'s documentation.</li>
                 <li> <i class="fas fa-info-circle"></i>: display information about the version of <i>vice</i> you have installed.</li>
@@ -218,6 +224,15 @@
               <img src="hover-info.jpg" srcset="hover-info-2x.jpg 2x" width="255" height="140" class="img-fluid" alt="aircraft information">
             </div>
             <br>
+            <p>If you are signed in to Discord, <i>vice</i> can
+            automatically update your activity status there with
+            information about your current <i>vice</i> session (the number
+            of arrivals and departures, the position you're controlling,
+            etc.) When you first launch <i>vice</i> you are given the
+              option to disable this feature if you would like.  The
+              settings window, available by clicking <i class="fas
+            fa-cog"></i> in the menubar, can also be used to enable or
+            disable this feature afterward.
           </section>
 
 	  <section class="docs-section" id="draw-routes">
@@ -316,7 +331,9 @@
             </p>
             <p>If you'd like to issue multiple commands to an aircraft,
               enter the commands one after another with a space between them and
-              then click on the appropriate aircraft.
+              then click on the appropriate aircraft. To open a window that
+              shows the available ATC commands when using <i>vice</i>,
+              click the <i class="fas fa-keyboard"></i> button in the top menubar.
             </p>
 
               <table class="table table-bordered">
@@ -632,7 +649,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.10/Vice-v0.10.10-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.10 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.11/Vice-v0.10.11-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.11 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -641,7 +658,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.10/Vice-v0.10.10-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.10 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.11/Vice-v0.10.11-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.11 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -667,6 +684,25 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.11 (10 October 2023)</h3>
+            <ul>
+	      <li>Added the D01 (Denver TRACON) scenario to
+		single-user <i>vice</i> (it was unintentionally not
+		included in the installer).</li>
+              <li>Added support for updating your Discord activity based on
+                your <i>vice</i> session (thanks to Samuel Valencia!)</li>
+              <li>Clicking the <i class="fas fa-keyboard"></i> icon on the
+                menubar opens a window that shows a summary
+                of <i>vice</i>'s keyboard commands.</li>
+              <li>Fixed a bug with aircraft descending too early when flying procedure turns.</li>
+	      <li>Fixed a bug where some departures would try to re-fly
+                their initial departure route after being handed off to a
+                virtual controller.</li>
+	      <li>Fixed multiple bugs with the handling of "at or above" altitude constraints.</li>
+	      <li>Fixed a bug that left the default DCB brightness set to
+	        0.</li>
+            </ul>
 
             <h3>0.10.10 (1 October 2023)</h3>
             <ul>
