@@ -324,8 +324,12 @@
 
 	  <section class="docs-section" id="commands">
             <h2 class="section-heading">ATC Commands</h2>
-            <p>In order to issue control commands to aircraft, type the appropriate command from the table below
-              and click on an aircraft's track. After you issue a command, the virtual pilot's readback is shown at the bottom of the window.
+            <p>The commands below issue control commands to aircraft. To
+              indicate which aircraft should be given a command, you
+              can either enter a command and click on an aircraft's radar
+              track or you can enter the aircraft's callsign, a space, 
+              the command, and then press the "enter" key.
+              After you issue a command, the virtual pilot's readback is shown at the bottom of the window.
               The aircraft will then start following that instruction, to the best of its abilities.
               Unlike VATSIM, the pilots will always do exactly what you tell them to.
             </p>
@@ -509,6 +513,11 @@
                     <td><code>I</code></td>
                   </tr>
                   <tr>
+                    <td><code>ID</code></td>
+                    <td>Instructs the aircraft to "ident".</td>
+                    <td><code>ID</code></td>
+                  </tr>
+                  <tr>
                     <td><code>X</code></td>
                     <td>Deletes the specified aircraft from the simulation. This command is useful when one starts going down the tubes.</td>
                     <td><code>X</code></td>
@@ -649,7 +658,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.11/Vice-v0.10.11-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.11 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.12/Vice-v0.10.12-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.12 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -658,7 +667,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.11/Vice-v0.10.11-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.11 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.12/Vice-v0.10.12-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.12 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -684,6 +693,39 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.12 (31 October 2023)</h3>
+            <ul>
+              <li>Added a new DCA scenario.</li>
+              <li>Aircraft will now ident if given the "ID" command.</li>
+              <li>There is now a short delay (3-6 seconds) before aircraft
+              start following heading instructions, to better model reality.</li>
+              <li>Control commands for aircraft can now be given without
+              slewing on the aircraft: enter their callsign, a space, one
+              or more commands, and then hit enter.</li>
+              <li>Point outs can be rejected by entering "UN" and slewing
+              on the radar track of an aircraft being pointed out.</li>
+              <li>RNAV approaches can now be intercepted via a heading.</li>
+              <li>Fixed a bug where departures wouldn't follow altitude
+              restrictions on SIDs.</li>
+              <li>Fixed a bug where aircraft that went around would
+              always continue to do so on subsequent approaches.</li>
+              <li>Facility engineering updates:</li>
+              <ul>
+                <li>The "multi_controllers" field in scenario definitions
+                  is now an object where each entry specifies a control
+                  position split. If more than one split is specified, then
+                  the user will be prompted to pick one of them when
+                  launching a scenario.</li>
+                <li>Also in "multi_controllers", a single departure
+                  controller is no longer specified using the Boolean
+                  "departure". Instead, there is a "departures" field that
+                  is an array of strings specifying airports and/or runways
+                  that a controller is responsible for.</li>
+                <li>Airports have an optional "name" field that is used
+                  in transmissions from aircraft when referring to the airport.</li>
+              </ul>
+            </ul>
 
             <h3>0.10.11 (10 October 2023)</h3>
             <ul>
@@ -1550,7 +1592,12 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"location"</td>
                 <td>String</td>
-                <td>The airport's location</td>
+                <td>The airport's location.</td>
+              </tr>
+              <tr>
+                <td>"name"</td>
+                <td>String</td>
+                <td>(<i>Optional</i>) The name of the airport.</td>
               </tr>
               <tr>
                 <td>"tower_list"</td>
@@ -1930,7 +1977,9 @@ how it simulates aircraft or the STARS interface.
                 <td>Object</td>
                 <td>(<i>Optional</i>) If specified, this provides
                 information about the control positions that are available
-                for multi-controller scenarios. Each member specifies a
+                  for multi-controller scenarios. Each member specifies a
+                  controller split configuration. Each configuration is
+                  then an object where each member specifies a
                 controller with the corresponding callsign.  For each
                 controller, the following members may be specified:
                   <ul>
@@ -1941,9 +1990,11 @@ how it simulates aircraft or the STARS interface.
                     <li>"backup": Specifies another controller in "multi_controllers" that covers
                     the controller's position if the controller is not
                     signed in.</li>
-                    <li>"departure": Boolean value that indicates whether
-                    the controller is responsible for departures.  Must be
-                    given for exactly one controller. </li>
+                    <li>"departures": An optional array of strings that
+                    determines which departing aircraft the controller is
+                    responsible for. Each string can be an airport name
+                    ("KJFK") or a slash-separated airport name and runway
+                      ("KJFK/22R").</li>
                     <li>"primary": Boolean value that indicates that the
                     controller is the primary controller. Must be given for
                     exactly one controller. If no other controllers
