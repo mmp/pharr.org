@@ -84,7 +84,7 @@
                                 As its title suggests, the book's focus is on physically-based approaches to rendering. It implements a ray-optics based simulation of light transport and scattering; all of the light transport algorithms it describes are based on Monte Carlo path tracing. For more information, see both
                                 <a href="https://pbrt.org">the book Website,</a>
                                 as well as the
-                                <a href="http://pbr-book.org">online verision of the third edition.</a>
+                                <a href="http://pbr-book.org">online verision of the book.</a>
                             </p>
                         </div>
                         <div class="flex-shrink-0">
@@ -107,6 +107,63 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Decorrelating ReSTIR Samplers via MCMC Mutations</h3>
+                            <div class="authors">Rohan Sawhney, Daqi Lin, Markus Kettunen, Benedikt Bitterli, Ravi Ramamoorthi, Chris Wyman, Matt Pharr</div>
+                            <div>ACM Transactions on Graphics</div>
+                            <div class="mb-3"><a href="https://arxiv.org/pdf/2211.00166.pdf">[PDF] (preprint)</a></div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/restir-mutations.png" alt="" width="388" height="370" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Monte Carlo rendering algorithms often utilize correlations between pixels to improve efficiency and enhance image quality. For real-time applications in particular, repeated reservoir resampling offers a powerful framework to reuse samples both spatially in an image and temporally across multiple frames. While such techniques achieve equal-error up to 100× faster for real-time direct lighting [Bitterli et al. 2020] and global illumination [Ouyang et al. 2021; Lin et al. 2021], they are still far from optimal. For instance, unchecked spatiotemporal resampling often introduces noticeable correlation artifacts, while reservoirs holding more than one sample suffer from impoverishment in the form of duplicate samples. We demonstrate how interleaving Markov Chain Monte Carlo (MCMC) mutations with reservoir resampling helps alleviate these issues, especially in scenes with glossy materials and difficult-to-sample lighting. Moreover, our approach does not
+                                introduce any bias, and in practice we find considerable improvement in image quality with just a single mutation per reservoir sample in each frame.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None so far.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Rohan Sawhney, Daqi Lin, Markus Kettunen, Benedikt Bitterli, Ravi Ramamoorthi, Chris Wyman, Matt Pharr. 2024. Decorrelating ReSTIR Samplers via MCMC Mutations, ACM Transactions on Graphics, January 2024.
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/restir-mutations.png" alt="" width="388" height="370" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0">ART-Owen Scrambling</h3>
+                            <div class="authors">Abdalla G. M. Ahmed, Matt Pharr, Peter Wonka</div>
+                            <div>ACM Transactions on Graphics (SIGGRAPH Asia)</div>
+                            <div class="mb-3"><a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/ahmed2023artowen.pdf">[PDF]</a></div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/artowen.png" alt="" width="388" height="274" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                We present a novel algorithm for implementing Owen-scrambling, combining the generation and distribution of the scrambling bits in a single self-contained compact process. We employ a context-free grammar to build a binary tree of symbols, and equip each symbol with a scrambling code that affects all descendant nodes. We nominate the grammar of adaptive regular tiles (ART) derived from the repetition-avoiding Thue-Morse word, and we discuss its potential advantages and shortcomings. Our algorithm has many advantages, including random access to samples, fixed time complexity, GPU friendliness, and scalability to any memory budget. Further, it provides two unique features over known methods: it admits optimization, and it is invertable, enabling screen-space scrambling of the high-dimensional Sobol sampler.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None so far.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Abdalla G. M. Ahmed, Matt Pharr, Peter Wonka. 2023. ART-Owen Scrambling. ACM Transactions on Graphics (SIGGRAPH Asia), 42(6) 258:1-11.
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/artowen.png" alt="" width="388" height="274" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Stochastic Texture Filtering</h3>
                             <div class="authors">Marcos Fajardo, Bartlomiej Wronski, Marco Salvi, and Matt Pharr</div>
                             <div><a href="https://arxiv.org/abs/2305.05810">arxiv cs.GR</a></div>
@@ -121,7 +178,7 @@
                             </div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
-                                Rejected by HPG 2023(!).
+                                Rejected by HPG 2023.
                             </div>
                             <div class="citation mb-2">
                                 <b>Citation:</b>
@@ -580,7 +637,7 @@
                     <h3 class="mb-1">Committees</h3>
                     <ul>
                         <li>Papers Chair, Eurographics Symposium on Rendering 2020 (with Carsten Dachsbacher)</li>
-                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022</li>
+                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022, 2023</li>
                         <li>Program Chair, High Performance Graphics 2014</li>
                         <li>Conference Chair, High Performance Graphics 2011 (with John Owens)</li>
                         <li>Papers Chair, High Performance Graphics 2009 (with David McAllister and Ingo Wald)</li>
@@ -634,9 +691,11 @@
                             <div></div>
                             This is an implementation of Chiang et al's
                             <i>A Practical and Controllable Hair and Fur Model for Production Path Tracing,</i>
-                            implemented as a literate program. The forthcoming fourth edition of
+                            implemented as a literate program. The fourth edition of
                             <i>Physically Based Rendering</i>
-                            includes an updated version of this.
+                            includes an
+                            <a href="https://https://pbr-book.org/4ed/Reflection_Models/Scattering_from_Hair.html">updated version</a>
+                            of this.
                         </li>
                         <li>
                             <b>The Implementation of a Scalable Texture Cache (2017)</b>
@@ -663,6 +722,14 @@
                             <a href="https://vatsim.net">VATSIM.</a>
                             <a href="https://pharr.org/vice">[documentation]</a>
                             <a href="https://github.com/mmp/vice">[source]</a>
+                        </li>
+                        <li>
+                            <b>Apple ][ works:</b>
+                            Not to brag, but in middle school I wrote a pretty awesome
+                            <a href="assets/dd.bas.txt">D&D character generator</a>
+                            in Applesoft Basic as well as a
+                            <a href="assets/diskmod.txt">disk track/sector editor</a>
+                            in 6502 assembly language.
                         </li>
                     </ul>
                     <h3 class="mb-1">Selected Talks</h3>
