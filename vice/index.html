@@ -114,7 +114,8 @@
                 A90 (BOS),
                 C90 (ORD, MDW),
                 D01 (DEN),
-                F11 (JAX, MCO, SFB, ISM, ORL), 
+                F11 (JAX, MCO, SFB, ISM, ORL),
+                L30 (LAS),
                 N90 (EWR, JFK, LGA, FRG, ISP, HVN),
                 as well as the
                 AAC, ABE, CLE, CLT, DAB, JAX, PHL, SAV, and SDF
@@ -134,7 +135,7 @@
             <h2 class="section-heading">Getting Started</h2>
             <p>The radar client interface that <i>vice</i> provides is based on STARS.
               For familiarity to VATSIM controllers, <i>vice</i> generally follows the keyboard command scheme implemented
-              in <a href="https://vstars.rosscarlson.dev">vSTARS</a>; see
+              in <a href="https://crc.virtualnas.net/docs/#/">CRC's STARS implementation</a>; see
               the discussion of <a href="#stars"><i>vice</i>'s STARS
               emulation</a> below for more information.
             </p>
@@ -146,7 +147,7 @@
               Here is the configuration window for LGA:
             </p>
             <div class="text-center">
-              <img src="config.jpg" srcset="config-2x.jpg 2x" width="515" height="689" class="img-fluid" alt="configuration dialog box">
+              <img src="config.jpg" srcset="config-2x.jpg 2x" width="520" height="692" class="img-fluid" alt="configuration dialog box">
             </div>
             <br>
             <p>
@@ -295,7 +296,7 @@
              all of the settings that are the same as for single-controller aren't shown.
             </p>
             <div class="text-center">
-              <img src="create-multi.jpg" srcset="create-multi-2x.jpg 2x" width="519" height="225" class="img-fluid" alt="create multi-controller window">
+              <img src="create-multi.jpg" srcset="create-multi-2x.jpg 2x" width="519" height="221" class="img-fluid" alt="create multi-controller window">
             </div>
             <br>
             <p>
@@ -583,20 +584,13 @@
             </p>
             <p>
               <i>vice</i> mostly follows the keybindings
-              used in <a href="https://vstars.rosscarlson.dev">vSTARS</a>; the 
-              <a href="https://vstars.rosscarlson.dev/Assets/Files/vSTARS%20Command%20Reference.pdf">vSTARS
-              Command Reference</a> provides a summary.
+              used in <a href="https://crc.virtualnas.net/docs/#/">CRC STARS</a>.
             </p>
-            <h3 class="section-heading">Differences from vSTARS</h3>
+            <h3 class="section-heading">Differences from CRC STARS</h3>
             <p><i>vice</i> supports the following features from STARS that
-            are not present in vSTARS:
+            are not present in CRC STARS:
             </p>
             <ul>
-              <li><i>vice</i> supports the STARS "FUSED" mode, which
-                features updates of aircraft positions every second (rather
-                than every 5 seconds) and round markers for primary radar
-                tracks.) Select FUSED mode via the "SITE" menu from the
-                primary DCB.</li>
               <li><i>vice</i> supports the STARS "dwell" mode, which draws
                 the datablock and leaderline of track under the mouse more
                 brightly when it is enabled. Dwell mode can be configured
@@ -611,19 +605,6 @@
                   <li><code>[multifunc] D I</code>: inhibit (disable) dwell mode.</li>
                 </ul>
               </li>
-              <li>To quicklook a controller, <i>vice</i> does not
-              support entering the controller id and hitting enter to
-              toggle quicklook. Rather, the <code>[multifunc] Q [id]</code>
-                command must be used.</li>
-              <li><i>vice</i> supports the "plus" specifier for quicklook:
-                if a plus sign is specified after a controller id
-                when enabling quicklook, the datablocks for that controller's tracks will
-                be white, not green. (Similarly, <code>ALL+</code> can be
-                  specified to quick look all controllers' traffic in this
-                way.)</li>
-              <li><i>vice</i> allows placing DCB at the top, left, right,
-             or bottom of the window using the "DCB TOP", "DCB LEFT", "DCB
-             RIGHT", and "DCB BOTTOM" buttons.</li>
               <li><i>vice</i> supports displaying the current weather radar
               for the selected location (though not yet with shading that
               matches STARS.)</li>
@@ -658,7 +639,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.13/Vice-v0.10.13-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.13 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.14/Vice-v0.10.14-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.14 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -667,7 +648,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.13/Vice-v0.10.13-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.13 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.14/Vice-v0.10.14-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.14 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -693,6 +674,26 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.14 (18 November 2023)</h3>
+            <ul>
+              <li>L30 TRACON (Las Vegas) added, thanks to Michael Trokel.</li>
+              <li>Added a combined N90 (JFK, LGA, EWR) scenario.</li>
+              <li>Important readbacks from pilots (e.g., "unable") are now highlighted in red.</li>
+              <li>Improved STARS *T to allow entering fix names and to show ETA.</li>
+              <li>Added support for charted visual approaches.</li>
+              <li>STARS allows control-shift click to initiate track (CRC style).</li>
+              <li>Secondary scratchpads are now supported.</li>
+              <li>Fixed bug that would cause arrivals to climb when vectored off of their STAR.</li>
+              <li>Fixed other minor navigation bugs.</li>
+              <li>Facility engineering</li>
+              <ul>
+                <li>Scenarios can now have "center" and "range" specified; they override the scenario group valus, if present.</li>
+                <li>"default_map" in scenarios is now "default_maps"; an array of values can be given, allowing multiple maps to be initially shown.</li>
+                <li>Departures from different runways at an airport are sequenced better so that CAs on departure are less likely.</li>
+                <li>Added "tracon" to the scenario group definition; this is used to gather scenarios for a single TRACON in the UI.</li>
+              </ul>
+            </ul>
 
             <h3>0.10.13 (5 November 2023)</h3>
             <ul>
@@ -969,7 +970,7 @@ how it simulates aircraft or the STARS interface.
             <h3>0.9.2 (3 July 2023)</h3>
                 <ul>
                   <li>Fixed the behavior of *T to better match
-                    STARS/vSTARS: the line is now drawn to the mouse
+                    STARS: the line is now drawn to the mouse
                     position after the first point is selected, without
                     waiting for the second point.</li>
                   <li>Added more checks when loading scenario descriptions;
@@ -1257,7 +1258,7 @@ how it simulates aircraft or the STARS interface.
             </pre>
             <p>
               There are utility programs available for extracting video maps from
-              both VSTARS configuration files and from installed CRC
+              both vSTARS configuration files and from installed CRC
               ARTCCs.
             </p>
             <ul>
@@ -1471,6 +1472,11 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
+                <td>"tracon"</td>
+                <td>String</td>
+                <td>Name of the ATCT/TRACON that the scenario group is associated with. This is used to show all scenarios for a given ATCT/TRACON together in the UI.</td>
+              </tr>
+              <tr>
                 <td>"video_map_file"</td>
                 <td>String</td>
                 <td>Filename of the video map file from which the maps specified in "stars_maps" are found (e.g., "videomaps/zny-maps.json.zst")</td>
@@ -1504,7 +1510,7 @@ how it simulates aircraft or the STARS interface.
                   <ul>
                     <li>"full_name": a string giving the full name of the approach (e.g., "RNAV Z Runway 13L")</li>
                     <li>"runway": a string describing the runway the approach ends at (e.g., "13L")</li>
-                    <li>"type": a string indicating the type of the approach; it must be either "ILS" or "RNAV"</li>
+                    <li>"type": a string indicating the type of the approach; it must be "ILS", "RNAV", or "Visual"</li>
                     <li>"waypoints": an array of one or more strings giving the approach's route.</li>
                   </ul>
                   Multiple strings can be provided for "waypoints" for approaches with multiple IAFs (e.g. an RNAV "T" configuration).
@@ -1654,10 +1660,19 @@ how it simulates aircraft or the STARS interface.
                 <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
                   at the ends of the runway.</li>
               </ul>
-              <p>It also takes an optional "description" member, which is
-                string-valued. This description is shown in the UI
-                for <a href="#draw-routes">choosing routes to draw on the
-                  radar scope</a>.
+            <p>It also takes two optional members:<p>
+              <ul>
+                <li>"description", a string: this description is shown in
+                  the UI for <a href="#draw-routes">choosing routes to draw
+                    on the radar scope</a>.</li>
+                <li>"handoff_controller": a string indicating which
+                  controller should receive the handoff if one of the fixes
+                  in the route has the <tt>/ho</tt> qualifier for a
+                  handoff. This is useful if a virtual controller has
+                  initial control, e.g., for a departure from a nearby
+                  airport.
+                </li>
+              </ul>
               <p>
               On departure the aircraft will fly the specified waypoints and then the waypoints specified in the route
               to its destination. In this case, aircraft will remain on a 185 heading until vectored by the controller
@@ -1952,14 +1967,21 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
+                <td>"center"</td>
+                <td>String</td>
+                <td>(<i>Optional</i>) If specified, this gives the initial radar scope center (as a <a href="#fe-locations">latitude-longitude position</a>.)
+                  It overrides the "center" value from the scenario group.
+                </td>
+              </tr>
+              <tr>
                 <td>"controllers"</td>
                 <td>Array of strings</td>
                 <td>Callsigns of the other virtual controllers who are online. (These also must be in "control_positions".)</td>
               </tr>
               <tr>
-                <td>"default_map"</td>
-                <td>String</td>
-                <td>The name of the initial video map that should be selected when this scenario is selected.</td>
+                <td>"default_maps"</td>
+                <td>Array of strings</td>
+                <td>The names of the initial video maps that should be displayed when this scenario is selected.</td>
               </tr>
               <tr>
                 <td>"departure_airspace"</td>
@@ -2012,6 +2034,11 @@ how it simulates aircraft or the STARS interface.
                     pauses if the primary controller's position is not covered </li>
                   </ul>
                 </td>
+              </tr>
+              <tr>
+                <td>"range"</td>
+                <td>Number</td>
+                <td>(<i>Optional</i>) If specified, gives the initial radar scope center range in nautical miles. This overrides the range given in the scenario group.</td>
               </tr>
               <tr>
                 <td>"solo_controller"</td>
