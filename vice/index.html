@@ -117,8 +117,10 @@
                 F11 (JAX, MCO, SFB, ISM, ORL),
                 L30 (LAS),
                 N90 (EWR, JFK, LGA, FRG, ISP, HVN),
+                P50 (PHX),
+                S46 (SEA),
                 as well as the
-                AAC, ABE, CLE, CLT, DAB, JAX, PHL, SAV, and SDF
+                AAC, ABE, AUS, BHM, CLE, CLT, DAB, GSP, JAX, PHL, SAV, and SDF
                 ATCT/TRACONs.
                 New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
@@ -514,6 +516,21 @@
                     <td><code>I</code></td>
                   </tr>
                   <tr>
+                    <td><code>CVS</code></td>
+                    <td>Directs a departure to "climb via the SID".</td>
+                    <td><code>CVS</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>DVS</code></td>
+                    <td>Directs an arrival to "descend via the STAR".</td>
+                    <td><code>DVS</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>TO</code></td>
+                    <td>Directs an arrival to contact the tower.</td>
+                    <td><code>TO</code></td>
+                  </tr>
+                  <tr>
                     <td><code>ID</code></td>
                     <td>Instructs the aircraft to "ident".</td>
                     <td><code>ID</code></td>
@@ -639,7 +656,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.15/Vice-v0.10.15-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.15 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.16/Vice-v0.10.16-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.16 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -648,7 +665,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.15/Vice-v0.10.15-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.15 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.16/Vice-v0.10.16-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.16 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -674,6 +691,39 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.16 (22 December 2023)</h3>
+            <ul>
+	      <li>Added multiple new scenarios: S46, BHM, GSP (Aaron Flett), AUS (Jace Martin), P50 (Mike K)</li>
+	      <li>Multi-controller servers can now be password-protected</li>
+	      <li>Added "TO" command for "contact tower"</li>
+	      <li>Various bugfixes with handoffs and approach navigation</li>
+	      <li>Match real-world STARS alert sounds</li>
+              <li>Facility engineering changes/improvements:
+              <ul>
+                <li>The scenario group "nm_per_*" settings have been removed and no longer need to be specified.</li>
+                <li>Fixed crashes with the <code>-scenario</code>
+                  and <code>-videomap</code> command-line options</li>
+                <li>It is no longer required to specify "full_name" for
+                  approaches; a default name will be assigned using the
+                  specified approach type and runway if "full_name" is not
+                  given.</li>
+                <li>In "departure_routes", the "route" field has been
+                renamed to "sid". It is optional to specify "sid"; if the
+                aircraft isn't on a published departure it should be left blank.</li>
+                <li>In "arrivals", the "route" field has been renamed to "star".</li>
+                <li>Approaches now have a "tower_controller" field to specify which tower
+                  controller arrivals should contact. If an airport has a single controller
+                  named "(airport)_TWR", then "tower_controller" doesn't need to be specified.</li>
+                <li>Arrivals specified in "arrival_groups" now have an "assigned_altitude" field
+                  (and "cleared_altitude" has been removed.)  If "assigned_altitude" is specified,
+                  it is treated as an altitude assignment from a previous controller and the
+                  aircraft will not descend further. For aircraft on a STAR that have been cleared
+                  to descend via the STAR, "assigned_altitude" should not be given.</li>
+                <li>For multi-controller scenarios, departure controllers can be specified per-runway
+                  (e.g., "KPHX/25R") or per-SID (e.g., "KJFK/SCORR5").
+              </ul>
+            </ul>
 
             <h3>0.10.15 (19 November 2023)</h3>
             <ul>
@@ -1073,22 +1123,18 @@ how it simulates aircraft or the STARS interface.
               </p>
               <p>When developing scenarios, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations,
                 or you or might specify completely new scenario and video map files if you're working on support for a new TRACON.
-                While you're doing this, there are two ways to point <i>vice</i> at the file you're working on:
-              </p>
+                While you're doing this you can point <i>vice</i> at the
+                file you're working on using the command-line: if you open a command prompt and run <i>vice</i> from the command line,
+                  there are two options make it possible to specify
+                additional files for testing:
+                </p>
               <ul>
-                <li>Via the command-line: if you open a command prompt and run <i>vice</i> from the command line,
-                  there are two options make it possible to specify additional files for testing:
-                  <ul>
-                    <li>The <tt>-scenario</tt> command line option takes a single filename.
-                      The scenario specified file is loaded at startup time; if it has the same name as an existing scenario, it replaces
-                      that scenario's definition.
-                    </li>
-                    <li>In a similar manner, the <tt>-videomap</tt> command line option also takes a single filename that specifies a file
-                      with video map definitions.
-                    </li>
-                  </ul>
-                <li>Alternatively, select the "Settings..." menu item in <i>vice</i> and then expand the "Developer" section.
-                  You can select a scenario file and or a video map file to use.
+                <li>The <tt>-scenario</tt> command line option takes a single filename.
+                  The scenario specified file is loaded at startup time; if it has the same name as an existing scenario, it replaces
+                  that scenario's definition.
+                </li>
+                <li>In a similar manner, the <tt>-videomap</tt> command line option also takes a single filename that specifies a file
+                  with video map definitions.
                 </li>
               </ul>
               <p>When you're working on a new scenario, you may omit the "video_map_file" specifier in its JSON file.
@@ -1407,20 +1453,6 @@ how it simulates aircraft or the STARS interface.
                 <td>The name for the scenario group.  This name cannot be the same as the name for any of the other scenario groups.</td>
               </tr>
               <tr>
-                <td>"nm_per_latitude"</td>
-                <td>Number</td>
-                <td>Number of nautical miles per degree of latitude in the area around the scenario group's center point.
-                  On Earth, this should be 60.
-                </td>
-              </tr>
-              <tr>
-                <td>"nm_per_longitude"</td>
-                <td>Number</td>
-                <td>Number of nautical miles per degree of longitude in the area around the scenario group's center point.
-                  This value depends on the center point's latitude; it's around 45 around KJFK, for example.
-                </td>
-              </tr>
-              <tr>
                 <td>"primary_airport"</td>
                 <td>String</td>
                 <td>The main airport for the scenario.
@@ -1517,8 +1549,12 @@ how it simulates aircraft or the STARS interface.
                   Member names give the abbreviated name of the approach, as used in <i>vice</i>'s <a href="#commands">ATC commands</a>.
                   Each approach is then defined by the following members:
                   <ul>
-                    <li>"full_name": a string giving the full name of the approach (e.g., "RNAV Z Runway 13L")</li>
+                    <li>"full_name": (<i>Optional</i>) a string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
+                      If not specified and the approach is ILS or RNAV the approach's name is generated automatically using "runway" and "type".</li>
                     <li>"runway": a string describing the runway the approach ends at (e.g., "13L")</li>
+                    <li>"tower_controller": (<i>Optional</i>) a string giving the name of the tower controller covering
+                      the approach. If an airport has a single tower controller named "(airport)_TWR", then this doesn't
+                      need to be specified.</li>
                     <li>"type": a string indicating the type of the approach; it must be "ILS", "RNAV", or "Visual"</li>
                     <li>"waypoints": an array of one or more strings giving the approach's route.</li>
                   </ul>
@@ -1641,7 +1677,7 @@ how it simulates aircraft or the STARS interface.
     "13R": {
       "ARD,DIXIE,RBV,WHITE": {
         "cleared_altitude": 5000,
-        "route": "JFK5",
+        "sid": "JFK5",
         "waypoints": "_JFK_13R _JFK_31L/h185"
       },
       ...
@@ -1661,16 +1697,16 @@ how it simulates aircraft or the STARS interface.
               their "exit" specifier. 
             </p>
             <p>
-              The departure route specification has three required members:
+              The departure route specification has two required members:
               </p>
               <ul>
                 <li>"cleared_altitude": the initial altitude that aircraft are cleared to</li>
-                <li>"route": a string naming the route that is added to the start of aircraft's route as shown in flight strips, etc.
                 <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
                   at the ends of the runway.</li>
               </ul>
-            <p>It also takes two optional members:<p>
+            <p>It also takes three optional members:<p>
               <ul>
+                <li>"sid": a string naming the SID that the aircraft is flying.</li>
                 <li>"description", a string: this description is shown in
                   the UI for <a href="#draw-routes">choosing routes to draw
                     on the radar scope</a>.</li>
@@ -1754,9 +1790,11 @@ how it simulates aircraft or the STARS interface.
                 <td>Destination airports and airlines for the arrivals. See example below.</td>
               </tr>
               <tr>
-                <td>"cleared_altitude"</td>
+                <td>"assigned_altitude"</td>
                 <td>Number</td>
-                <td>The altitude to which the aircraft is descending when first spawned.</td>
+                <td>(<i>Optional</i>) If specified, the aircraft will be descending to the given altitude which it will
+                  then maintain until given further directions. If the aircraft should be descending via a STAR that includes
+                  altitude restrictions, leave this unspecified.</td>
               </tr>
               <tr>
                 <td>"cruise_altitude"</td>
@@ -1790,11 +1828,6 @@ how it simulates aircraft or the STARS interface.
                 <td>The aircraft's initial speed when first spawned.</td>
               </tr>
               <tr>
-                <td>"route"</td>
-                <td>String</td>
-                <td>Route to show for aircraft in flight strips. Not used for navigation.</td>
-              </tr>
-              <tr>
                 <td>"runway_waypoints"</td>
                 <td>Object</td>
                 <td>This specifies runway-specific waypoints.  After an approach is assigned to an aircraft, the corresponding
@@ -1805,6 +1838,11 @@ how it simulates aircraft or the STARS interface.
                 <td>"speed_restriction"</td>
                 <td>Number</td>
                 <td>If present, gives a speed restriction in knots</td>
+              </tr>
+              <tr>
+                <td>"star"</td>
+                <td>String</td>
+                <td>Name of the STAR that the aircraft is flying.</td>
               </tr>
               <tr>
                 <td>"waypoints"</td>
@@ -2033,8 +2071,10 @@ how it simulates aircraft or the STARS interface.
                     <li>"departures": An optional array of strings that
                     determines which departing aircraft the controller is
                     responsible for. Each string can be an airport name
-                    ("KJFK") or a slash-separated airport name and runway
-                      ("KJFK/22R").</li>
+                    ("KJFK"), a slash-separated airport name and runway
+                      ("KJFK/22R"), or a slash-separated airport name and
+                      SID ("KJFK/SKORR5"). It is not allowed to mix different
+                      ways of specifying departures at a given airport.</li>
                     <li>"primary": Boolean value that indicates that the
                     controller is the primary controller. Must be given for
                     exactly one controller. If no other controllers
