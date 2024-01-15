@@ -114,13 +114,14 @@
                 A90 (BOS),
                 C90 (ORD, MDW),
                 D01 (DEN),
+                D10 (DFW),
                 F11 (JAX, MCO, SFB, ISM, ORL),
                 L30 (LAS),
                 N90 (EWR, JFK, LGA, FRG, ISP, HVN),
                 P50 (PHX),
                 S46 (SEA),
                 as well as the
-                AAC, ABE, AUS, BHM, CLE, CLT, DAB, GSP, JAX, PHL, SAV, and SDF
+                AAC, ABE, ASE, AUS, BHM, CLE, CLT, COS, CYS, DAB, DCA, GSP, JAX, PHL, SAV, and SDF
                 ATCT/TRACONs.
                 New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
@@ -656,7 +657,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.16/Vice-v0.10.16-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.16 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.17/Vice-v0.10.17-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.17 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -665,7 +666,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.16/Vice-v0.10.16-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.16 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.17/Vice-v0.10.17-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.17 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -691,6 +692,38 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.17 (15 January 2024)</h3>
+            <ul>
+	      <li>Added multiple new scenarios: D10 (Mike K), CYS, ASE, COS (Jud Lopez).</li>
+              <li>Fixed multiple bugs with handling of altitude and speed restrictions in departure routes.</li>
+              <li>Many small fixes to scenario routes and altitude/speed restrictions.</li>
+              <li>Increased acceleration and climb rate of departures to be more realistic.</li>
+              <li>Fixed bugs with point outs (couldn't be cleared, incorrect rendering in STARS).</li>
+              <li>Fixed bug in the STARS scope that required secondary scratchpads to be three characters.</li>
+              <li>When departures are handed off to center, they are only given direct to the exit fix if
+                they are on a heading; otherwise they continue flying their route.</li>
+              <li>(Re-)added optional sound effect for accepted handoffs.</li>
+              <li>Airspace warnings are inhibited for aircraft flying approaches.</li>
+              <li>Fixed a bug where wind would affect aircraft on the ground and blow them off course.</li>
+              <li>STARS: allow control-left-click in place of the third mouse button to highlight aircraft.</li>
+              <li>STARS: don't allow scratchpads of arbitrary length.</li>
+              <li>STARS: actually use the LDB brightness setting for limited/partial datablocks.</li>
+              <li>STARS: fix incorrect error message after issuing "at fix, cleared approach".</li>
+              <li>Facility engineering changes/improvements:
+                <ul>
+                  <li>Fixes in routes may have <code>/flyover</code> after
+                  them to indicate that aircraft must fly directly over the
+                    fix before starting their next turn.</li>
+                  <li>It is no longer required to specify radar sites in scenarios; if no sites are given,
+                    then STARS Fused mode is always enabled.</li>
+                  <li>Departure routes may be given with either "assigned_altitude" or "cleared_altitude".
+                    "cleared_altitude" implies "climb via SID": aircraft obey altitude restrictions and
+                    climb no higher than the given altitude, while "assigned_altitude" has them climb without
+                    restriction to that altitude.</li>
+                </ul>
+              </li>
+            </ul>
 
             <h3>0.10.16 (22 December 2023)</h3>
             <ul>
@@ -1238,6 +1271,11 @@ how it simulates aircraft or the STARS interface.
               <li> <code>/iaf</code>: indicates that the fix is an IAF (initial approach fix)</li>
               <li> <code>/if</code>: indicates that the fix is the IF (intermediate fix)</li>
               <li> <code>/faf</code>: indicates that the fix is the FAF (final approach fix)</li>
+              <li> <code>/flyover</code>: indicates that the fix is
+              a <i>flyover</i> fix (as opposed to the
+              default, <i>fly-by</i>). Aircraft must pass directly over flyover
+              fixes before turning to the next fix, while they may turn
+              early with fly-by fixes.</li>
             </ul>
             <p>If the aircraft should follow a DME arc leaving a
               fix, <code>/arc</code> can be given after the fix. It takes
@@ -1460,9 +1498,9 @@ how it simulates aircraft or the STARS interface.
               </tr>
               <tr>
                 <td>"radar_sites"</td>
-                <td>Object</td>
+                <td>Object (<i>Optional</i>)</td>
                 <td>Specification of all of the radar sites.
-                  (A good source of data for these is the <code>RadarSites</code> section of your ARTCC's vSTARS configuration file.)
+                  (If not specified, then STARS Fused mode is the only radar mode available.)
                   Each object member describes a radar site; the member's name gives the site's identifier.
                   Each radar site has the following configuration values:
                   <ul>
@@ -1700,9 +1738,19 @@ how it simulates aircraft or the STARS interface.
               The departure route specification has two required members:
               </p>
               <ul>
-                <li>"cleared_altitude": the initial altitude that aircraft are cleared to</li>
                 <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
                   at the ends of the runway.</li>
+                <li>It then must have one of the two following members:
+                  <ul>
+                    <li>"cleared_altitude": the initial altitude that aircraft are cleared to. Aircraft given "cleared_altitude"
+                      are implicitly given "climb via SID": they will obey altitude restrictions in the departure route and
+                      climb no higher than the altitude given.</li>
+                    <li>"assigned_altitude": the initial altitude that aircraft climb to. Aircraft given "assigned_altitude"
+                      do not obey any altitude restrictions in the departure route. (This option is mostly useful for hybrid
+                      SIDs that start with radar vectors and later have a pilot nav component; aircraft will not climb beyond
+                      this altitude until the "climb via SID" instruction is given to them.)</li>
+                  </ul>
+                  </li>
               </ul>
             <p>It also takes three optional members:<p>
               <ul>
