@@ -103,25 +103,25 @@
 
 	    <section class="docs-intro">
 	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
-                Its goal is to provide a training experience similar to a VATSIM sweatbox with an instructor, 
-                just without the instructor, making it possible to better
-                prepare for sweatboxes and to practice vectoring and traffic handling techniques without being on the network.
                 It presents a STARS-like interface, but with simulated traffic and other controllers.
+                It also supports multiple users, where each person controls a different position at a facility.
               </p>
               <p><i>vice</i> supports departure and arrival control
                 scenarios in a number of TRACONs:
                 A80 (ATL),
                 A90 (BOS),
                 C90 (ORD, MDW),
-                D01 (DEN),
+                D01 (DEN, GJT),
                 D10 (DFW),
                 F11 (JAX, MCO, SFB, ISM, ORL),
                 L30 (LAS),
                 N90 (EWR, JFK, LGA, FRG, ISP, HVN),
+                NCT (SJC, SFO, OAK, RNO, SMF, MRY, MER, MOD, SCK, SAC, LVK, SNS),
                 P50 (PHX),
                 S46 (SEA),
+                SCT (BUR, LGB, ONT, PSP, SAN, SNA, VNY, WHP)
                 as well as the
-                AAC, ABE, ASE, AUS, BHM, CLE, CLT, COS, CYS, DAB, DCA, GSP, JAX, PHL, SAV, and SDF
+                AAC, ABE, ASE, AUS, BHM, CLE, CLT, COS, CYS, DAB, DCA, GSP, JAX, PHL, SAV, SDF, and TPA
                 ATCT/TRACONs.
                 New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
@@ -365,19 +365,19 @@
                     <td><code>L130</code></td>
                   </tr>
                   <tr>
-                    <td><code>L</code><i>degrees</i><code>D</code></td>
-                    <td>Directs the aircraft to turn the specified number of degrees to the left.</td>
-                    <td><code>L10D</code></td>
-                  </tr>
-                  <tr>
                     <td><code>R</code><i>heading</i></td>
                     <td>Directs the aircraft to turn right to the specified heading.</td>
                     <td><code>R210</code></td>
                   </tr>
                   <tr>
-                    <td><code>R</code><i>degrees</i><code>D</code></td>
+                    <td><code>T</code><i>degrees</i><code>L</code></td>
+                    <td>Directs the aircraft to turn the specified number of degrees to the left.</td>
+                    <td><code>T10L</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>T</code><i>degrees</i><code>R</code></td>
                     <td>Directs the aircraft to turn the specified number of degrees to the right.</td>
-                    <td><code>R20D</code></td>
+                    <td><code>T20R</code></td>
                   </tr>
                   <tr>
                     <td><code>D</code><i>fix</i></td>
@@ -624,8 +624,7 @@
                 </ul>
               </li>
               <li><i>vice</i> supports displaying the current weather radar
-              for the selected location (though not yet with shading that
-              matches STARS.)</li>
+              for the selected location.</li>
               </ul>
             </section>
 
@@ -657,7 +656,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.17/Vice-v0.10.17-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.17 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.18/Vice-v0.10.18-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.18 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -666,7 +665,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.17/Vice-v0.10.17-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.17 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.18/Vice-v0.10.18-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.18 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -692,6 +691,27 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.10.18 (12 February 2024)</h3>
+            <ul>
+	      <li>Added new scenarios: SCT (Justin Nguyen and Eli Thompson), NCT and D01/GJT (Jud Lopez), and TPA (Connor Allen).</li>
+	      <li>Smaller scenario updates: D10 and JAX (Mike K), AUS (Jace Martin), LGA, JFK, COS, CLE, ASE, DCA, F11.</li>
+	      <li>STARS: more accurate simulation of the STARS weather radar display.</li>
+	      <li>Added new syntax for issuing left/right turn in degrees: <code>T10L</code>, <code>T20R</code>, etc.</li>
+	      <li>STARS: allow middle-click highlight of aircraft regardless of having their track.</li>
+              <li>STARS: fix LDB/FRB/PRI/POS brightness usage when drawing things (hopefully).</li>
+              <li>STARS: fixed bug where observers were unable to quicklook other positions.</li>
+              <li>Fixed a few cases where <i>vice</i> would crash when given an invalid scenario.</li>
+              <li>Improved calculation of the final approach course line, which fixed some bugs with bad approach intercepts.</li>
+              <li>Facility engineering changes/improvements:
+                <ul>
+	          <li>Arc routes between fixes can now be specified without specifying a center point for the arc's circle:
+                    for example, <code>WUPMA/arc7.5 ALABE</code> has aircraft fly along the 7.5nm long arc between WUPMA and ALABE.</li>
+                  <li>The "tower_list" property of airports is now used to prioritize tower list assignment rather than used directly.
+                    (Thus, if multiple airports have the same "tower_list" value, they no longer try to share the same tower list.)</li>
+                </ul>
+              </li>
+            </ul>
 
             <h3>0.10.17 (15 January 2024)</h3>
             <ul>
@@ -1277,12 +1297,19 @@ how it simulates aircraft or the STARS interface.
               fixes before turning to the next fix, while they may turn
               early with fly-by fixes.</li>
             </ul>
-            <p>If the aircraft should follow a DME arc leaving a
-              fix, <code>/arc</code> can be given after the fix. It takes
-              both a radius in nautical miles as well as the fix at the
-              center of the arc's circle.  For
+            <p>If the aircraft should follow an arc leaving a
+              fix, <code>/arc</code> can be given after the fix.
+              It can be used in two ways:
+            </p>
+            <ul>
+              <li>Both a radius in nautical miles as well as the fix at the
+              center of the arc's circle can be specified.  For
               example, <code>HANAV/arc16OMN</code> specifies a 16nm radius
-              arc centered at <code>OMN</code>.  The direction of the arc is
+                arc centered at <code>OMN</code>.</li>
+              <li>Alternatively, just the length of the arc may be given.
+                For example, <code>WUPMA/arc7.5 ALABE</code> has aircraft fly along the 7.5nm long arc between WUPMA and ALABE.</li>
+            </ul>
+            <p>For both uses, the direction of the arc is
               automatically determined based on the position of the following fix.
               </p>
             <p>For approach fixes that have procedure turns, a number of additional items can be specified:</p>
@@ -1700,7 +1727,10 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"tower_list"</td>
                 <td>Number</td>
-                <td>Gives which of the three STARS tower lists the airport should be associated with, if any. If present, should have the value 1, 2, or 3.</td>
+                <td>Gives the airport's priority for tower list assignments. 1 is the highest priority, then 2, etc.
+                  If "tower_list" is unspecified, the airport has the lowest priority.
+                  The 3 tower lists in the STARS scope are then assigned using this priority, with ties broken by
+                  airport name sorted alphabetically.</td>
               </tr>
             </tbody>
             </table>
