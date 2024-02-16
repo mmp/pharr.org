@@ -1932,7 +1932,7 @@ how it simulates aircraft or the STARS interface.
                 <td>"waypoints"</td>
                 <td>String</td>
                 <td>The series of waypoints that aircraft should fly. New aircraft are spawned at the first waypoint. These waypoints
-                  should include a "@" directive at the point where the aircraft should be handed off from the virtual controller
+                  should include a "/ho" directive at the point where the aircraft should be handed off from the virtual controller
                   to the user.
                 </td>
               </tr>
@@ -1973,19 +1973,19 @@ how it simulates aircraft or the STARS interface.
             <p>The "runway_waypoints" member can be used for STARs that have different routes depending on the runway.
               When the user instructs the aircraft to expect a particular approach then the corresponding waypoints are
               added to its route. As an example, the specification of the KPHL <a href="https://aeronav.faa.gov/d-tpp/2305/00320JIIMS.PDF">JIIMS4 arrival</a>
-              starts with the following string for "waypoints": "HEKMN N039.27.43.645,W074.56.38.400 @ JIIMS@a8000".
+              starts with the following string for "waypoints": "HEKMN N039.27.43.645,W074.56.38.400/ho JIIMS/a8000".
               (The second point is used to set the handoff point to be between HEKMN and JIIMS.)
               It then has the following "runway_waypoints", corresponding to the runway-specific routes.
               Note that all start with JIIMS, the same fix at the end of "waypoints".
             </p>
             <pre>
   "runway_waypoints": {
-    "27L": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-    "27R": "JIIMS@a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-    "17": "JIIMS@a8000 SNEDE/h312",
-    "35": "JIIMS@a8000 SNEDE/h312",
-    "9L": "JIIMS@a8000 WUDRR WEVVE ERNYY/h268",
-    "9R": "JIIMS@a8000 WUDRR WEVVE ERNYY/h268"
+    "27L": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+    "27R": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+    "17": "JIIMS/a8000 SNEDE/h312",
+    "35": "JIIMS/a8000 SNEDE/h312",
+    "9L": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268",
+    "9R": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268"
   },
             </pre>
             
