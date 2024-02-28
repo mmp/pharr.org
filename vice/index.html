@@ -2,6 +2,13 @@
 <html lang="en"> 
 <head>
   <title>Vice Documentation</title>
+  <style>
+    svg {
+       width: 1em;   /* Match the width to the text height */
+       height: 1em;  /* Match the height to the text height */
+       vertical-align: middle; /* Vertically align with the text */
+    }
+  </style>
   
   <!-- Meta -->
   <meta charset="utf-8">
@@ -55,7 +62,13 @@
       </div><!--//container-->
     </div><!--//branding-->
   </header><!--//header-->
-  
+
+  <svg style="display:none;">
+    <symbol id="radar" viewBox="0 0 512 512">
+      <path fill="currentColor" d="M400 256c0 57.28-33.92 109.1-86.41 132c-8.094 3.531-11.8 12.97-8.25 21.06c2.625 6 8.5 9.594 14.67 9.594c2.125 0 4.297-.4375 6.391-1.344C390.5 389.3 432 326 432 256c0-8.844-7.156-16-16-16S400 247.2 400 256zM232 416c0 13.25 10.75 24 24 24s24-10.75 24-24c0-13.26-10.75-24-24-24S232 402.7 232 416zM496 240C487.2 240 480 247.2 480 256c0 123.5-100.5 224-224 224s-224-100.5-224-224s100.5-224 224-224c54.36 0 105.8 19.52 146.5 54.88l-34.44 34.44C336.5 95.03 297.5 80 256 80c-69.98 0-133.3 41.44-161.3 105.6C91.11 193.7 94.81 203.1 102.9 206.7C104.1 207.6 107.2 208 109.3 208c6.172 0 12.05-3.594 14.67-9.594C146.9 145.9 198.7 112 256 112c32.97 0 63.97 11.64 89.39 31.98l-33.96 33.96C295.3 166.5 276.2 160 256 160C203.1 160 160 203.1 160 256s43.06 96 96 96s96-43.06 96-96c0-8.844-7.156-16-16-16S320 247.2 320 256c0 35.28-28.7 64-64 64S192 291.3 192 256s28.7-64 64-64c11.58 0 22.62 3.271 32.36 9.02l-43.67 43.67c-6.25 6.25-6.25 16.38 0 22.62C247.8 270.4 251.9 272 256 272s8.188-1.562 11.31-4.688l240-240c6.25-6.25 6.25-16.38 0-22.62s-16.38-6.25-22.62 0L425.2 64.22C378.3 22.87 318.9 0 256 0C114.8 0 0 114.8 0 256s114.8 256 256 256s256-114.8 256-256C512 247.2 504.8 240 496 240zM185.6 417.3c2.094 .9062 4.266 1.344 6.391 1.344c6.172 0 12.05-3.594 14.67-9.594c3.547-8.094-.1562-17.53-8.25-21.06C165 373.4 138.6 347 123.1 313.6C120.5 305.5 111 301.8 102.9 305.3C94.81 308.9 91.11 318.3 94.66 326.4C112.5 367.2 144.8 399.5 185.6 417.3zM120 256c0-13.26-10.75-24-24-24S72 242.7 72 256c0 13.25 10.75 24 24 24S120 269.3 120 256z"/>
+    </symbol>
+    </svg>
+
   
   <div class="docs-wrapper">
     <div id="docs-sidebar" class="docs-sidebar">
@@ -68,20 +81,38 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#launches">Launching Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#multi-controller">Multiple Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#airspace">Airspace</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars">STARS Emulation</a></li>
+
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-installation"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Installation</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-windows">Windows</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-mac">Mac</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#install-linux">Linux</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
+
+	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-stars"><span class="theme-icon-holder me-2"><svg><use xlink:href="#radar"></use></svg></span>STARS Emulation</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-overview">Overview</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-dcb">The DCB</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-keyboard">Key Mappings</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-quickref">Quick Reference</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-aircraft">Working Aircraft</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-controllers">Coordinating With Other Controllers</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto"
+	  href="#tracks-datablocks">Tracks and Datablocks</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-errors">Error Codes</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-tools">Tools</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-display">Configuring The Display</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto"
+	  href="#crc-stars-differences">Differences from CRC STARS</a></li>
+
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-engineering"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Engineering</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-locations">Specifying Locations</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-routes">Aircraft Routes</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airlines-aircraft">Airlines and Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-videomaps">Video Maps</a></li>
           <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenario-groups">Scenario Groups</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports and Departures</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-approaches">Approaches</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-departures">Departures</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-arrivals">Arrivals</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airspace">Airspace</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
@@ -119,9 +150,9 @@
                 NCT (SJC, SFO, OAK, RNO, SMF, MRY, MER, MOD, SCK, SAC, LVK, SNS),
                 P50 (PHX),
                 S46 (SEA),
-                SCT (BUR, LGB, ONT, PSP, SAN, SNA, VNY, WHP)
+                SCT (BUR, LAX, LGB, ONT, PSP, SAN, SNA, VNY, WHP)
                 as well as the
-                AAC, ABE, ASE, AUS, BHM, CLE, CLT, COS, CYS, DAB, DCA, GSP, JAX, PHL, SAV, SDF, and TPA
+                AAC, ABE, ASE, AUS, BHM, CLE, CLT, COS, CYS, DAB, DCA, GSP, IND, JAX, MIA, MKE, PHL, SAV, SDF, and TPA
                 ATCT/TRACONs.
                 New scenarios are regularly added.
                 Adding scenarios at more airports is a matter of writing JSON configuration files that describe them;
@@ -242,16 +273,16 @@
 	  <section class="docs-section" id="draw-routes">
             <h2 class="section-heading">Drawing Routes</h2>
             <p><i>vice</i> can draw the active departures, approaches, and
-            arrivals for the current scenario. This can be helpful when
+            arrivals for the current simulation. This can be helpful when
             studying those for an airport, since they are drawn directly on
             the radar scope with annotations that give the fixes, any
               altitude or speed restrictions, and procedure turns.
             </p>
             <p>To toggle whether a route is drawn on the scope, click the checkbox on the left 
-              next to it in the scenario information window that is shown at
+              next to it in the information window that is shown at
               the start or after clicking on the
               <i class="fas fa-question-circle"></i> button in the menubar.
-              For example, here is how the HVN RNAV Runway 2 approach is rendered:
+              For example, here is how the <a href="https://aeronav.faa.gov/d-tpp/2310/00671R2.PDF">HVN RNAV Runway 2 approach</a> is rendered:
             </p>
             <div class="text-center">
               <img src="hvn-rnav2.jpg" srcset="hvn-rnav2-2x.jpg 2x" width="436" height="457" class="img-fluid" alt="manual aircraft launch window">
@@ -265,11 +296,11 @@
           
 	  <section class="docs-section" id="launches">
             <h2 class="section-heading">Launching Aircraft</h2>
-            <p>When a new scenario starts, <i>vice</i> automatically launches new departures and arrivals based on the
+            <p>When a new simulation starts, <i>vice</i> automatically launches new departures and arrivals based on the
               departure and arrival rates set in the "New Simulation" window.
               During a simulation, clicking on the departing plane icon in the menubar <i class="fas fa-plane-departure"></i>
               opens a window that allows more control over aircraft launches.
-              (Note that when <i>vice</i> is used with multiple controllers in the same simulation, then only one controller
+              (Note that when <i>vice</i> is used with multiple controllers in the same simulation, only one controller
               may have this window open at a time.)
             </p>
             <p>The rates for automatic launches can be adjusted in this window. Alternatively, aircraft can be launched manually.  If manual launches are selected,
@@ -279,7 +310,7 @@
               next launch (for example, to have a heavy aircraft), click the redo icon <i class="fas fa-redo"></i> until you're happy with the selection.
               The window also shows the elapsed time since the launch of each type as well as how many
               miles in trail (MIT) there would be if the next aircraft was launched.
-              To clear out all of the current aircraft and restart, click the trash icon:
+              To delete all of the aircraft from the simulation and restart, click the trash icon:
 <i class="fas fa-trash"></i>.
             </p>
             <div class="text-center">
@@ -586,50 +617,7 @@
               </table>
 
           </section>
-
-	  <section class="docs-section" id="stars">
-            <h2 class="section-heading">STARS Emulation</h2>
-            <p><i>vice</i> attempts to present a reasonably accurate
-            representation of
-            the <a href="https://en.wikipedia.org/wiki/Standard_Terminal_Automation_Replacement_System">Standard
-                Terminal Automation Replacement System</a>.
-              Its focus is to provide the STARS functionality that is
-            useful for regular TRACON controlling; thus, obscure features like
-              military operations area commands are not supported.
-              If you are familiar with the actual STARS system, suggestions
-            about how to improve <i>vice</i>'s accuracy would be happily accepted! Head on over
-            to the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a>...
-            </p>
-            <p>
-              <i>vice</i> mostly follows the keybindings
-              used in <a href="https://crc.virtualnas.net/docs/#/">CRC STARS</a>.
-            </p>
-            <h3 class="section-heading">Differences from CRC STARS</h3>
-            <p><i>vice</i> supports the following features from STARS that
-            are not present in CRC STARS:
-            </p>
-            <ul>
-              <li><i>vice</i> supports the STARS "dwell" mode, which draws
-                the datablock and leaderline of track under the mouse more
-                brightly when it is enabled. Dwell mode can be configured
-                by choosing "SHIFT" from the main DCB menu and then
-                selecting the "DWELL" button, or via the following keyboard
-                commands:
-                <ul>
-                  <li><code>[multifunc] D E</code>: enable dwell mode.</li>
-                  <li><code>[multifunc] D L</code>: lock dwell
-                  mode&mdash;the selected aircraft remains highlighted
-                  even if it or the mouse cursor moves.</li>
-                  <li><code>[multifunc] D I</code>: inhibit (disable) dwell mode.</li>
-                </ul>
-              </li>
-              <li><i>vice</i> supports displaying the current weather radar
-              for the selected location.</li>
-              </ul>
-            </section>
-
-
-          </article>
+        </article>
 
         <article class="docs-article" id="section-installation">
           <header class="docs-header">
@@ -656,7 +644,7 @@
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.19/Vice-v0.10.19-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.19 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.20/Vice-v0.10.20-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.20 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -665,7 +653,7 @@
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.19/Vice-v0.10.19-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.19 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.10.20/Vice-v0.10.20-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.20 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -692,10 +680,34 @@ how it simulates aircraft or the STARS interface.
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
 
+            <h3>0.10.20 (28 February 2024)</h3>
+            <ul>
+	      <li>Added new scenarios: SCT LAX (Jud Lopez), IND (Samuel Valencia), MKE (Yahya Nazimuddin), MIA (Mike K).</li>
+	      <li>Scenario updates/bugfixes: TPA (Connor Allen), SCT ONT/SNA (Eli Thompson), A80, L30 (Michael Trokel).</li>
+              <li>STARS: added automated terminal proximity alert (ATPA) support.</li>
+	      <li>STARS: consolidated wake turbulence (CWT) categories are now shown in datablocks and used for ATPA in-trail requirements.</li>
+	      <li>Live weather can now be used in sims.</li>
+	      <li>STARS: fixed various small bugs related to when the FDB should be displayed.</li>
+              <li>Facility engineering changes/improvements:
+                <ul>
+	          <li>For arrivals, the runway endpoint no longer needs to be included in the route.</li>
+	          <li>For departures, the runway start and endpoints no longer need to be included in the route.</li>
+                  <li>In STARs, "runway_waypoints" are now specified separately per-airport.</li>
+	          <li>Improved support for multi-runway departure scenarios: it is no longer required that each runway have a route for each exit;
+                  now it is just required that between all of the active runways at an airport, one of them must have a route for each exit.</li>
+	          <li><i>vice</i> is now able to extract STARs and arrival routes from the FAA
+                    <a href="https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cifp/">Coded Instrument Flight Procedures (CIFP)</a>.
+                    These can be incorporated in scenario definitions, simplifying the development of new scenarios.
+                  <li>"location" no longer needs to be specified for airports.</li>
+                  <li>Waypoints at the thresholds of all runways are now built-in: for example, <code>KJFK-4L</code> gives the threshold
+                  of runway 4L at JFK.</li>
+                </ul>
+              </li>
+            </ul>
+
             <h3>0.10.19 (13 February 2024)</h3>
             <ul>
-	      <li>STARS: fixed bug with flickering airport weather
-	        list.</li>
+	      <li>STARS: fixed bug with flickering airport weather list.</li>
             </ul>
 
             <h3>0.10.18 (12 February 2024)</h3>
@@ -1160,6 +1172,559 @@ how it simulates aircraft or the STARS interface.
 
         </article><!--//docs-article-->
 
+        <article class="docs-article" id="section-stars">
+          <header class="docs-header">
+            <h1 class="docs-heading">STARS Emulation</h1>
+
+            <section class="docs-intro">
+
+            <p><i>vice</i> attempts to present a reasonably accurate
+            representation of
+            the <a href="https://en.wikipedia.org/wiki/Standard_Terminal_Automation_Replacement_System">Standard
+                Terminal Automation Replacement System</a>.
+              Its primary goal is to provide the STARS functionality that is
+            useful for regular TRACON controlling; thus, obscure features like
+              military operations area commands are not supported.
+              If you are familiar with the real-world STARS system, suggestions
+            about how to improve <i>vice</i>'s accuracy would be happily accepted! Head on over
+            to the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a>...
+            </p>
+
+            <div class="content">
+              <div class="callout-block callout-block-info">
+                <h4 class="callout-title">
+	          <span class="callout-icon-holder me-1">
+	            <i class="fas fa-bullhorn"></i>
+	          </span><!--//icon-holder-->
+	        </h4>
+                <p>The following documentation is a work-in-progress and is still incomplete.
+                  More complete documentation will be posted in the coming weeks.
+                </p>
+              </div><!--//callout-block-->
+            </div><!--//content-->
+
+            </section><!--//docs-intro-->
+          </header>
+
+	  <section class="docs-section" id="stars-overview">
+            <h2 class="section-heading">Overview</h2>
+            <p>Some STARS commands are entirely keyboard based: you enter a
+              command and hit the "enter" key to issue the command.
+              As you type, your input will be shown in the <i>input area</i>,
+              which is by default on the left side of the screen.
+              Entering a space starts a new line.
+              To edit your input, the backspace key can be used.
+              Alternatively, hitting the escape key clears the input (and
+              any errors that are displayed).
+              <p>
+            <p>Many STARS commands involve selecting an aircraft that they
+              apply to; in
+              STARS this is called "slewing" the aircraft.  To slew an
+              aircraft in <i>vice</i>, click on its radar track with the
+              left mouse button.  You will often enter a command with the
+              keyboard and then slew an aircraft; if the documentation
+              below, <code>[SLEW]</code> indicates that an aircraft should
+              be slewed to execute the command.
+            </p>
+            <p>The center of the radar scope can be moved by clicking the
+            right mouse button and dragging.  Zoom in and out using the
+            mouse wheel; each step increases or decreases the radius shown
+            by one nautical mile.  Holding down the control key while using
+              the mouse wheel gives three mile steps in the radius.  Zooming and
+              panning the scope can be disabled with <i>vice</i>'s settings window,
+              which is displayed when the <i class="fas fa-cog"></i> in the menubar is clicked.
+              </p>
+            <p>Aircraft are shown on the scope as <i>radar tracks</i>;
+              a <i>datablock</i> next to them shows the aircraft's callsign
+              and additional information about it.</p>
+          </section>
+
+	  <section class="docs-section" id="stars-dcb">
+            <h2 class="section-heading">The DCB</h2>
+            <!-- <p>Display control bar (DCB)</p> -->
+          </section>
+          
+	  <section class="docs-section" id="stars-keyboard">
+            <h2 class="section-heading">Key Mappings</h2>
+            <p>The STARS keyboard has a number of custom keys that are not present on standard keyboards.
+              <i>vice</i> uses the same mappings to regular keys as <a href="https://crc.virtualnas.net/docs/#/stars">CRC STARS</a> does.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>STARS</th>
+                    <th>Regular</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>[TRIANGLE]</td><td>~</td></tr>
+                  <tr><td>[MIN]</td><td>End</td></tr>
+                  <tr><td>[INIT CNTL]</td><td>F3</td></tr>
+                  <tr><td>[TERM CNTL]</td><td>F4</td></tr>
+                  <tr><td>[HND OFF]</td><td>F5</td></tr>
+                  <tr><td>[VP]</td><td>F6</td></tr>
+                  <tr><td>[MULTIFUNC]</td><td>F7</td></tr>
+                  <tr><td>[FLT DATA]</td><td>F9</td></tr>
+                  <tr><td>[CA]</td><td>F11</td></tr>
+                  <tr><td>[CNTR]</td><td>Ctrl-F1</td></tr>
+                  <tr><td>[MAPS]</td><td>Ctrl-F2</td></tr>
+                  <tr><td>[BRITE]</td><td>Ctrl-F4</td></tr>
+                  <tr><td>[LDR]</td><td>Ctrl-F5</td></tr>
+                  <tr><td>[CHARSIZE]</td><td>Ctrl-F6</td></tr>
+                  <tr><td>[DCB-SHIFT]</td><td>Ctrl-F7</td></tr>
+                  <tr><td>[DCB]</td><td>Ctrl-F8</td></tr>
+                  <tr><td>[RNGRING]</td><td>Ctrl-F9</td></tr>
+                  <tr><td>[RANGE]</td><td>Ctrl-F10</td></tr>
+                  <tr><td>[SITE]</td><td>Ctrl-F11</td></tr>
+                </tbody>
+              </table>
+          </section>
+
+	  <section class="docs-section" id="stars-quickref">
+            <h2 class="section-heading">Quick Reference</h2>
+            <p>For basic controlling, a small number of commands are used frequently.
+              The following table lists them and gives a short description of their operation.
+              See the <a href="#stars-fullref">Full Command Reference</a> for more details.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Command</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>[SLEW]</code></td><td><p>Whichever of the
+                  following first applied:</p>
+                      <ul>
+                        <li>Acknowledge a conflict alert (CA) for an aircraft.</li>
+                        <li>If an aircraft is being handed off by another
+                          controller, accept the handoff.</li>
+                        <li>If a handoff of an aircraft has been offered to
+                          another controller but the other controller has
+                          not yet accepted it, cancel the offer.</li>
+                        <li>Acknowledge a pointout from another controller.</li>
+                  </td></tr>
+                  <tr><td><code>[INIT CNTL][SLEW]</code></td><td>Initiate control of an aircraft that isn't being tracked by another controller.</td></tr>
+                  <tr><td><code>[TERM CNTL][SLEW]</code></td><td>Terminates
+                  control of an aircraft being tracked&mdash;drops its track.</td></tr>
+                  <tr><td><code>[HND OFF](id)[SLEW]</code><id></td><td>Offers to handoff the
+                      track of the aircraft to the controller identified by (id).</td></tr>
+                  <tr><td><code>[MULTIFUNC]Y(scratchpad)</code></td><td>Sets
+                  the scratchpad of the aircraft to <code>(scratchpad)</code>.</td></tr>
+                  <tr><td><code>.[SLEW]</code></td><td>Clears the
+                  aircraft's scratchpad.</td></tr>
+                  <tr><td><code>+(###)[SLEW]</code></td><td>Sets the
+                      aircraft's assigned temporary altitude.</td></tr>
+                </tbody>
+              </table>
+            
+          </section>
+
+	  <section class="docs-section" id="stars-aircraft">
+            <h2 class="section-heading">Working Aircraft</h2>
+            <p>Aircraft may
+              be <i>tracked</i> by a specific controller; when a controller
+              is tracking an aircraft, other controllers cannot issue
+              control commands to it.  When an aircraft is leaving a
+              controller's airspace, they will generally hand it off to
+              another controller.</p>
+          </section>
+
+	  <section class="docs-section" id="stars-control">
+            <h2 class="section-heading">Coordinating With Other Controllers</h2>
+            <!-- <p>quickref</p> -->
+          </section>
+
+	  <section class="docs-section" id="tracks-datablocks">
+            <h2 class="section-heading">Tracks and Datablocks</h2>
+            <!-- <p>quickref</p> -->
+          </section>
+
+	  <section class="docs-section" id="stars-errors">
+            <h2 class="section-heading">Error Codes</h2>
+            <p>When issuing a command leads to an error, STARS prints an
+              abbreviated message above the input area. These are the error
+              codes that <i>vice</i> currently uses:
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Code</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+	          <tr>
+                    <td>FORMAT</td>
+                    <td>Error in the format of the command; for example,
+                      specifying a non-numeric value where a number was expected.
+                    </td>
+                  </tr>
+                  <!--
+	          <tr>
+                    <td>DUP BCN</td>
+                    <td>Duplicate beacon code: the same squawk code has
+                    been assigned to multiple aircraft.</td>
+                  </tr> -->
+	          <tr>
+                    <td>ILL ATIS</td>
+                    <td>Illegal ATIS code.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL AIRPORT</td>
+                    <td>Illegal airport: either the airport does not exist
+                    or the command does not apply to it.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL CODE</td>
+                    <td>Illegal beacon code: an illegal squawk code was entered.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL FIX</td>
+                    <td>Illegal fix: the fix specified does not exist.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL FLIGHT</td>
+                    <td>Illegal flight: no flight plan is filed for the specified callsign.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL MAP</td>
+                    <td>Illegal map: an invalid map was specified to be
+                    displayed or hidden.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL PARAM</td>
+                    <td>Illegal parameter: the command specified had an
+                    invalid parameter.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL POS</td>
+                    <td>Illegal position: the control position specified
+                    is invalid or does not exist.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL SCR</td>
+                    <td>Illegal scratchpad: the scratchpad specified for
+                    an aircraft does not meet the requirements of a valid scratchpad.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL SECTOR</td>
+                    <td>Illegal sector: the controller specified is
+                    invalid. </td>
+                  </tr> 
+	          <!-- <tr>
+                    <td>ILL TEXT</td>
+                    <td>ErrSTARSIllegalText</td>
+                  </tr> -->
+	          <tr>
+                    <td>ILL TRK</td>
+                    <td>Illegal track: another controller owns the
+                    aircraft's track, so the command is disallowed.</td>
+                  </tr>
+	          <tr>
+                    <td>ILL VALUE</td>
+                    <td>Illegal value: the value specified is
+                    illegal (e.g., an impossible altitude).</td>
+                  </tr>
+	          <tr>
+                    <td>NO FLIGHT</td>
+                    <td>No flight: there is no aircraft with the specified callsign.</td>
+                  </tr>
+                </tbody>
+                </table>
+          </section>            
+
+          <!-- TODO: maps -->
+          
+	  <section class="docs-section" id="stars-tools">
+            <h2 class="section-heading">Tools</h2>
+
+            <h3>Range Bearing Lines</h3>
+            <p>Range bearing lines (RBLs) track the distance and heading between aircraft and/or fixes.
+              For example, the image below shows an RBL between two aircraft, indicating that WJA466 is 8.46nm
+              miles along a 246 heading for DLH0VZ.  (Alternatively, the RBL could have been set up to be
+              from WJA466 to DLH0VZ, in which case the distance would be the same but the heading would be 246-180=66.
+              The "-1" at the end indicates that this is RBL number 1.  If additional RBLs were created, they would
+              be given successive numbers to identify them.
+              </p>
+            <div class="text-center">
+              <img src="rbl-aircraft.png" srcset="rbl-aircraft-2x.png 2x" width="442" height="198" class="img-fluid" alt="tpa ring">
+            </div>
+            <br>
+            <p>The following commands are available to create and delete RBLs.</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>*T[SLEW][SLEW]</code></td>
+                    <td>Create an RBL between the two slewed aircraft.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*T[SLEW]FIX</code> or <code>*TFIX[SLEW]</code></td>
+                    <td>Create an RBL between the slewed aircraft and the fix <code>FIX</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*T[SLEW](#)</td>
+                    <td>Delete the RBL with given number.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*T</td>
+                    <td>Delete all RBLs.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+            <h3>Minimum Separation</h3>
+
+            <p>The predicted minimum separation between two aircraft can be shown. Below we
+              see that based on their current routes the two aircraft are predicted to have
+              a minimum separation of 3.19nm and that separation will occur when they are at
+              the two points marked by small triangles.</p>
+            <div class="text-center">
+              <img src="minsep.png" srcset="minsep-2x.png 2x" width="385" height="168" class="img-fluid" alt="tpa ring">
+            </div>
+            <br>
+            <p>The following commands are available to create and minimum separation lines.</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[MIN][SLEW][SLEW]</code></td>
+                    <td>Create an RBL between the two slewed aircraft.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MIN]</code></td>
+                    <td>Create an RBL between the slewed aircraft and the fix <code>FIX</code>.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+            
+            <h3>TPA/ATPA</h3>
+
+            <p>The terminal proximity alert (TPA) and automated TPA (ATPA) tools provide graphical representations that aid
+              in ensuring that there is sufficient separation between aircraft. A TPA cone can be associated with an aircraft
+              to show a given distance in nautical miles in front of it; see the left image below for a TPA cone marking 3nm.
+              A TPA J-ring is a circle around an aircraft's radar track of specified radius; the right image below shows a J-ring
+              with a 3nm radius.
+              </p>
+            <div class="text-center">
+              <img src="tpa-cone.png" srcset="tpa-cone-2x.png 2x" width="187" height="87" class="img-fluid" alt="tpa cone">
+              <img src="tpa-ring.png" srcset="tpa-ring-2x.png 2x" width="199" height="178" class="img-fluid" alt="tpa ring">
+            </div>
+            <br>
+            <p>The following keyboard commands are also available to configure TPA cones and J-rings:</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>*J[###][SLEW]</code></td>
+                    <td>Adds a TPA J-ring with radius given by ### to the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*J[SLEW]</code></td>
+                    <td>Removes TPA J-ring from the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>**J</code></td>
+                    <td>Removes TPA J-rings from all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*P[###][SLEW]</code></td>
+                    <td>Adds a TPA cone with length given by ### to the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*P[SLEW]</code></td>
+                    <td>Removes TPA cone from the selected track. (ATPA cones are unaffected.)</td>
+                  </tr>
+                  <tr>
+                    <td><code>**P</code></td>
+                    <td>Removes TPA cones from all tracks. (ATPA cones are unaffected.)</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+</code></td>
+                    <td>Toggles the display of the mileage represented by TPA rings/cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+[SLEW]</code></td>
+                    <td>Toggles the display of the mileage represented by TPA rings/cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+E</code></td>
+                    <td>Enables the display of the mileage represented by TPA rings/cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+E[SLEW]</code></td>
+                    <td>Enables the display of the mileage represented by TPA rings/cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+I</code></td>
+                    <td>Inhibits the display of the mileage represented by TPA rings/cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*D+I[SLEW]</code></td>
+                    <td>Inhibits the display of the mileage represented by TPA rings/cones for the selected track.</td>
+                  </tr>
+                </tbody>
+                </table>
+
+            <p>ATPA automatically generates cones for aircraft in the <emph>approach volume</emph> for a runway.
+              (Approach volumes are generally along the glideslope for a runway.) For example, the image below
+              shows a 5nm cone with WJA466, indicating the required separation for a B737 behind a heavy A343.
+              The in-trail distance is shown in WJA466's datablock, and both that distance and the cone are red, indicating
+              an ATPA alert for loss of separation.
+            </p>
+            <div class="text-center">
+              <img src="atpa-alert.png" srcset="atpa-alert-2x.png 2x" width="324" height="263" class="img-fluid" alt="ATPA alert cone">
+            </div>
+            <br>
+            <p>ATPA alerts are issued if a loss of separation is expected in the next 24 seconds, and ATPA warnings (which
+              are drawn in yellow) are issued if a loss of separation is expected in the next 24-45 seconds.
+              </p>
+            <p>TPA and ATPA can be configured by selecting "SHIFT" from the main DCB menu and then "TPA/ATPA".
+              The following options are provided:</p>
+            <div class="text-center">
+              <img src="tpa-atpa-dcb.png" srcset="tpa-atpa-dcb-2x.png 2x" width="350" height="70" class="img-fluid" alt="tpa/atpa DCB menu">
+            </div>
+            <br>
+            <p>The first four buttons toggle a particular TPA/ATPA option and display "ENABLED" if the corresponding option is enabled, and "INHIBTD" if it is inhibited. "DONE" returns to the previous DCB menu.</p>
+            <ul>
+              <li>A/TPA MILEAGE: whether the respective radius or length are shown with TPA J-rings or TPA/APTA cones.</li>
+              <li>INTRAIL DIST: determines whether the in-trail distance to the next aircraft is shown in the datablocks for arrivals in an ATPA volume.</li>
+              <li>ALERT CONES: determines whether ATPA warning and alert cones are automatically created when insufficient separation is predicted. If disabled but monitor cones are enabled, monitor cones will be shown.</li>
+              <li>MONITOR CONES: determines whether monitor cones may be automatically created for all arrivals in an ATPA volume.</li>
+            </ul>
+
+            <p>The following keyboard commands are also available to configure ATPA:</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>*AE</code></td>
+                    <td>Enables the display of ATPA warning/alert cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*AE[SLEW]</code></td>
+                    <td>Enables the display of ATPA warning/alert cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*AI</code></td>
+                    <td>Inhibits the display of ATPA warning/alert cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*AI[SLEW]</code></td>
+                    <td>Inhibits the display of ATPA warning/alert cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*BE</code></td>
+                    <td>Enables the display of ATPA monitor cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*BE[SLEW]</code></td>
+                    <td>Enables the display of ATPA monitor cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*BI</code></td>
+                    <td>Inhibits the display of ATPA monitor cones for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*BI[SLEW]</code></td>
+                    <td>Inhibits the display of ATPA monitor cones for the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*DE</code></td>
+                    <td>Enables the display of ATPA in-trail distance all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*DE[SLEW]</code></td>
+                    <td>Enables the display of ATPA in-trail distance the selected track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*DI</code></td>
+                    <td>Inhibits the display of ATPA in-trail distance for all tracks.</td>
+                  </tr>
+                  <tr>
+                    <td><code>*DI[SLEW]</code></td>
+                    <td>Inhibits the display of ATPA in-trail distance for the selected track.</td>
+                  </tr>
+                  </tbody>
+              </table>
+
+              <p>For facility engineers, the ATPA approach volumes are
+                listed in the "PROCESSING AREAS" map list, which can be selected
+                via "SYS PROC" from the DCB "MAPS" menu.  Individual maps can be displayed and then
+                hidden by entering <code>[MAPS](###)</code> where ### is the map number associated with the volume.
+                </p>
+
+              <h3>Weather</h3>
+
+            <h3>CRDA</h3>
+
+          </section>
+
+	  <section class="docs-section" id="stars-display">
+            <h2 class="section-heading">Configuring The Display</h2>
+            <!-- <p>quickref</p> -->
+          </section>
+
+	  <section class="docs-section" id="crc-stars-differences">
+            <h2 class="section-heading">Differences from CRC STARS</h2>
+            <p><i>vice</i> supports the following features from STARS that
+            are not present in <a href="https://crc.virtualnas.net/docs/#/stars">CRC STARS</a>:
+            </p>
+            <ul>
+              <li><i>vice</i> supports the STARS "dwell" mode, which draws
+                the datablock and leaderline of track under the mouse more
+                brightly when it is enabled. Dwell mode can be configured
+                by choosing "SHIFT" from the main DCB menu and then
+                selecting the "DWELL" button, or via the following keyboard
+                commands:
+                <ul>
+                  <li><code>[MULTIFUNC] D E</code>: enable dwell mode.</li>
+                  <li><code>[MULTIFUNC] D L</code>: lock dwell
+                  mode&mdash;the selected aircraft remains highlighted
+                  even if it or the mouse cursor moves.</li>
+                  <li><code>[MULTIFUNC] D I</code>: inhibit (disable) dwell mode.</li>
+                </ul>
+              </li>
+              <li>To quicklook a controller, <i>vice</i> does not
+              support entering the controller id and hitting enter to
+              toggle quicklook. Rather, the <code>[MULTIFUNC] Q [id]</code>
+                command must be used.</li>
+              <li><i>vice</i> supports the "plus" specifier for quicklook:
+                if a plus sign is specified after a controller id
+                when enabling quicklook, the datablocks for that controller's tracks will
+                be white, not green. (Similarly, <code>ALL+</code> can be
+                  specified to quick look all controllers' traffic in this
+                way.)</li>
+              <li><i>vice</i> supports displaying the current weather radar
+              for the selected location.</li>
+              </ul>
+            </section>
+
+          </article>
+
         <article class="docs-article" id="section-facility-engineering">
           <header class="docs-header">
             <h1 class="docs-heading">Facility Engineering</h1>
@@ -1221,7 +1786,10 @@ how it simulates aircraft or the STARS interface.
 
             <p>Throughout the <i>vice</i> configuration files, it's often necessary to specify various locations on the Earth.
               <i>vice</i> has a built-in database of all of the airports, VORs, NDBs, and fixes in the United States (courtesy of the FAA),
-              which allows using these directly for specifying locations.  Locations can also be specified via
+              which allows using these directly for specifying locations. The locations of runway thresholds are available via the syntax
+              <code>KJFK-22L</code> where the airport name and runway specifier are separated by a hyphen.</p>
+
+              <p>Locations can also be specified via
               latitude-longitude positions, given as strings. For convenience, multiple latitude-longitude formats are supported.
             </p>
               <table class="table">
@@ -1247,7 +1815,7 @@ how it simulates aircraft or the STARS interface.
                     <td>Degrees, minutes, seconds</td>
                     <td>A pair of values with position specified in degrees, minutes, and seconds, separated by periods.
                       "N" and "S" are used to distinguish North and South latitudes and similarly for "E" and "W" with longitudes.</td>
-                    <td><code>"N40.37.58.400, W073.46.17.000"</code></td>
+                    <td><code>"N40.37.58.400,W073.46.17.000"</code></td>
                   </tr>
                   <tr>
                     <td>ISO6790 Annex H</td>
@@ -1271,14 +1839,14 @@ how it simulates aircraft or the STARS interface.
               In addition to the lateral positions along the route, it is possibly to specify speed and altitude restrictions, handoff points,
               and headings to fly.
             </p>
-            <p>Here is an example route from a JFK departure. The first two waypoints are custom fixes at the start and end of the KJFK 31L runway,
-              specified via the "fixes" object in the <a href="#fe-scenario-groups">scenario group</a>, while the next three are standard
-              fixes.  The "/h223" after "RNGRR" specifies that the aircraft should fly a 223 heading as departing RNGRR.
+            <p>Here is an example route from a JFK departure. The first two waypoints along the departure runway are automatically
+              provided by <i>vice</i> so the route starts with the specified fixes in the departure procedure.
+              The "/h223" after "RNGRR" specifies that the aircraft should fly a 223 heading as departing RNGRR.
               It will maintain that heading until it
               is further vectored by the controller.  If there are further fixes after such a heading, the aircraft may be sent direct to one of
-              those fixes by the controller.
+              those fixes by the controller.</p>
             <pre>
-  "_JFK_31L _JFK_13R SKORR METSS RNGRR/h223"
+  "SKORR METSS RNGRR/h223"
             </pre>
             <p>A number of items like headings can be specified with a fix:</p>
             <ul>
@@ -1291,6 +1859,7 @@ how it simulates aircraft or the STARS interface.
                   <li><i>alt</i>: cross at <i>alt</i>
                 </ul>
               </li>
+              <li> <code>/delete</code><i>heading</i>: the aircraft will be deleted when it reaches the fix</li>
               <li> <code>/h</code><i>heading</i>: depart the fix at specified heading</li>
               <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
               <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>       
@@ -1597,8 +2166,9 @@ how it simulates aircraft or the STARS interface.
               </table>
 
           </section><!--//section-->
+
           <section class="docs-section" id="fe-airports">
-            <h2 class="section-heading">Airports and Departures</h2>
+            <h2 class="section-heading">Airports</h2>
 
             <p>The airports in a scenario group are specified via the "airports" member of the scenario group.
               Each airports is a separate member, named according to the airport's ICAO code (e.g., "KJFK").
@@ -1616,23 +2186,8 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"approaches"</td>
                 <td>Object</td>
-                <td>Defines all of the approaches to the airport that may be used by aircraft.
-                  Member names give the abbreviated name of the approach, as used in <i>vice</i>'s <a href="#commands">ATC commands</a>.
-                  Each approach is then defined by the following members:
-                  <ul>
-                    <li>"full_name": (<i>Optional</i>) a string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
-                      If not specified and the approach is ILS or RNAV the approach's name is generated automatically using "runway" and "type".</li>
-                    <li>"runway": a string describing the runway the approach ends at (e.g., "13L")</li>
-                    <li>"tower_controller": (<i>Optional</i>) a string giving the name of the tower controller covering
-                      the approach. If an airport has a single tower controller named "(airport)_TWR", then this doesn't
-                      need to be specified.</li>
-                    <li>"type": a string indicating the type of the approach; it must be "ILS", "RNAV", or "Visual"</li>
-                    <li>"waypoints": an array of one or more strings giving the approach's route.</li>
-                  </ul>
-                  Multiple strings can be provided for "waypoints" for approaches with multiple IAFs (e.g. an RNAV "T" configuration).
-                  Arriving aircraft are removed from the simulation when they reach their last approach waypoint.
-                  Thus, for all of the routes specified, the last waypoint should generally be at the runway threshold with a ground-level altitude restriction.
-                </td>
+                <td><p>Defines all of the approaches to the airport that may be used by aircraft.
+                    See <a href="#fe-approaches">below for documentation about how approaches are specified.</td>
               </tr>
               <tr>
                 <td>"approach_regions"</td>
@@ -1670,6 +2225,32 @@ how it simulates aircraft or the STARS interface.
                   </ul>
                 </td>
               </tr>
+                <td>"atpa_volumes"</td>
+                <td>Object</td>
+              <td>Each member is a string with a runway name and an associated object that  specifies the region of space where
+                the STARS automated terminal proximity alert (ATPA) feature is active for the runway.  (If not specified, a default
+                volume is generated along the runway's extended centerline.) The following members define the region of space:
+                <ul>
+	            <li>"runway_threshold"`: position of the runway threshold or point at which should be used for the start of the volume.</li>
+	            <li>"heading"`: runway heading or orientation of the volume.</li>
+	          <li>"max_heading_deviation"`: maximum deviation between an aircraft's heading and the ATPA volume heading allowed for an
+                  aircraft to be included in ATPA.</li>
+	            <li>"floor"`: bottom altitude of the volume, in feet.</li>
+	            <li>"ceiling"`: top altitude of the volume, in feet.</li>
+	            <li>"length"`: length of the volume, from "runway_threshold" in direction "heading", given in nautical miles.</li>
+	          <li>"left_width"`: width the volume extends to the left of the extended centerline, where "left" is with respect to an
+                  aircraft flying the approach.</li>
+	            <li>"right_width"`: width the volume extends to the right of the extended centerline.</li>
+	            <li>"filtered_scratchpads"`: aircraft scratchpads that do not receive ATPA warnings/alerts but that do still
+                      participate in ATPA calculations for other aircraft. (Thus, this should include for example aircraft cleared
+                      for visual approaches that should not themselves receive alerts but where other non-visual aircraft must still
+                    be separated from them.)</li>
+	          <li>"excluded_scratchpads"`: aircraft scratchpads that do not participate at all in ATPA for this runway.
+                  This should include scratchpads of aircraft arriving on parallel runways, for example.</li>
+	            <li>"enable_2.5nm"`: a Boolean value that indicates whether reduced 2.5nm separation is allowed on final approach.</li>
+	            <li>"2.5nm_distance"`: distance from runway threshold at which 2.5nm separation is allowed, if "enamble_2.5nm" is true.</li>
+                </ul>
+                </td>
               <tr>
                 <td>"converging_runways"</td>
                 <td>Array of objects</td>
@@ -1700,13 +2281,14 @@ how it simulates aircraft or the STARS interface.
                 <td>Object</td>
                 <td>Each member is an object that defines routes for the specified a departure runway.
                   These routes are followed by aircraft departing that runway, organized by exit fix.
-                  See below for documentation of the per-runway departure route object.</td>
+                  See <a href="#fe-departures">below for documentation of the per-runway departure route object</a>.</td>
               </tr>
               <tr>
                 <td>"departures"</td>
                 <td>Array of objects</td>
                 <td>Each object in the array defines a departure to a destination, including one or more airlines that fly that departure,
-                  the type of aircraft flown, and information about the aircraft's path.  See below for details of the departure object.</td>
+                  the type of aircraft flown, and information about the aircraft's path.  See <a href="#fe-departures">below for details
+                    of the departure object</a>.</td>
               </tr>
               <tr>
                 <td>"departure_controller"</td>
@@ -1719,11 +2301,6 @@ how it simulates aircraft or the STARS interface.
                 <td>Each member corresponds to a fix used as an exit for departures in the scenario group and allows associating a string category
                   name with each exit. (These categories are used so that users can control the mix of exits used in a scenario.)
                   Example: <code>"ARD": "Southwest"</code></td>
-              </tr>
-              <tr>
-                <td>"location"</td>
-                <td>String</td>
-                <td>The airport's location.</td>
               </tr>
               <tr>
                 <td>"name"</td>
@@ -1741,9 +2318,111 @@ how it simulates aircraft or the STARS interface.
             </tbody>
             </table>
 
+
+          </section><!--//section-->
+
+          <section class="docs-section" id="fe-approaches">
+            <h2 class="section-heading">Approaches</h2>
+
+            <p>The member names in the airport "approaches" object give the abbreviated name of each approach,
+            as used in <i>vice</i>'s <a href="#commands">ATC commands</a>.</p>
+
+            <p>Approaches may be specified using data automatically loaded from the
+              <a href="https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cifp/">FAA CIFP</a> or manually.
+              To use CIFP data, run <i>vice</i> from the command-line and give it the argument <code>-route KXYZ</code>, where
+              <code>KXYZ</code> is the ICAO code for the airport. <i>vice</i> will print identifiers for the available approaches
+              and their associated waypoints. For example:</p>
+<pre>
+  > ...\vice.exe -routes KMIA
+  [...]  
+  Approaches:
+  I12  : DHP GLRIA/a3000+/lhilpt1.0min/pta3000/iaf PIANA/a3000+ VEPCO/a2000+
+  [...]
+  RY12 : WORPP/iaf GLRIA/a3000/if PIANA/a3000+ VEPCO/a2000+
+         FOGSO/s210/iaf GLRIA/a3000/if PIANA/a3000+ VEPCO/a2000+
+  [...]
+</pre>  
+            <p>Approach ids encode the type of approach&mdash;for example, <code>I12</code> is an
+ILS approach to runway 27 and <code>RY12</code> is an RNAV Y runway 12 approach.
+Given the id, the approach can be specified with:</p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"cifp_id"</td>
+                <td>String</td>
+                <td>A string giving the identifier of the approach in the CIFP (e.g., "RZ14").</td>
+              </tr>
+              <tr>
+                <td>"tower_controller"</td>
+                <td>Optional string</td>
+                <td>The name of the tower controller covering the approach. If an airport has a single
+                  tower controller named "(airport)_TWR", then this doesn't need to be specified.</td>
+
+                </tr>
+            </tbody>
+            </table>
+            <p>Support for loading routes from the CIFP is new so please confirm that routes are correct
+              and report any bugs you find. Note that not all approaches are included in the CIFP.
+              </p>
+
+              <p>Alternatively, approaches can be defined manually using the following members:</p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"full_name"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> A string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
+                  If not specified and the approach is ILS or RNAV the approach's name is generated automatically using "runway" and "type".</td>
+              </tr>
+              <tr>
+                <td>"runway"</td>
+                <td>String</td>
+                <td>A string describing the runway the approach ends at (e.g., "13L"). Note that single-digit runways should not
+                be specified with a leading 0 (i.e., "1L, not "01L".)</td>
+              </tr>
+              <tr>
+                <td>"tower_controller"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> The name of the tower controller covering the approach. If an airport has a single
+                  tower controller named "(airport)_TWR", then this doesn't need to be specified.</td>
+              </tr>
+              <tr>
+                <td>"type"</td>
+                <td>String</td>
+                <td>The type of the approach; it must be "ILS", "RNAV", or "Visual".</td>
+              </tr>
+              <tr>
+                <td>"waypoints"</td>
+                <td>Array of strings</td>
+                <td>Each given string specifies an approach route. Multiple strings can be provided for "waypoints" for approaches
+                  with multiple IAFs (e.g. an RNAV "T" configuration).
+                  <i>vice</i> automatically adds a final waypoint at the arrival runway threshold; aircraft are deleted from
+                  the simulation when they reach that point.</td>
+              </tr>
+            </tbody>
+            <table>
+              
+          <section class="docs-section" id="fe-departures">
+            <h2 class="section-heading">Departures</h2>
+
             <p>There are two pieces for specifying departures: their initial route leaving the airport, which depends on the active departure runway,
               and their subsequent route out of the TRACON, which does not. These two parts are specified separately.</p>
-            <p>The "departure_routes" object gives the initial routing for departures, based both on the runway they are departing as well
+            <p>The "departure_routes" object in the airport definition gives the initial routing for departures,
+              based both on the runway they are departing as well
               as their exit fix.  Here is an excerpt from the KJFK departure routes:
               </p>
             <pre>
@@ -1752,7 +2431,7 @@ how it simulates aircraft or the STARS interface.
       "ARD,DIXIE,RBV,WHITE": {
         "cleared_altitude": 5000,
         "sid": "JFK5",
-        "waypoints": "_JFK_13R _JFK_31L/h185"
+        "waypoints": "KJFK-31L/h185"
       },
       ...
             </pre>
@@ -1771,44 +2450,65 @@ how it simulates aircraft or the STARS interface.
               their "exit" specifier. 
             </p>
             <p>
-              The departure route specification has two required members:
+              The departure route specification includes the following members:
               </p>
-              <ul>
-                <li>"waypoints": the initial series of waypoints that the aircraft follows. (Here, the first two are custom fixes specified
-                  at the ends of the runway.</li>
-                <li>It then must have one of the two following members:
-                  <ul>
-                    <li>"cleared_altitude": the initial altitude that aircraft are cleared to. Aircraft given "cleared_altitude"
-                      are implicitly given "climb via SID": they will obey altitude restrictions in the departure route and
-                      climb no higher than the altitude given.</li>
-                    <li>"assigned_altitude": the initial altitude that aircraft climb to. Aircraft given "assigned_altitude"
-                      do not obey any altitude restrictions in the departure route. (This option is mostly useful for hybrid
-                      SIDs that start with radar vectors and later have a pilot nav component; aircraft will not climb beyond
-                      this altitude until the "climb via SID" instruction is given to them.)</li>
-                  </ul>
-                  </li>
-              </ul>
-            <p>It also takes three optional members:<p>
-              <ul>
-                <li>"sid": a string naming the SID that the aircraft is flying.</li>
-                <li>"description", a string: this description is shown in
-                  the UI for <a href="#draw-routes">choosing routes to draw
-                    on the radar scope</a>.</li>
-                <li>"handoff_controller": a string indicating which
-                  controller should receive the handoff if one of the fixes
-                  in the route has the <tt>/ho</tt> qualifier for a
-                  handoff. This is useful if a virtual controller has
-                  initial control, e.g., for a departure from a nearby
-                  airport.
-                </li>
-              </ul>
-              <p>
-              On departure the aircraft will fly the specified waypoints and then the waypoints specified in the route
-              to its destination. In this case, aircraft will remain on a 185 heading until vectored by the controller
-              (as explained in <a href="#fe-routes">Routes</a>, above.)
-            </p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+              <td>"assigned_altitude"</td>
+              <td>Number</td>
+              <td>The initial altitude that aircraft climb to. Aircraft given "assigned_altitude"
+                  do not obey any altitude restrictions in the departure route. (This option is mostly useful for hybrid
+                  SIDs that start with radar vectors and later have a pilot nav component; aircraft will not climb beyond
+                this altitude until the "climb via SID" instruction is given to them.)</td>
+              </tr>
+              <tr>
+                <td>"cleared_altitude"</td>
+                <td>Number</td>
+                <td>the initial altitude that aircraft are cleared to. Aircraft given "cleared_altitude"
+                  are implicitly given "climb via SID": they will obey altitude restrictions in the departure route and
+                  climb no higher than the altitude given.</td>
+              </tr>
+              <tr>
+                <td>"description"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> A description that is shown in the UI for <a href="#draw-routes">choosing routes to draw
+                    on the radar scope</a>.</td>
+              </tr>
+              <tr>
+                <td>"handoff_controller"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> A string indicating which controller should receive the handoff if one of the fixes
+                  in the route has the <tt>/ho</tt> qualifier for a handoff. This is useful if a virtual controller has
+                  initial control, e.g., for a departure from a nearby airport.<td>
+              </tr>
+              <tr>
+                <td>"sid"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> A string naming the SID that the aircraft is flying.</td>
+              </tr>
+              <tr>
+                <td>"waypoints"</td>
+                <td>String</td>
+                <td>The initial series of waypoints that the aircraft follows. <i>vice</i> automatically
+                  sets the route's first waypoints to be the specified runway's threshold and then a point 3/4 of the
+                  way down the runway. The waypoints in "waypoints" are then appended to those.  Therefore, for the
+                  example above, the aircraft continues to the end of the runway and then flies the heading 185.
+                </td>
+              </tr>
+            </tbody>
+            </table>
 
-            <p>The other half of specifying departures is the array of objects stored in "departures". Each one describes a departure
+            <p>Either "assigned_altitude" or "cleared_altitude" must be specified.</p>
+
+            <p>The other part of specifying departures is the array of objects stored in "departures". Each one describes a departure
               to a particular destination. Here is a JFK departure to Paris Charles de Gaulle:
             </p>
             <pre>
@@ -1826,23 +2526,48 @@ how it simulates aircraft or the STARS interface.
     },
   ...
             </pre>
-            <p>Four things must be specified with each departure:</p>
-              <ul>
-                <li>"airlines": The airlines that fly the route and which part of their fleet of aircraft is used; see <a href="#fe-airlines-aircraft">airlines
-                    and aircraft</a> below for more information</li>
-                <li>"destination": the ICAO airport code for the destination. This is only used in flight strips and for the aircraft's datablock on the
-                  radar scope; it does not affect its routing.</li>
-                <li>"exit": the exit fix for the departure. In conjunction with the departure runway, this is used to determine the aircraft's
-                  route leaving the airport using "departure_routes".</li>
-                <li>"route": the aircraft's route to the destination. This is mostly used so that flight strips have plausible routes, though
-                  <i>vice</i> does its best to have the aircraft follow the given route after it reaches the exit fix.
-              </ul>
-              <p>The "scratchpad" field is optional; if specified, it gives
-              the aircraft's initial scratchpad. Otherwise, the scratchpad
-              is set based on the exit, using the "scratchpads" dictionary
-              in the scenario definition.</p>
-
-          </section><!--//section-->
+            <p>A few additional things must be specified with each departure:</p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"airlines"</td>
+                <td>String</td>
+                <td>The airlines that fly the route and which part of their fleet of aircraft is used; see <a href="#fe-airlines-aircraft">airlines
+                    and aircraft</a> below for more information</td>
+              </tr>
+              <tr>
+                <td>"destination"</td>
+                <td>String</td>
+                <td>The ICAO airport code for the destination. This is only used in flight strips and for the aircraft's datablock on the
+                  radar scope; it does not affect its routing.</td>
+              </tr>
+              <tr>
+                <td>"exit"</td>
+                <td>String</td>
+                <td>The exit fix for the departure. In conjunction with the departure runway, this is used to determine the aircraft's
+                  route leaving the airport using "departure_routes".</td>
+              </tr>
+              <tr>
+                <td>"route"</td>
+                <td>String</td>
+                <td>The aircraft's route to the destination. This is mostly used so that flight strips have plausible routes, though
+                  <i>vice</i> does its best to have the aircraft follow the given route after it reaches the exit fix.</td>
+              </tr>
+              <tr>
+                <td>"scratchpad"</td>
+                <td>Optional String</td>
+                <td>If specified, this gives the aircraft's initial scratchpad. Otherwise, the scratchpad
+              is set based on the exit, using the "scratchpads" dictionary in the scenario definition.</td>
+              </tr>
+            </tbody>
+            </table>
 
           <section class="docs-section" id="fe-arrivals">
             <h2 class="section-heading">Arrivals</h2>
@@ -1912,13 +2637,6 @@ how it simulates aircraft or the STARS interface.
                 <td>The aircraft's initial speed when first spawned.</td>
               </tr>
               <tr>
-                <td>"runway_waypoints"</td>
-                <td>Object</td>
-                <td>This specifies runway-specific waypoints.  After an approach is assigned to an aircraft, the corresponding
-                  runway waypoints are added to its route. Note that the first waypoint in each entry in "runway_waypoints"
-                  must match the last waypoint in "waypoints". (See the example below.)</td>
-              </tr>
-              <tr>
                 <td>"speed_restriction"</td>
                 <td>Number</td>
                 <td>If present, gives a speed restriction in knots</td>
@@ -1927,14 +2645,6 @@ how it simulates aircraft or the STARS interface.
                 <td>"star"</td>
                 <td>String</td>
                 <td>Name of the STAR that the aircraft is flying.</td>
-              </tr>
-              <tr>
-                <td>"waypoints"</td>
-                <td>String</td>
-                <td>The series of waypoints that aircraft should fly. New aircraft are spawned at the first waypoint. These waypoints
-                  should include a "/ho" directive at the point where the aircraft should be handed off from the virtual controller
-                  to the user.
-                </td>
               </tr>
             </tbody>
             </table>
@@ -1970,22 +2680,95 @@ how it simulates aircraft or the STARS interface.
               to limit which types of aircraft may be chosen.
             </p>
 
-            <p>The "runway_waypoints" member can be used for STARs that have different routes depending on the runway.
+            <p>There are two ways to specify a STAR's waypoints: automatically using data loaded from the
+              <a href="https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cifp/">FAA CIFP</a> or
+              manually.  To use CIFP data, ensure that the STAR is available by running vice from the command-line
+              and providing the <code>-routes KXYZ</code> argument, where <code>KXYZ</code> is the name of the
+              airport.  <i>vice</i> will print the available STARS with their transitions.  For example,</p>
+<pre>
+> ...\vice -routes KLGA
+STARs:
+APPLE3.SHLBK: SHLBK LOUIE/a13000 BACKY ODESA DQO RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE PROUD/flyover/h45
+APPLE3.SWANN: SWANN GATBY KERNO ODESA DQO RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE PROUD/flyover/h45
+APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE PROUD/flyover/h45
+[...]
+</pre>
+            <p>If the STAR specified
+              in the "star" parameter is present, <i>vice</i> will automatically use the available routes to define the STAR's
+              transitions and runway-specific waypoints.  In that case, one additional parameter must be specified:</p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"spawn"</td>
+                <td>String</td>
+                <td>The name of the waypoint in the STAR at which new arrivals should start.
+                  A point between two waypoints in the STAR can be specified using an "@" symbol
+                  and a number between 0 and 1 that represents the fraction of distance between
+                  the waypoint and the next. For example, "STW@0.6" specifies that aircraft should
+                  spawn 0.6 of the way between STW and the following waypoint.
+                  Aircraft will then be handed off from the center controller halfway between the
+                  first two waypoints of the route.
+                </td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>Alternatively, the waypoints may be specified manually using one required and one optional member.
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"runway_waypoints"</td>
+                <td>Object</td>
+                <td><i>(Optional)</i> This specifies runway-specific waypoints for each airport, if there are any.
+                  After an approach is assigned to an aircraft, the corresponding
+                  runway waypoints are added to its route. Note that the first waypoint in each entry in "runway_waypoints"
+                  must match the last waypoint in "waypoints". (See the example below.)</td>
+              </tr>
+              <tr>
+                <td>"waypoints"</td>
+                <td>String</td>
+                <td>The series of waypoints that aircraft should fly. New aircraft are spawned at the first waypoint. These waypoints
+                  should include a "/ho" directive at the point where the aircraft should be handed off from the virtual controller
+                  to the user.
+                </td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>The "runway_waypoints" member can be used for STARs that have different routes depending on the arrival
+              airport and runway.
               When the user instructs the aircraft to expect a particular approach then the corresponding waypoints are
               added to its route. As an example, the specification of the KPHL <a href="https://aeronav.faa.gov/d-tpp/2305/00320JIIMS.PDF">JIIMS4 arrival</a>
               starts with the following string for "waypoints": "HEKMN N039.27.43.645,W074.56.38.400/ho JIIMS/a8000".
               (The second point is used to set the handoff point to be between HEKMN and JIIMS.)
-              It then has the following "runway_waypoints", corresponding to the runway-specific routes.
+              It then has the following "runway_waypoints", corresponding to the runway-specific routes into KPHL, the
+              only active airport in the scenario.
               Note that all start with JIIMS, the same fix at the end of "waypoints".
             </p>
             <pre>
   "runway_waypoints": {
-    "27L": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-    "27R": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-    "17": "JIIMS/a8000 SNEDE/h312",
-    "35": "JIIMS/a8000 SNEDE/h312",
-    "9L": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268",
-    "9R": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268"
+    "KPHL": {
+      "27L": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+      "27R": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+      "17": "JIIMS/a8000 SNEDE/h312",
+      "35": "JIIMS/a8000 SNEDE/h312",
+      "9L": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268",
+      "9R": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268"
+    }
   },
             </pre>
             
@@ -2193,7 +2976,7 @@ how it simulates aircraft or the STARS interface.
             </table>
           </section><!--//section-->
           
-</article>
+        </article>
 
         <footer class="footer">
           <div class="container text-center py-5">
