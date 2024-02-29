@@ -90,15 +90,13 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a></li>
 
 	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-stars"><span class="theme-icon-holder me-2"><svg><use xlink:href="#radar"></use></svg></span>STARS Emulation</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-overview">Overview</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-dcb">The DCB</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-keyboard">Key Mappings</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-command-entry">Entering Commands</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-quickref">Quick Reference</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-aircraft">Working Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-controllers">Coordinating With Other Controllers</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto"
 	  href="#tracks-datablocks">Tracks and Datablocks</a></li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-errors">Error Codes</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-tools">Tools</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-display">Configuring The Display</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto"
@@ -1190,6 +1188,10 @@ how it simulates aircraft or the STARS interface.
             to the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> discord</a>...
             </p>
 
+            <p>Aircraft are shown on the scope as <i>radar tracks</i>;
+              a <i>datablock</i> next to them shows the aircraft's callsign
+              and additional information about it.</p>
+
             <div class="content">
               <div class="callout-block callout-block-info">
                 <h4 class="callout-title">
@@ -1206,8 +1208,13 @@ how it simulates aircraft or the STARS interface.
             </section><!--//docs-intro-->
           </header>
 
-	  <section class="docs-section" id="stars-overview">
-            <h2 class="section-heading">Overview</h2>
+	  <section class="docs-section" id="stars-dcb">
+            <h2 class="section-heading">The DCB</h2>
+            <!-- <p>Display control bar (DCB)</p> -->
+          </section>
+          
+	  <section class="docs-section" id="command-entry">
+            <h2 class="section-heading">Entering Commands</h2>
             <p>Some STARS commands are entirely keyboard based: you enter a
               command and hit the "enter" key to issue the command.
               As you type, your input will be shown in the <i>input area</i>,
@@ -1226,28 +1233,16 @@ how it simulates aircraft or the STARS interface.
               below, <code>[SLEW]</code> indicates that an aircraft should
               be slewed to execute the command.
             </p>
-            <p>The center of the radar scope can be moved by clicking the
-            right mouse button and dragging.  Zoom in and out using the
-            mouse wheel; each step increases or decreases the radius shown
-            by one nautical mile.  Holding down the control key while using
-              the mouse wheel gives three mile steps in the radius.  Zooming and
-              panning the scope can be disabled with <i>vice</i>'s settings window,
-              which is displayed when the <i class="fas fa-cog"></i> in the menubar is clicked.
-              </p>
-            <p>Aircraft are shown on the scope as <i>radar tracks</i>;
-              a <i>datablock</i> next to them shows the aircraft's callsign
-              and additional information about it.</p>
-          </section>
-
-	  <section class="docs-section" id="stars-dcb">
-            <h2 class="section-heading">The DCB</h2>
-            <!-- <p>Display control bar (DCB)</p> -->
-          </section>
-          
-	  <section class="docs-section" id="stars-keyboard">
-            <h2 class="section-heading">Key Mappings</h2>
+            <p>Many STARS keyboard commands take additional parameters such as a number
+              or the name of an airport.  These will be shown in parenthesis with the number
+              and type of character expected. Thus <code>(#)</code>
+              indicates that a single digit should be entered, without any parenthesis.
+              Similarly, <code>(ABC)</code> indicates that three letters are expected.
+            </p>
             <p>The STARS keyboard has a number of custom keys that are not present on standard keyboards.
               <i>vice</i> uses the same mappings to regular keys as <a href="https://crc.virtualnas.net/docs/#/stars">CRC STARS</a> does.
+              In the following documentation, when one of the STARS keys in square brackets below is shown, the corresponding
+              regular keyboard key should be entered.
             </p>
               <table class="table">
                 <thead>
@@ -1257,92 +1252,28 @@ how it simulates aircraft or the STARS interface.
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>[TRIANGLE]</td><td>~</td></tr>
-                  <tr><td>[MIN]</td><td>End</td></tr>
-                  <tr><td>[INIT CNTL]</td><td>F3</td></tr>
-                  <tr><td>[TERM CNTL]</td><td>F4</td></tr>
-                  <tr><td>[HND OFF]</td><td>F5</td></tr>
-                  <tr><td>[VP]</td><td>F6</td></tr>
-                  <tr><td>[MULTIFUNC]</td><td>F7</td></tr>
-                  <tr><td>[FLT DATA]</td><td>F9</td></tr>
-                  <tr><td>[CA]</td><td>F11</td></tr>
-                  <tr><td>[CNTR]</td><td>Ctrl-F1</td></tr>
-                  <tr><td>[MAPS]</td><td>Ctrl-F2</td></tr>
-                  <tr><td>[BRITE]</td><td>Ctrl-F4</td></tr>
-                  <tr><td>[LDR]</td><td>Ctrl-F5</td></tr>
-                  <tr><td>[CHARSIZE]</td><td>Ctrl-F6</td></tr>
-                  <tr><td>[DCB-SHIFT]</td><td>Ctrl-F7</td></tr>
-                  <tr><td>[DCB]</td><td>Ctrl-F8</td></tr>
-                  <tr><td>[RNGRING]</td><td>Ctrl-F9</td></tr>
-                  <tr><td>[RANGE]</td><td>Ctrl-F10</td></tr>
-                  <tr><td>[SITE]</td><td>Ctrl-F11</td></tr>
+                  <tr><td><code>[TRIANGLE]</code></td><td>~</td></tr>
+                  <tr><td><code>[MIN]</code></td><td>End</td></tr>
+                  <tr><td><code>[INIT CNTL]</code></td><td>F3</td></tr>
+                  <tr><td><code>[TERM CNTL]</code></td><td>F4</td></tr>
+                  <tr><td><code>[HND OFF]</code></td><td>F5</td></tr>
+                  <tr><td><code>[VP]</code></td><td>F6</td></tr>
+                  <tr><td><code>[MULTIFUNC]</code></td><td>F7</td></tr>
+                  <tr><td><code>[FLT DATA]</code></td><td>F9</td></tr>
+                  <tr><td><code>[CA]</code></td><td>F11</td></tr>
+                  <tr><td><code>[CNTR]</code></td><td>Ctrl-F1</td></tr>
+                  <tr><td><code>[MAPS]</code></td><td>Ctrl-F2</td></tr>
+                  <tr><td><code>[BRITE]</code></td><td>Ctrl-F4</td></tr>
+                  <tr><td><code>[LDR]</code></td><td>Ctrl-F5</td></tr>
+                  <tr><td><code>[CHARSIZE]</code></td><td>Ctrl-F6</td></tr>
+                  <tr><td><code>[DCB-SHIFT]</code></td><td>Ctrl-F7</td></tr>
+                  <tr><td><code>[DCB]</code></td><td>Ctrl-F8</td></tr>
+                  <tr><td><code>[RNGRING]</code></td><td>Ctrl-F9</td></tr>
+                  <tr><td><code>[RANGE]</code></td><td>Ctrl-F10</td></tr>
+                  <tr><td><code>[SITE]</code></td><td>Ctrl-F11</td></tr>
                 </tbody>
               </table>
-          </section>
 
-	  <section class="docs-section" id="stars-quickref">
-            <h2 class="section-heading">Quick Reference</h2>
-            <p>For basic controlling, a small number of commands are used frequently.
-              The following table lists them and gives a short description of their operation.
-              See the <a href="#stars-fullref">Full Command Reference</a> for more details.
-            </p>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width:20%">Command</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td><code>[SLEW]</code></td><td><p>Whichever of the
-                  following first applied:</p>
-                      <ul>
-                        <li>Acknowledge a conflict alert (CA) for an aircraft.</li>
-                        <li>If an aircraft is being handed off by another
-                          controller, accept the handoff.</li>
-                        <li>If a handoff of an aircraft has been offered to
-                          another controller but the other controller has
-                          not yet accepted it, cancel the offer.</li>
-                        <li>Acknowledge a pointout from another controller.</li>
-                  </td></tr>
-                  <tr><td><code>[INIT CNTL][SLEW]</code></td><td>Initiate control of an aircraft that isn't being tracked by another controller.</td></tr>
-                  <tr><td><code>[TERM CNTL][SLEW]</code></td><td>Terminates
-                  control of an aircraft being tracked&mdash;drops its track.</td></tr>
-                  <tr><td><code>[HND OFF](id)[SLEW]</code><id></td><td>Offers to handoff the
-                      track of the aircraft to the controller identified by (id).</td></tr>
-                  <tr><td><code>[MULTIFUNC]Y(scratchpad)</code></td><td>Sets
-                  the scratchpad of the aircraft to <code>(scratchpad)</code>.</td></tr>
-                  <tr><td><code>.[SLEW]</code></td><td>Clears the
-                  aircraft's scratchpad.</td></tr>
-                  <tr><td><code>+(###)[SLEW]</code></td><td>Sets the
-                      aircraft's assigned temporary altitude.</td></tr>
-                </tbody>
-              </table>
-            
-          </section>
-
-	  <section class="docs-section" id="stars-aircraft">
-            <h2 class="section-heading">Working Aircraft</h2>
-            <p>Aircraft may
-              be <i>tracked</i> by a specific controller; when a controller
-              is tracking an aircraft, other controllers cannot issue
-              control commands to it.  When an aircraft is leaving a
-              controller's airspace, they will generally hand it off to
-              another controller.</p>
-          </section>
-
-	  <section class="docs-section" id="stars-control">
-            <h2 class="section-heading">Coordinating With Other Controllers</h2>
-            <!-- <p>quickref</p> -->
-          </section>
-
-	  <section class="docs-section" id="tracks-datablocks">
-            <h2 class="section-heading">Tracks and Datablocks</h2>
-            <!-- <p>quickref</p> -->
-          </section>
-
-	  <section class="docs-section" id="stars-errors">
-            <h2 class="section-heading">Error Codes</h2>
             <p>When issuing a command leads to an error, STARS prints an
               abbreviated message above the input area. These are the error
               codes that <i>vice</i> currently uses:
@@ -1434,6 +1365,69 @@ how it simulates aircraft or the STARS interface.
                 </tbody>
                 </table>
           </section>            
+
+          </section>
+
+	  <section class="docs-section" id="stars-quickref">
+            <h2 class="section-heading">Quick Reference</h2>
+            <p>For basic controlling, a small number of commands are used frequently.
+              The following table lists them and gives a short description of their operation.
+            </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Command</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>[SLEW]</code></td><td><p>Whichever of the
+                  following first applied:</p>
+                      <ul>
+                        <li>Acknowledge a conflict alert (CA) for an aircraft.</li>
+                        <li>If an aircraft is being handed off by another
+                          controller, accept the handoff.</li>
+                        <li>If a handoff of an aircraft has been offered to
+                          another controller but the other controller has
+                          not yet accepted it, cancel the offer.</li>
+                        <li>Acknowledge a pointout from another controller.</li>
+                  </td></tr>
+                  <tr><td><code>[INIT CNTL][SLEW]</code></td><td>Initiate control of an aircraft that isn't being tracked by another controller.</td></tr>
+                  <tr><td><code>[TERM CNTL][SLEW]</code></td><td>Terminates
+                  control of an aircraft being tracked&mdash;drops its track.</td></tr>
+                  <tr><td><code>[HND OFF](id)[SLEW]</code><id></td><td>Offers to handoff the
+                      track of the aircraft to the controller identified by (id).</td></tr>
+                  <tr><td><code>[MULTIFUNC]Y(scratchpad)</code></td><td>Sets
+                  the scratchpad of the aircraft to <code>(scratchpad)</code>.</td></tr>
+                  <tr><td><code>.[SLEW]</code></td><td>Clears the
+                  aircraft's scratchpad.</td></tr>
+                  <tr><td><code>+(###)[SLEW]</code></td><td>Sets the
+                      aircraft's assigned temporary altitude.</td></tr>
+                </tbody>
+              </table>
+            
+          </section>
+
+	  <section class="docs-section" id="stars-aircraft">
+            <h2 class="section-heading">Working Aircraft</h2>
+            <p>Aircraft may
+              be <i>tracked</i> by a specific controller; when a controller
+              is tracking an aircraft, other controllers cannot issue
+              control commands to it.  When an aircraft is leaving a
+              controller's airspace, they will generally hand it off to
+              another controller.</p>
+          </section>
+
+	  <section class="docs-section" id="stars-control">
+            <h2 class="section-heading">Coordinating With Other Controllers</h2>
+            <!-- <p>quickref</p> -->
+          </section>
+
+	  <section class="docs-section" id="tracks-datablocks">
+            <h2 class="section-heading">Tracks and Datablocks</h2>
+            <!-- <p>dwell mode here, quicklook, leader lines, FUSED/radar mode, DCB HISTORY, PTLs, DWELL, </p> -->
+          </section>
+
 
           <!-- TODO: maps -->
           
@@ -1534,7 +1528,7 @@ how it simulates aircraft or the STARS interface.
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>*J[###][SLEW]</code></td>
+                    <td><code>*J(###)[SLEW]</code></td>
                     <td>Adds a TPA J-ring with radius given by ### to the selected track.</td>
                   </tr>
                   <tr>
@@ -1546,7 +1540,7 @@ how it simulates aircraft or the STARS interface.
                     <td>Removes TPA J-rings from all tracks.</td>
                   </tr>
                   <tr>
-                    <td><code>*P[###][SLEW]</code></td>
+                    <td><code>*P(###)[SLEW]</code></td>
                     <td>Adds a TPA cone with length given by ### to the selected track.</td>
                   </tr>
                   <tr>
@@ -1677,15 +1671,161 @@ how it simulates aircraft or the STARS interface.
                 hidden by entering <code>[MAPS](###)</code> where ### is the map number associated with the volume.
                 </p>
 
+              <h3>Range Rings</h3>
+
+            <p>Range rings are concentric circles drawn around a selected point with successive steps between
+              their radii that are 2, 5, 10, or 20nm. With 5nm steps, the default, here are the 5 and 10nm range rings drawn around KEWR:</p>
+            <div class="text-center">
+              <img src="rr-example.png" srcset="rr-example-2x.png 2x" width="248" height="245" class="img-fluid" alt="Range rings on radar scope">
+            </div>
+            <br>
+            <p>The brightness of range rings can be controlled with the "RR" spinner in the "BRITE" menu of the main DCB.
+              If the brightness is set to 0, range rings are not drawn. A few buttons on the main DCB make it possible to
+              configure range rings.  Clicking on "RR" activates a spinner that allows selecting the step between radii.
+              If "PLACE RR" is clicked, then the next location clicked on the radar scope will become the range rings' center point.
+              Finally, clicking "RR CNTR" causes the range rings to be centered on the point at the center of the radar scope.
+            </p>
+            <div class="text-center">
+              <img src="rr-buttons.png" srcset="rr-buttons-2x.png 2x" width="143" height="71" class="img-fluid" alt="Range rings buttons on the DCB">
+            </div>
+            <br>
+            <p>The radius of the range rings can also be set by entering <code>[RANGE]</code> and then 2, 5, 10, or 20, and then pressing enter.
+            </p>
+            
               <h3>Weather</h3>
 
-            <h3>CRDA</h3>
+            <p>The current weather radar can be displayed on the STARS scope. Here is an example South of KSEA.
+              The blue-green areas indicate light precipitation, while the mustard-colored area is moderate to heavy precipitation.
+              Stippling in the radar also indicates the strength, where a denser stipple is heavier precipitation.</p>
+            <div class="text-center">
+              <img src="wx-radar.png" srcset="wx-radar-2x.png 2x" width="449" height="294" class="img-fluid" alt="Weather radar on radar scope">
+            </div>
+            <br>
+            <p>The brightness of the radar on the STARS scope can be controlled using the "WX" spinner in the "BRITE" menu of the DCB.
+              It is also possible to control which levels of precipitation are shown using the "WX*" buttons in the main DCB:
+              </p>
+            <div class="text-center">
+              <img src="wx-buttons.png" srcset="wx-buttons-2x.png 2x" width="211" height="71" class="img-fluid" alt="WX buttons on DCB">
+            </div>
+            <br>
+            <p>With the selection above, the two lowest levels, WX0 and WX1, are not shown, while all of the higher levels
+              of precipitation are.</p>
 
+              <h3>CRDA</h3>
+
+            <p>The Converging Runways Display Aid (CRDA) helps ensure separation between aircraft approaching
+              intersecting runways, on parallel approaches, and in related situations. It does so by drawing
+              "ghost" aircraft on one course that correspond to aircraft on another course. The idea is perhaps
+              best understood with an example:</p>
+            <div class="text-center">
+              <img src="crda.png" srcset="crda-2x.png 2x" width="406" height="275" class="img-fluid" alt="CRDA example">
+            </div>
+            <br>
+            <p>Here two aircraft are approaching KPHL, one with PDT4783 landing runway 27R and PDT4517 landing runway 35.
+              With CRDA enabled, a ghost of PDT4783 is drawn on the runway 35 approach course. We can easily see that PDT4517
+              will reach the threshold of runway 35 well before PDT4783 reaches runway 27R.</p>
+            <p>Ghost aircraft may be positioned via either "stagger" or "tie" mode.  With stagger mode, the ghosts
+              are the same difference from a common point (e.g., the intersection of two runways); the controller's
+              goal is then to ensure adequate separation between ghost and actual aircraft radar tracks.
+              Alternatively, with tie mode, ghosts are offset so that the controller's goal is to have actual
+              aircraft radar tracks coincide with the ghost tracks in order to achieve separation.</p>
+            <p>When CRDA is available at an airport, the CRDA status list may be displayed on the STARS scope. 
+              Entering <code>[MULTIFUNC]TN</code> toggles whether it is shown, and <code>[MULTIFUNC]TN[SLEW]</code>
+              repositions it on the screen. In the example below, we can see from the "S" in the line below "CRDA STATUS"
+              that CRDA is enabled in stagger mode for
+              runways 27R/35 at KPHL for the current controller, who has id 6N.</p>
+            <div class="text-center">
+              <img src="crda-status.png" srcset="crda-status-2x.png 2x" width="206" height="108" class="img-fluid" alt="CRDA status list">
+            </div>
+            <br>
+            <p>Ghost radar tracks are normally only generated for aircraft within a pre-defined volume of space around an
+              approach course and only if their heading is within a specified range of the approach heading.
+              However, a number of commands below allow <i>forcing</i> a ghost track even if these criteria
+              are not met.</p>
+            <p>A variety of commands are available to configure CRDA.  Some take an airport's identifier, which
+              should be given without the initial "K": i.e., "PHL" for Philadelphia, not "KPHL":</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Command</th>
+                    <th style="width: 75%;">Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[MULTIFUNC]N</code></td>
+                    <td>Toggles whether CRDA is enabled.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)S(#)</code></td>
+                    <td>Toggles stagger mode for the given CRDA runway pair at the airport ABC.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)T(#)</code></td>
+                    <td>Toggles tie mode for the given CRDA runway pair at the airport ABC.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)D(#)</code></td>
+                    <td>Disables CRDA for the given runway pair at the airport ABC.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]NL(ABC)(#)</code></td>
+                    <td>Set the leader line direction for ghost aircraft according to the given number,
+                      which is interpreted with reference to the number pad on a keyboard (e.g., "2"
+                      signifies that the leader line should be directly below the radar track, if the radar track
+                      is considered to be at "5".)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N*ALL</code></td>
+                    <td>Force ghost tracks for all aircraft</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N[SLEW]</code></td>
+                    <td>Toggle whether ghosts are forced for the slewed aircraft.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)(RWY)</code></td>
+                    <td>Toggle whether ghosts are generated for the specified runway.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)(RWY)E</code></td>
+                    <td>Enable ghosts for the specified runway.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)(RWY)I</code></td>
+                    <td>Inhibit ghosts for the specified runway</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)(RWY)&nbsp;B</code></td>
+                    <td>Toggle whether the <i>qualification region</i> for the runway is drawn;
+                      this is the lateral region of space aircraft must be inside for a ghost to be generated.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]N(ABC)(RWY)&nbsp;L</code></td>
+                    <td>Toggle whether the <i>course lines</i> for the runway are drawn;
+                      these show the final approach course that CRDA is defined with respect to.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
           </section>
 
 	  <section class="docs-section" id="stars-display">
             <h2 class="section-heading">Configuring The Display</h2>
-            <!-- <p>quickref</p> -->
+
+            <p>The center of the radar scope can be moved by clicking the
+            right mouse button and dragging.  Zoom in and out using the
+            mouse wheel; each step increases or decreases the radius shown
+            by one nautical mile.  Holding down the control key while using
+              the mouse wheel gives three mile steps in the radius.  Zooming and
+              panning the scope can be disabled with <i>vice</i>'s settings window,
+              which is displayed when the <i class="fas fa-cog"></i> in the menubar is clicked.
+              </p>
+
+            <!-- DCB RANGE, MAPS -->
+            <!-- <p>the various lists, BRITE, font size, PREF, SSA FILTER, GI TEXT FILTER, DCB POSITION...</p> -->
           </section>
 
 	  <section class="docs-section" id="crc-stars-differences">
