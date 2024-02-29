@@ -814,13 +814,14 @@ how it simulates aircraft or the STARS interface.
               <li>Secondary scratchpads are now supported.</li>
               <li>Fixed bug that would cause arrivals to climb when vectored off of their STAR.</li>
               <li>Fixed other minor navigation bugs.</li>
-              <li>Facility engineering</li>
+              <li>Facility engineering:
               <ul>
                 <li>Scenarios can now have "center" and "range" specified; they override the scenario group valus, if present.</li>
                 <li>"default_map" in scenarios is now "default_maps"; an array of values can be given, allowing multiple maps to be initially shown.</li>
                 <li>Departures from different runways at an airport are sequenced better so that CAs on departure are less likely.</li>
                 <li>Added "tracon" to the scenario group definition; this is used to gather scenarios for a single TRACON in the UI.</li>
               </ul>
+              </li>
             </ul>
 
             <h3>0.10.13 (5 November 2023)</h3>
@@ -848,7 +849,7 @@ how it simulates aircraft or the STARS interface.
               restrictions on SIDs.</li>
               <li>Fixed a bug where aircraft that went around would
               always continue to do so on subsequent approaches.</li>
-              <li>Facility engineering updates:</li>
+              <li>Facility engineering updates:
               <ul>
                 <li>The "multi_controllers" field in scenario definitions
                   is now an object where each entry specifies a control
@@ -863,6 +864,7 @@ how it simulates aircraft or the STARS interface.
                 <li>Airports have an optional "name" field that is used
                   in transmissions from aircraft when referring to the airport.</li>
               </ul>
+              </li>
             </ul>
 
             <h3>0.10.11 (10 October 2023)</h3>
@@ -891,7 +893,7 @@ how it simulates aircraft or the STARS interface.
               <li>Added the ability to <a href="#draw-routes">draw active departure, arrival, and
               approach routes on</a> the radar scope.
               </li>
-              <li>Facility engineering updates related to the above:</li>
+              <li>Facility engineering updates related to the above:
               <ul>
                 <li>When specifying fixes in approaches, you can
                   add <code>/iaf</code>, <code>/if</code>
@@ -904,13 +906,14 @@ how it simulates aircraft or the STARS interface.
                 optional string "description" field that will be shown in
                 the UI. Similarly, for departures in "departure_routes",
                 you can also give a "description" string.
-                  </li>
+                </li>
               </ul>
+              </li>
             </ul>
 
             <h3>0.10.9 (28 September 2023)</h3>
             <ul>
-              <li>Many improvements to the AAC scenario's accuracy:</li>
+              <li>Many improvements to the AAC scenario's accuracy:
               <ul>
                 <li>Added turboprop and piston departures and arrivals for AAC.</li>
                 <li>AAC jet arrivals now come in on the TULSA4; turboprops
@@ -921,6 +924,7 @@ how it simulates aircraft or the STARS interface.
                 departure gate.)</li>
                 <li>Inbound handoffs are now 45 miles out.</li>
               </ul>
+              </li>
               <li>Fixed a bug where arrivals would sometimes climb after
                 being cleared for the approach.</li>
               <li>Facility engineering: when exits are specified in
@@ -948,7 +952,7 @@ how it simulates aircraft or the STARS interface.
               D01/KSAV/KSDF scenario (Thanks to Mike D and Samuel
                 Valencia!)</li>
               <li>Added a new scenario for KAAC/KJKE.</li>
-              <li>Facility engineering changes:</li>
+              <li>Facility engineering changes:
               <ul>
                 <li>DME arcs can now be <a href="#fe-routes">specified with approaches</a>.</li>
                 <li>Scratchpads may be <a href="#fe-airports">specified
@@ -956,6 +960,7 @@ how it simulates aircraft or the STARS interface.
                 <li>Fixes can now be specified with respect to a distance
                   along a radial from another fix.</li>
               </ul>
+              </li>
               <li>Various small bugfixes related to aircraft navigation and
                 clearing approaches at fixes.
                 </li>
@@ -975,7 +980,7 @@ how it simulates aircraft or the STARS interface.
               round markers for radar tracks; choose "FUSED" in the "SITE menu.)
               <li>It is no longer allowed to issue control commands to
               departing aircraft before they have checked in.</li>
-              <li>Added multiple new <a href="#commands">ATC commands</a>:</li>
+              <li>Added multiple new <a href="#commands">ATC commands</a>:
               <ul>
                 <li><code>EC</code>/<code>ED</code>: expedite
                   climb/descent.</li>
@@ -990,7 +995,8 @@ how it simulates aircraft or the STARS interface.
                 below 10,000, <code>CFIX/A120-150</code> is
                   cross <code>FIX</code> between 12,000 and 15,000, etc.</li>
               </ul>
-              <li>Facility engineering changes:</li>
+              </li>
+              <li>Facility engineering changes:
               <ul>
                 <li>Removed the "elevation" field for airports; it is no
                   longer needed.</li>
@@ -999,6 +1005,7 @@ how it simulates aircraft or the STARS interface.
                   which the airport's elevation is used.</li>
               </ul>
               <li>Minor fixes to the ABE scenario.</li>
+              </li>
             </ul>
 
             <h3>0.10.4 (16 August 2023)</h3>
@@ -1150,7 +1157,7 @@ how it simulates aircraft or the STARS interface.
                 Many additional small bugfixes.</li>
               <li>0.7.0: Added LGA scenarios (thanks to Arya T!), and various small bug fixes.</li>
               <li>0.6.6: Small JAX scenario fixes and added ISP and HVN arrivals/departures to the JFK scenario.</li>
-              <li>0.6.5: Fixed <emph>another</emph> bug with intercepting the localizer.</li>
+              <li>0.6.5: Fixed <i>another</i> bug with intercepting the localizer.</li>
               <li>0.6.4: Fixed a bug with intercepting the localizer that occasionally led to aircraft hanging in the air for a while before proceeding.</li>
               <li>0.6.3: Added JAX scenarios for F11. Updated PHL scenarios for arrival changes.</li>
               <li>0.6.2: Added go arounds and ABE TRACON scenarios.</li>
@@ -1366,8 +1373,6 @@ how it simulates aircraft or the STARS interface.
                 </table>
           </section>            
 
-          </section>
-
 	  <section class="docs-section" id="stars-quickref">
             <h2 class="section-heading">Quick Reference</h2>
             <p>For basic controlling, a small number of commands are used frequently.
@@ -1391,11 +1396,12 @@ how it simulates aircraft or the STARS interface.
                           another controller but the other controller has
                           not yet accepted it, cancel the offer.</li>
                         <li>Acknowledge a pointout from another controller.</li>
+                      </ul>
                   </td></tr>
                   <tr><td><code>[INIT CNTL][SLEW]</code></td><td>Initiate control of an aircraft that isn't being tracked by another controller.</td></tr>
                   <tr><td><code>[TERM CNTL][SLEW]</code></td><td>Terminates
                   control of an aircraft being tracked&mdash;drops its track.</td></tr>
-                  <tr><td><code>[HND OFF](id)[SLEW]</code><id></td><td>Offers to handoff the
+                  <tr><td><code>[HND OFF](id)[SLEW]</code></td><td>Offers to handoff the
                       track of the aircraft to the controller identified by (id).</td></tr>
                   <tr><td><code>[MULTIFUNC]Y(scratchpad)</code></td><td>Sets
                   the scratchpad of the aircraft to <code>(scratchpad)</code>.</td></tr>
@@ -1464,7 +1470,7 @@ how it simulates aircraft or the STARS interface.
                     <td>Create an RBL between the slewed aircraft and the fix <code>FIX</code>.</td>
                   </tr>
                   <tr>
-                    <td><code>*T[SLEW](#)</td>
+                    <td><code>*T[SLEW](#)</code></td>
                     <td>Delete the RBL with given number.</td>
                   </tr>
                   <tr>
@@ -1578,7 +1584,7 @@ how it simulates aircraft or the STARS interface.
                 </tbody>
                 </table>
 
-            <p>ATPA automatically generates cones for aircraft in the <emph>approach volume</emph> for a runway.
+            <p>ATPA automatically generates cones for aircraft in the <i>approach volume</i> for a runway.
               (Approach volumes are generally along the glideslope for a runway.) For example, the image below
               shows a 5nm cone with WJA466, indicating the required separation for a B737 behind a heavy A343.
               The in-trail distance is shown in WJA466's datablock, and both that distance and the cone are red, indicating
@@ -2327,7 +2333,7 @@ how it simulates aircraft or the STARS interface.
                 <td>"approaches"</td>
                 <td>Object</td>
                 <td><p>Defines all of the approaches to the airport that may be used by aircraft.
-                    See <a href="#fe-approaches">below for documentation about how approaches are specified.</td>
+                    See <a href="#fe-approaches">below for documentation about how approaches are specified</a>.</td>
               </tr>
               <tr>
                 <td>"approach_regions"</td>
@@ -2365,6 +2371,7 @@ how it simulates aircraft or the STARS interface.
                   </ul>
                 </td>
               </tr>
+              <tr>
                 <td>"atpa_volumes"</td>
                 <td>Object</td>
               <td>Each member is a string with a runway name and an associated object that  specifies the region of space where
@@ -2390,7 +2397,8 @@ how it simulates aircraft or the STARS interface.
 	            <li>"enable_2.5nm"`: a Boolean value that indicates whether reduced 2.5nm separation is allowed on final approach.</li>
 	            <li>"2.5nm_distance"`: distance from runway threshold at which 2.5nm separation is allowed, if "enamble_2.5nm" is true.</li>
                 </ul>
-                </td>
+              </td>
+              </tr>
               <tr>
                 <td>"converging_runways"</td>
                 <td>Array of objects</td>
@@ -2554,7 +2562,7 @@ Given the id, the approach can be specified with:</p>
                   the simulation when they reach that point.</td>
               </tr>
             </tbody>
-            <table>
+            </table>
               
           <section class="docs-section" id="fe-departures">
             <h2 class="section-heading">Departures</h2>
