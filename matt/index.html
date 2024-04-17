@@ -107,6 +107,35 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Stochastic Texture Filtering</h3>
+                            <div class="authors">Matt Pharr, Bartlomiej Wronski, Marco Salvi, and Marcos Fajardo</div>
+                            <div>Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D '24)</div>
+                            <div class="mb-3"><a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/stochtex.pdf">[PDF]</a></div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                2D texture maps and 3D voxel arrays are widely used to add rich detail to the surfaces and volumes of rendered scenes, and filtered texture lookups are integral to producing high-quality imagery. We show that applying the texture filter after evaluating shading generally gives more accurate imagery than filtering textures before BSDF evaluation, as is current practice. These benefits are not merely theoretical, but are apparent in common cases. We demonstrate that practical and efficient filtering after shading is possible through the use of stochastic sampling of texture filters.
+                            </div>
+                            <div class="abstract mb-2">Stochastic texture filtering offers additional benefits, including efficient implementation of high-quality texture filters and efficient filtering of textures stored in compressed and sparse data structures, including neural representations. We demonstrate applications in both real-time and offline rendering and show that the additional error from stochastic filtering is minimal. We find that this error is handled well by either spatiotemporal denoising or moderate pixel sampling rates.</div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                (None).
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Matt Pharr, Bartlomiej Wronski, Marco Salvi, and Marcos Fajardo. 2024. Stochastic Texture Filtering. Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D '24).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Decorrelating ReSTIR Samplers via MCMC Mutations</h3>
                             <div class="authors">Rohan Sawhney, Daqi Lin, Markus Kettunen, Benedikt Bitterli, Ravi Ramamoorthi, Chris Wyman, Matt Pharr</div>
                             <div>ACM Transactions on Graphics</div>
@@ -164,35 +193,6 @@
                     </div>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
-                            <h3 class="mb-0">Stochastic Texture Filtering</h3>
-                            <div class="authors">Marcos Fajardo, Bartlomiej Wronski, Marco Salvi, and Matt Pharr</div>
-                            <div><a href="https://arxiv.org/abs/2305.05810">arxiv cs.GR</a></div>
-                            <div class="mb-3"><a href="https://arxiv.org/pdf/2305.05810.pdf">[PDF]</a></div>
-                            <span class="d-lg-none">
-                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
-                            </span>
-                            <div class="abstract mb-2">
-                                <b>Abstract:</b>
-                                2D texture maps and 3D voxel arrays are widely used to add rich detail to the surfaces and volumes of rendered scenes, and filtered texture lookups are integral to producing high-quality imagery. We show that filtering textures after evaluating lighting, rather than before BSDF evaluation as is current practice, gives a more accurate solution to the rendering equation. These benefits are not merely theoretical, but are apparent in common cases. We further show that stochastically sampling texture filters is crucial for enabling this approach, which has not been possible previously except in limited cases. Stochastic texture filtering offers additional benefits, including efficient implementation of high-quality texture filters and efficient filtering of textures stored in compressed and sparse data structures, including neural representations. We demonstrate applications in both real-time and offline rendering and show that the additional stochastic
-                                error is minimal. Furthermore, this error is handled well by either spatiotemporal denoising or moderate pixel sampling rates.
-                            </div>
-                            <div class="comments mb-2">
-                                <b>Comments:</b>
-                                Rejected by HPG 2023.
-                            </div>
-                            <div class="citation mb-2">
-                                <b>Citation:</b>
-                                Marcos Fajardo, Bartlomiej Wronski, Marco Salvi, and Matt Pharr. 2023. Stochastic Texture Filtering. arXiv: 2305.05810 [cs.GR]
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="d-none d-lg-block">
-                                <div><img class="img-fluid img-paper" src="assets/img/stochtex.png" alt="" width="388" height="218" loading="lazy" /></div>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
-                        <div class="flex-grow-1">
                             <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Rendering</h3>
                             <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
                             <div><a href="https://arxiv.org/abs/2303.15762">arxiv cs.GR</a></div>
@@ -231,9 +231,9 @@
                             </span>
                             <div class="abstract mb-2">
                                 <b>Abstract:</b>
-                                Even with the advent of hardware-accelerated ray tracing in modern GPUs, only a small number of rays can be traced at each pixel in real-time applications. This presents a significant challenge for path tracing, even when augmented with state-of-the art denoising algorithms. While the recently-developed ReSTIR algorithm [Bitterli et al. 2020] enables high-quality renderings of scenes with millions of light sources using just a few shadow rays at each pixel, there remains a need for effective algorithms to sample indirect illumination. We introduce an effective path sampling algorithm for indirect lighting that is suitable to highly parallel GPU architectures. Building on the screen-space spatio-temporal resampling principles of ReSTIR, our approach resamples multi-bounce indirect lighting paths obtained by path tracing. Doing so allows sharing information about important paths that contribute to lighting both across time and pixels in the image. The
-                                resulting algorithm achieves a substantial error reduction compared to path tracing: at a single sample per pixel every frame, our algorithm achieves MSE improvements ranging from 9.3x to 166x in our test scenes. In conjunction with a denoiser, it leads to high-quality path traced global illumination at real-time frame rates on modern GPUs
+                                Even with the advent of hardware-accelerated ray tracing in modern GPUs, only a small number of rays can be traced at each pixel in real-time applications. This presents a significant challenge for path tracing, even when augmented with state-of-the art denoising algorithms. While the recently-developed ReSTIR algorithm [Bitterli et al. 2020] enables high-quality renderings of scenes with millions of light sources using just a few shadow rays at each pixel, there remains a need for effective algorithms to sample indirect illumination.
                             </div>
+                            <div class="abstract mb-2">We introduce an effective path sampling algorithm for indirect lighting that is suitable to highly parallel GPU architectures. Building on the screen-space spatio-temporal resampling principles of ReSTIR, our approach resamples multi-bounce indirect lighting paths obtained by path tracing. Doing so allows sharing information about important paths that contribute to lighting both across time and pixels in the image. The resulting algorithm achieves a substantial error reduction compared to path tracing: at a single sample per pixel every frame, our algorithm achieves MSE improvements ranging from 9.3x to 166x in our test scenes. In conjunction with a denoiser, it leads to high-quality path traced global illumination at real-time frame rates on modern GPUs</div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
                                 ReSTIR: the gift that keeps on giving.
@@ -389,9 +389,9 @@
                             </span>
                             <div class="abstract mb-2">
                                 <b>Abstract:</b>
-                                We present a system for acquiring, processing, and rendering panoramic light field still photography for display in Virtual Reality (VR). We acquire spherical light field datasets with two novel light field camera rigs designed for portable and efficient light field acquisition. We introduce a novel real-time light field reconstruction algorithm that uses a per-view geometry and a disk-based blending field. We also demonstrate how to use a light field prefiltering operation to project from a high-quality offline reconstruction model into our real-time model while suppressing artifacts. We introduce a practical approach for compressing light fields by modifying the VP9 video codec to provide high quality compression with real-time, random access decompression. We combine these components into a complete light field system offering convenient acquisition, compact file size, and high-quality rendering while generating stereo views at 90Hz on commodity VR
-                                hardware. Using our system, we built a freely available light field experience application called Welcome to Light Fields featuring a library of panoramic light field stills for consumer VR which has been downloaded over 15,000 times.
+                                We present a system for acquiring, processing, and rendering panoramic light field still photography for display in Virtual Reality (VR). We acquire spherical light field datasets with two novel light field camera rigs designed for portable and efficient light field acquisition. We introduce a novel real-time light field reconstruction algorithm that uses a per-view geometry and a disk-based blending field. We also demonstrate how to use a light field prefiltering operation to project from a high-quality offline reconstruction model into our real-time model while suppressing artifacts. We introduce a practical approach for compressing light fields by modifying the VP9 video codec to provide high quality compression with real-time, random access decompression.
                             </div>
+                            <div class="abstract mb-2">We combine these components into a complete light field system offering convenient acquisition, compact file size, and high-quality rendering while generating stereo views at 90Hz on commodity VR hardware. Using our system, we built a freely available light field experience application called Welcome to Light Fields featuring a library of panoramic light field stills for consumer VR which has been downloaded over 15,000 times.</div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
                                 There is an entertaining retrospective to write about Google's VR efforts and the light field project specifically, but this space is too narrow to contain it.
@@ -455,9 +455,9 @@
                             </span>
                             <div class="abstract mb-2">
                                 <b>Abstract:</b>
-                                Distributions of samples play a very important role in rendering, affecting variance, bias and aliasing in Monte-Carlo and Quasi-Monte Carlo evaluation of the rendering equation. In this paper, we propose an original sampler which inherits many important features of classical low-discrepancy sequences (LDS): a high degree of uniformity of the achieved distribution of samples, computational efficiency and progressive sampling capability. At the same time, we purposely tailor our sampler in order to improve its spectral characteristics, which in turn play a crucial role in variance reduction, anti-aliasing and improving visual appearance of rendering. Our sampler can efficiently generate sequences of multidimensional points, whose power spectra approach so-called Blue-Noise (BN) spectral property while preserving low discrepancy (LD) in certain 2-D projections. In our tile-based approach, we perform permutations on subsets of the original Sobol LDS. In a
-                                large space of all possible permutations, we select those which better approach the target BN property, using pair-correlation statistics. We pre-calculate such “good” permutations for each possible Sobol pattern, and store them in a lookup table efficiently accessible in runtime. We provide a complete and rigorous proof that such permutations preserve dyadic partitioning and thus the LDS properties of the point set in 2-D projections. Our construction is computationally efficient, has a relatively low memory footprint and supports adaptive sampling. We validate our method by performing spectral/discrepancy/aliasing analysis of the achieved distributions, and provide variance analysis for several target integrands of theoretical and practical interest.
+                                Distributions of samples play a very important role in rendering, affecting variance, bias and aliasing in Monte-Carlo and Quasi-Monte Carlo evaluation of the rendering equation. In this paper, we propose an original sampler which inherits many important features of classical low-discrepancy sequences (LDS): a high degree of uniformity of the achieved distribution of samples, computational efficiency and progressive sampling capability. At the same time, we purposely tailor our sampler in order to improve its spectral characteristics, which in turn play a crucial role in variance reduction, anti-aliasing and improving visual appearance of rendering. Our sampler can efficiently generate sequences of multidimensional points, whose power spectra approach so-called Blue-Noise (BN) spectral property while preserving low discrepancy (LD) in certain 2-D projections.
                             </div>
+                            <div class="abstract mb-2">In our tile-based approach, we perform permutations on subsets of the original Sobol LDS. In a large space of all possible permutations, we select those which better approach the target BN property, using pair-correlation statistics. We pre-calculate such “good” permutations for each possible Sobol pattern, and store them in a lookup table efficiently accessible in runtime. We provide a complete and rigorous proof that such permutations preserve dyadic partitioning and thus the LDS properties of the point set in 2-D projections. Our construction is computationally efficient, has a relatively low memory footprint and supports adaptive sampling. We validate our method by performing spectral/discrepancy/aliasing analysis of the achieved distributions, and provide variance analysis for several target integrands of theoretical and practical interest.</div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
                                 (none)
@@ -546,9 +546,9 @@
                             </span>
                             <div class="abstract mb-2">
                                 <b>Abstract:</b>
-                                Modeling and rendering of natural scenes with thousands of plants poses a number of problems. The terrain must be modeled and plants must be distributed throughout it in a realistic manner, reflecting the interactions of plants with each other and with their environment. Geometric models of individual plants, consistent with their positions within the ecosystem, must be synthesized to populate the scene. The scene, which may consist of billions of primitives, must be rendered efficiently while incorporating the subtleties of lighting in a natural environment. We have developed a system built around a pipeline of tools that address these tasks. The terrain is designed using an interactive graphical editor. Plant distribution is determined by hand (as one would do when designing a garden), by ecosystem simulation, or by a combination of both techniques. Given parameterized procedural models of individual plants, the geometric complexity of the scene is
-                                reduced by approximate instancing, in which similar plants, groups of plants, or plant organs are replaced by instances of representative objects before the scene is rendered. The paper includes examples of visually rich scenes synthesized using the system.
+                                Modeling and rendering of natural scenes with thousands of plants poses a number of problems. The terrain must be modeled and plants must be distributed throughout it in a realistic manner, reflecting the interactions of plants with each other and with their environment. Geometric models of individual plants, consistent with their positions within the ecosystem, must be synthesized to populate the scene. The scene, which may consist of billions of primitives, must be rendered efficiently while incorporating the subtleties of lighting in a natural environment.
                             </div>
+                            <div class="abstract mb-2">We have developed a system built around a pipeline of tools that address these tasks. The terrain is designed using an interactive graphical editor. Plant distribution is determined by hand (as one would do when designing a garden), by ecosystem simulation, or by a combination of both techniques. Given parameterized procedural models of individual plants, the geometric complexity of the scene is reduced by approximate instancing, in which similar plants, groups of plants, or plant organs are replaced by instances of representative objects before the scene is rendered. The paper includes examples of visually rich scenes synthesized using the system.</div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
                                 As I remember it, after the 1997 paper on memory-coherent ray tracing, Pat and Przemek got to talking. The combination of Przemek's ability to generate complex scenes full of plants and our work on rendering complex scenes led to this collaboration and soon enough I was off to Calgary for a few weeks in November 1997. I remember that in Calgary it got dark awfully early and that it was mighty chilly on walks back to my hotel in the evenings.
@@ -609,9 +609,10 @@
                             </span>
                             <div class="abstract mb-2">
                                 <b>Abstract:</b>
-                                We present a technique for rendering displacement mapped geometry in a ray-tracing renderer. Displacement mapping is an important technique for adding detail to surface geometry in rendering systems. It allows complex geometric variation to be added to simpler geometry, without the cost in geometric complexity of completely describing the nuances of the geometry at modeling time and with the advantage that the detail can be added adaptively at rendering time. The cost of displacement mapping is geometric complexity. Renderers that provide it must be able to efficiently render scenes that have effectively millions of geometric primitives. Scan-line renderers process primitives one at a time, so this complexity doesn't tax them, but traditional ray-tracing algorithms require random access to the entire scene database, so any part of the scene geometry may need to be available at any point during rendering. If the displaced geometry is fully instantiated in
-                                memory, it is straightforward to intersect rays with it, but displacement mapping has not yet been practical in ray-tracers due to the memory cost of holding this much geometry. We introduce the use of a geometry cache in order to handle the large amounts of geometry created by displacement mapping. By caching a subset of the geometry created and rendering the image in a coherent manner, we are able to take advantage of the fact that the rays spawned by traditional ray-tracing algorithms are spatially coherent. Using our algorithm, we have efficiently rendered highly complex scenes while using a limited amount of memory.
+                                We present a technique for rendering displacement mapped geometry in a ray-tracing renderer. Displacement mapping is an important technique for adding detail to surface geometry in rendering systems. It allows complex geometric variation to be added to simpler geometry, without the cost in geometric complexity of completely describing the nuances of the geometry at modeling time and with the advantage that the detail can be added adaptively at rendering time.
                             </div>
+                            <div class="abstract mb-2">The cost of displacement mapping is geometric complexity. Renderers that provide it must be able to efficiently render scenes that have effectively millions of geometric primitives. Scan-line renderers process primitives one at a time, so this complexity doesn't tax them, but traditional ray-tracing algorithms require random access to the entire scene database, so any part of the scene geometry may need to be available at any point during rendering. If the displaced geometry is fully instantiated in memory, it is straightforward to intersect rays with it, but displacement mapping has not yet been practical in ray-tracers due to the memory cost of holding this much geometry.</div>
+                            <div class="abstract mb-2">We introduce the use of a geometry cache in order to handle the large amounts of geometry created by displacement mapping. By caching a subset of the geometry created and rendering the image in a coherent manner, we are able to take advantage of the fact that the rays spawned by traditional ray-tracing algorithms are spatially coherent. Using our algorithm, we have efficiently rendered highly complex scenes while using a limited amount of memory.</div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
                                 Caching a subset of the scene geometry in memory works out well when you're doing Whitted ray tracing and trying to render complex scenes with a few tens of megabytes of RAM. (Note: less RAM than a current CPU has in cache memory.) This paper was published in the olden days when you couldn't have a color image here there and everywhere in your paper. Therefore, the paper itself includes no images, but there are separate “color plates” for the reader's elucidation. At the conference, which was held in Porto, we found a restaurant named “Monte Carlo” that naturally had to be tried; Phil Dutré took a
