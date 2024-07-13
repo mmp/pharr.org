@@ -107,6 +107,40 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">A Free-Space Diffraction BSDF</h3>
+                            <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Arshiya Mollazainali, Eugene d'Eon, and Matt Pharr</div>
+                            <div>ACM Transactions on Graphics (Proceedings of SIGGRAPH 2024)</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/steinberg2024_fsd_paper.pdf">[PDF]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/steinberg2024_fsd_paper_lowres.pdf">[PDF (lowres)]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/steinberg2024_fsd_supplemental.pdf">[Supplemental]</a>
+                                <a href="https://github.com/ssteinberg/fsdBSDFpaper">[Code]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/diffraction.png" alt="" width="428" height="286" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Free-space diffractions are an optical phenomenon where light appears to "bend" around the geometric edges and corners of scene objects. In this paper we present an efficient method to simulate such effects. We derive an edge-based formulation of Fraunhofer diffraction, which is well suited to the common (triangular) geometric meshes used in computer graphics. Our method dynamically constructs a free-space diffraction BSDF by considering the geometry around the intersection point of a ray of light with an object, and we present an importance sampling strategy for these BSDFs. Our method is unique in requiring only ray tracing to produce free-space diffractions, works with general meshes, requires no geometry preprocessing, and is designed to work with path tracers with a linear rendering equation. We show that we are able to reproduce accurate diffraction lobes, and, in contrast to any existing method, are able to handle complex, real-world geometry.
+                                This work serves to connect free-space diffractions to the efficient path tracing tools from computer graphics.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                (None).
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Arshiya Mollazainali, Eugene d'Eon, and Matt Pharr. 2024. A Free-Space Diffraction BSDF. ACM Transactions on Graphics (Proceedings of SIGGRAPH 2024), 43(4).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/diffraction.png" alt="" width="428" height="286" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Filtering After Shading With Stochastic Texture Filtering</h3>
                             <div class="authors">Matt Pharr, Bartlomiej Wronski, Marco Salvi, and Marcos Fajardo</div>
                             <div>Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D '24)</div>
@@ -154,7 +188,7 @@
                             </div>
                             <div class="citation mb-2">
                                 <b>Citation:</b>
-                                Rohan Sawhney, Daqi Lin, Markus Kettunen, Benedikt Bitterli, Ravi Ramamoorthi, Chris Wyman, Matt Pharr. 2024. Decorrelating ReSTIR Samplers via MCMC Mutations, ACM Transactions on Graphics, January 2024.
+                                Rohan Sawhney, Daqi Lin, Markus Kettunen, Benedikt Bitterli, Ravi Ramamoorthi, Chris Wyman, Matt Pharr. 2024. Decorrelating ReSTIR Samplers via MCMC Mutations, ACM Transactions on Graphics, January 2024. 43(1), 10:1-15.
                             </div>
                         </div>
                         <div class="flex-shrink-0">
