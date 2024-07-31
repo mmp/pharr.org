@@ -146,6 +146,7 @@ AUS,
 AVL,
 BHM,
 BIL,
+BOI,
 BNA,
 BUF,
 C90,
@@ -176,6 +177,7 @@ PCT,
 PHL,
 PIT,
 RDU,
+R90,
 S46,
 S56,
 SAV,
@@ -586,6 +588,11 @@ Y90.
                     <td><code>SA</code></td>
                   </tr>
                   <tr>
+                    <td><code>SQ</code><i>code</i></td>
+                    <td>Instructs the aircraft to squawk the given beacon code.</td>
+                    <td><code>SQ1200</code></td>
+                  </tr>
+                  <tr>
                     <td><code>E</code><i>approach</i></td>
                     <td>Tells the aircraft to expect the specified
                     approach. This command must be used before an aircraft
@@ -721,7 +728,7 @@ Y90.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.27/Vice-v0.10.27-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.27 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.0/Vice-v0.11.0-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.0 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -730,7 +737,7 @@ Y90.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.10.27/Vice-v0.10.27-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.10.27 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.0/Vice-v0.11.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.0 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -756,6 +763,25 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.11.0 (31 July 2024)</h3>
+            <ul>
+              <li>New scenarios: R90 (Logan S, Jackson Verdoorn), BOI (Jonah Lefkoff).</li>
+              <li>Scenario updates: M98 (Logan S, Jackson Verdoorn), MCI, N90 (Jud Lopez),
+                D21, CLE (Gavin V), SAN (Justin Nguyen), D01 (Andrew S),
+                MHT, ACK, A90 (Michael Knight), AAC (Matt Pharr).</li>
+              <li>Added an underlying simulation of the NAS and STARS/ERAM
+              computers (Michael Trokel): this will allow the addition of
+              ERAM displays in the future and makes it possible to more
+              accurately model inter-facility coordination.</li>
+              <li>Multiple improvements to the realism of the STARS display
+                and sounds.</li>
+              <li>"Beaconator" added to STARS (F1).</li>
+              <li>Added "SQ" command to issue a beacon code to an aircraft.</li>
+              <li>Server memory use is reduced.</li>
+              <li>Facility engineering: there is now a "speed_restriction"
+              field for departures (Xavier Caldwell).</li>
+            </ul>
 
             <h3>0.10.27 (4 July 2024)</h3>
             <ul>
@@ -2686,6 +2712,40 @@ how it simulates aircraft or the STARS interface.
             <p>With the selection above, the two lowest levels, WX0 and WX1, are not shown, while all of the higher levels
               of precipitation are.</p>
 
+            <h3 id="stars-character-size">Audio</h3>
+
+            <p>Audio alerts are played when there is a minimum safe altitude warning for an aircraft,
+              if an aircraft is squawking a special purpose code (e.g., 7700 for an emergency),
+              it a SPC has been manually assigned to an aircraft, or if there is a conflict alert between
+              two aircraft.  The "VOL" control in the DCB can be used to control the volume of these alerts.
+            </p>
+            <p>A few keyboard commands can be used to control audio:</p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Command</th>
+                    <th style="width: 75%;">Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[MULTIFUNC]ZA</code></td>
+                    <td>Briefly plays the audio test sound.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]ZEE</code></td>
+                    <td>Enables audio alerts when an invalid command is entered.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[MULTIFUNC]ZEI</code></td>
+                    <td>Inhibits audio alerts when an invalid command is entered.</td>
+                  </tr>
+                </tbody>
+              </table>
+            <p><i>vice</i> also provides optional audio alerts for when there is an inbound handoff to the
+              current controller and when an outbound handoff is accepted (though real-world STARS does not have
+              these.  These alerts can be enabled and disabled under the "STARS" section of <i>vice</i>'s settings menu.</p>
+
             <h3 id="stars-preferences">Preferences</h3>
 
             
@@ -2875,11 +2935,16 @@ above</a> for information about the CRDA system list.</p>
               <ul>
                 <li><tt>-runserver</tt> launches a <i>vice</i> server on
                 your local system</li>
-                <li><tt>-server</tt> specifies the IP address and port of a <i>vice</i>
-                  server to connect to. Specifying <tt>localhost:8000</tt>
-                  will connect to a local server launched via <tt>-runserver</tt>.</li>
+                <li><tt>-server</tt> specifies the IP address and
+                  (optionally), the port of a <i>vice</i>
+                  server to connect to. Specifying <tt>localhost</tt>
+                  will connect to a local server launched
+                  via <tt>-runserver</tt>.
+                </li>
                 <li><tt>-port</tt> allows specifying a custom port number
-                for the server to listen to.</li>
+                  for the server to listen to.  If this is used, then the
+                  address supplied to <tt>-server</tt> should be of the
+                  form <i>hostname:port</i>.</li>
                 </ul>
 
             </section><!--//docs-intro-->
@@ -3534,6 +3599,11 @@ Given the id, the approach can be specified with:</p>
                 <td>the initial altitude that aircraft are cleared to. Aircraft given "cleared_altitude"
                   are implicitly given "climb via SID": they will obey altitude restrictions in the departure route and
                   climb no higher than the altitude given.</td>
+              </tr>
+              <tr>
+                <td>"speed_restriction"</td>
+                <td>Number</td>
+                <td><i>(Optional)</i> If present, gives a speed restriction in knots which aircraft will maintain until told otherwise by the controller.</td>
               </tr>
               <tr>
                 <td>"description"</td>
