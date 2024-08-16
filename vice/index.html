@@ -861,7 +861,7 @@ how it simulates aircraft or the STARS interface.
                   <li>Overflights can now be specified: "arrival_groups"
                     has become "inbound_flows", where both arrivals and
                     overflights can be specified.</li>
-                  <li>The number of video maps specified isn't limited to
+                  <li>The number of video maps specified is no longer limited to
                     the number of slots in the DCB. Excess maps can be
                     accessed via the MAPS list.</li>
                   <li>Added "maps_labels" to allow specifying the labels to
@@ -1876,18 +1876,18 @@ how it simulates aircraft or the STARS interface.
             <p>The display control bar (DCB) is a menu that is shown by default at the top of the STARS window.
               Many aspects of STARS's behavior can be configured using the DCB.</p>
             <div class="text-center">
-              <img src="dcb-basic.png" srcset="dcb-basic-2x.png 2x" style="max-width: 100%; height:auto;">
+              <img src="dcb-basic.png" srcset="dcb-basic-2x.png 2x" width="1428" height="76" style="max-width: 100%; height:auto;">
             </div>
             <br>
             <p>There are four types of buttons in the DCB:
               <ul>
-                <li>Toggle buttons: these enable and disable various features. When enabled, they are
-                  light green and appear depressed (like the "1 PHL WEST" and "WX" buttons above.) Clicking them
+                <li>Toggle buttons: these enable and disable various features. When enabled, they have a lighter
+                  color than usual and appear depressed (like the "OFF CNTR" and "WX 3", "WX 4", and "WX 5" buttons above.) Clicking them
                 toggles whether they are enabled.</li>
                 <li>Menu buttons: when clicked, they replace the contents of the DCB with those for another
                   DCB menu. For example, clicking "MAPS" from the main DCB brings up a menu for configuring which
                 STARS video maps are displayed.</li>
-                <li>Spinners: these allow setting various STARS parameters using the mouse wheel. For example, clicking "RANGE" allows setting the radar's range in nautical miles.  Spinners capture the mouse and don't allow the cursor to leave their button until the user either clicks the mouse or presses the <code>[ESCAPE]</code> key.</li>
+                <li>Spinners: these allow setting various STARS parameters using the mouse wheel. For example, clicking "RANGE" allows setting the radar's range in nautical miles.  Spinners capture the mouse and don't allow the cursor to leave their button until the user either clicks the mouse or presses the <code>[ESCAPE]</code> key. When a spinner is active, it is also possible to enter a new value for it using the keyboard and then pressing <code>[ENTER]</code>.</li>
                 <!-- TODO: spinners enter value and hit enter -->
                 <li>Disabled buttons: these are shown in dark grey and represent STARS functionality that is not currently available in <i>vice</i>.</li> 
               </ul>
@@ -1907,21 +1907,24 @@ how it simulates aircraft or the STARS interface.
                 <li>PREF: allows loading and saving <a href="#stars-preferences">STARS preference sets</a>.</li>
                 <li>SITE: configures which <a href="#stars-radar-site">radar sites</a> are active.</li>
                 <li>SSA FILTER/GI TEXT FILTER: configures which elements of the <a href="#stars-ssa-list">System Status Area list</a> are displayed.</li>
-                <li>SHIFT: displays the auxiliary DCB menu (documented below)</li>
+                <li>SHIFT: displays the auxiliary DCB menu (documented below).</li>
               </ul>
             </p>
             <p>Here is the auxiliary DCB:</p>
             <div class="text-center">
-              <img src="dcb-aux.png" srcset="dcb-aux-2x.png 2x" width="1121" height="71">
+              <img src="dcb-aux.png" srcset="dcb-aux-2x.png 2x" width="1202" height="76" style="max-width: 100%; height:auto;">
             </div>
             <br>
             <p>Many of its buttons are disabled; the enabled ones are:
               <ul>
+                <li>VOL: controls the volume of STARS audio alerts. A short test sound is played when it is changed.</li>
                 <li>HISTORY: sets the number of dots drawn showing the aircraft's <a href="#stars-track-ids-history">radar track history</a>.</li>
+                <li>H_RATE: sets the rate in seconds that a new dot is added to aircraft history trails.</li>
                 <li>DCB LEFT/RIGHT/TOP/BOTTOM: sets the side of the radar scope where the DCB is displayed.</li>
                 <li>PTL LNTH/PTL OWN/PTL ALL: controls <a href="#stars-ptl-lines">Predicted Track Lines</a> (PTLs).</li>
                 <li>DWELL: enables or disables <a href="#stars-dwell-mode">dwell mode</a>.</li>
                 <li>TPA/ATPA: displays a submenu to configure <a href="#stars-tpa-atpa">terminal proximity alerts (TPAs) and automated TPAs</a>.</li>
+                <li>SHIFT: returns to the main DCB menu.</li>
               </ul>
             </p>
             <p>Press the <code>[DCB]</code> key (control-F8) to toggle whether the DCB is visible.</p>
@@ -2185,7 +2188,7 @@ how it simulates aircraft or the STARS interface.
             </div><br>
             <p>The DCB offers two buttons for configuring leader lines:</p>
             <div class="text-center">
-              <img src="dcb-ldr.png" srcset="dcb-ldr-2x.png 2x" width="71" height="69">
+              <img src="dcb-ldr.png" srcset="dcb-ldr-2x.png 2x" width="75" height="76">
             </div><br>
             <p>The top button, LDR DIR, is a spinner that controls the default direction of leader lines for
               aircraft whose tracks that are owned by the current controller.
@@ -2386,7 +2389,7 @@ how it simulates aircraft or the STARS interface.
             <p>PTLs can be controlled using these buttons in the auxiliary DCB menu, which is shown by
               selecting SHIFT from the main DCB.</p>
             <div class="text-center">
-              <img src="ptl-dcb.png" srcset="ptl-dcb-2x.png 2x" width="146" height="69">
+              <img src="ptl-dcb.png" srcset="ptl-dcb-2x.png 2x" width="149" height="76">
             </div>
             <br>
             <p>PTL OWN sets whether PTLs are shown for tracks that are owned by the TCP,
@@ -2569,7 +2572,7 @@ how it simulates aircraft or the STARS interface.
             <p>TPA and ATPA can be configured by selecting "SHIFT" from the main DCB menu and then "TPA/ATPA".
               The following options are provided:</p>
             <div class="text-center">
-              <img src="tpa-atpa-dcb.png" srcset="tpa-atpa-dcb-2x.png 2x" width="350" height="70" class="img-fluid" alt="tpa/atpa DCB menu">
+              <img src="tpa-atpa-dcb.png" srcset="tpa-atpa-dcb-2x.png 2x" width="376" height="77" class="img-fluid" alt="tpa/atpa DCB menu">
             </div>
             <br>
             <p>The first four buttons toggle a particular TPA/ATPA option and display "ENABLED" if the corresponding option is enabled, and "INHIBTD" if it is inhibited. "DONE" returns to the previous DCB menu.</p>
@@ -2670,7 +2673,7 @@ how it simulates aircraft or the STARS interface.
               Finally, clicking "RR CNTR" causes the range rings to be centered on the point at the center of the radar scope.
             </p>
             <div class="text-center">
-              <img src="rr-buttons.png" srcset="rr-buttons-2x.png 2x" width="143" height="71" class="img-fluid" alt="Range rings buttons on the DCB">
+              <img src="rr-buttons.png" srcset="rr-buttons-2x.png 2x" width="151" height="75" class="img-fluid" alt="Range rings buttons on the DCB">
             </div>
             <br>
             <p>The radius of the range rings can also be set by entering <code>[RANGE]</code> and then 2, 5, 10, or 20, and then pressing enter.
@@ -2817,21 +2820,23 @@ how it simulates aircraft or the STARS interface.
 
             <h3 id="stars-weather">Weather</h3>
 
-            <p>The current weather radar can be displayed on the STARS scope. Here is an example South of KSEA.
+            <p>The current weather radar that shows precipitation can be displayed on the STARS scope. Here is an example South of KMIA.
               The blue-green areas indicate light precipitation, while the mustard-colored area is moderate to heavy precipitation.
               Stippling in the radar also indicates the strength, where a denser stipple is heavier precipitation.</p>
             <div class="text-center">
-              <img src="wx-radar.png" srcset="wx-radar-2x.png 2x" width="449" height="294" class="img-fluid" alt="Weather radar on radar scope">
+              <img src="wx-radar.png" srcset="wx-radar-2x.png 2x" width="216" height="222">
             </div>
             <br>
-            <p>The brightness of the radar on the STARS scope can be controlled using the "WX" spinner in the "BRITE" menu of the DCB.
-              It is also possible to control which levels of precipitation are shown using the "WX*" buttons in the main DCB:
+            <p>The brightness of the weather on the STARS scope can be controlled using the "WX" spinner in the "BRITE" menu of the DCB.
+              It is also possible to control which levels of precipitation are shown using the "WX*" buttons in the main DCB.
+              When precipitation of a given level is available to be displayed, "AVL" is shown in the button and the button has
+              a blue-grey color. When there is no precipitation, the corresponding button has the regular green color.
             </p>
             <div class="text-center">
-              <img src="wx-buttons.png" srcset="wx-buttons-2x.png 2x" width="211" height="71" class="img-fluid" alt="WX buttons on DCB">
+              <img src="wx-buttons.png" srcset="wx-buttons-2x.png 2x" width="230" height="77"  class="img-fluid" alt="WX buttons on DCB">
             </div>
             <br>
-            <p>With the selection above, the two lowest levels, WX0 and WX1, are not shown, while all of the higher levels
+            <p>With the selection above, the two lowest levels, WX1 and WX2, are not shown, while all of the higher levels
               of precipitation are.</p>
 
             <h3 id="stars-character-size">Audio</h3>
@@ -2923,9 +2928,9 @@ above</a> for information about the CRDA system list.</p>
                 </tbody>
                 </table>
 
-            <p>Which elements that are displayed in the SSA list can be configured by selecting the "SSA FILTER" menu from the main DCB.</p> 
+            <p>Which elements are displayed in the SSA list can be configured by selecting the "SSA FILTER" menu from the main DCB.</p> 
             <div class="text-center">
-              <img src="ssa-filter-dcb.png" srcset="ssa-filter-dcb-2x.png 2x" width="909" height="71" class="img-fluid" alt="tpa ring">
+              <img src="ssa-filter-dcb.png" srcset="ssa-filter-dcb-2x.png 2x" width="975" height="75" class="img-fluid" alt="tpa ring">
             </div>
             <br>
             <p>The buttons toggle display of the following elements:</p>
