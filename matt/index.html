@@ -107,6 +107,44 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Light Transport</h3>
+                            <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
+                            <div>ACM Transactions on Graphics (SIGGRAPH Asia)</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/rtplt_paper.pdf">[Paper]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/rtplt_lowres.pdf">[Paper (lowres)]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/rtplt_supplemental.pdf">[Supplemental]</a>
+                                <a href="https://www.youtube.com/watch?v=94ZAG7o5gvY">[Teaser video]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/spaceship-lowres.png" alt="" width="344" height="177" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Ray optics is the foundation of modern path tracing and sampling algorithms for computer graphics; crucially, it allows high-performance implementations based on ray tracing. However, many applications of interest in computer graphics and computational optics demand a more precise understanding of light: as waves. For example, accurately modelling scattering effects like diffraction or interference requires a model that provides the coherence of light waves arriving at surfaces. While recent work in Physical Light Transport has introduced such a model, it requires tracing light paths starting from the light sources, which is often less efficient than tracing them from the sensor, and does not allow the use of many effective importance sampling techniques.
+                            </div>
+                            <div class="abstract mb-2">
+                                We introduce a new model for wave optical light transport that is based on the fact that sensors aggregate the measurement of many light waves when capturing an image. This allows us to compactly represent the statistics of light waves in a
+                                <em>generalized ray</em>
+                                . Generalized rays allow sampling light paths starting from the sensor and applying sophisticated path tracing sampling techniques while still accurately modelling the wave nature of light. Our model is computationally efficient and straightforward to add to an existing path tracer; this offers the prospect of wave optics becoming the foundation of most renderers in the future. Using our model, we show that it is possible to render complex scenes under wave optics with high performance, which has not been possible with any existing method.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None yet!
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr. 2024. A Generalized Ray Formulation For Wave-Optics Light Transport. ACM Transactions on Graphics (Proceedings of SIGGRAPH Asia 2024), 43(6).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/spaceship-lowres.png" alt="" width="344" height="177" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">A Free-Space Diffraction BSDF</h3>
                             <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Arshiya Mollazainali, Eugene d'Eon, and Matt Pharr</div>
                             <div>ACM Transactions on Graphics (Proceedings of SIGGRAPH 2024)</div>
@@ -226,35 +264,6 @@
                         <div class="flex-shrink-0">
                             <span class="d-none d-lg-block">
                                 <div><img class="img-fluid img-paper" src="assets/img/artowen.png" alt="" width="388" height="274" loading="lazy" /></div>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
-                        <div class="flex-grow-1">
-                            <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Rendering</h3>
-                            <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
-                            <div><a href="https://arxiv.org/abs/2303.15762">arxiv cs.GR</a></div>
-                            <div class="mb-3"><a href="https://arxiv.org/pdf/2303.15762.pdf">[Paper]</a></div>
-                            <span class="d-lg-none">
-                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/waveoptics.jpg" alt="" width="388" height="380" loading="lazy" /></div>
-                            </span>
-                            <div class="abstract mb-2">
-                                <b>Abstract:</b>
-                                Under ray-optical light transport, the classical ray serves as a local and linear “point query” of light’s behaviour. Such point queries are useful, and sophisticated path tracing and sampling techniques enable efficiently computing solutions to light transport problems in complex, real-world settings and environments. However, such formulations are firmly confined to the realm of ray optics, while many applications of interest, in computer graphics and computational optics, demand a more precise understanding of light. We rigorously formulate the generalized ray, which enables local and linear point queries of the wave-optical phase space. Furthermore, we present sample-solve: a simple method that serves as a novel link between path tracing and computational optics. We will show that this link enables the application of modern path tracing techniques for wave-optical rendering, improving upon the state-of-the-art in terms of the generality and accuracy
-                                of the formalism, ease of application, as well as performance. Sampling using generalized rays enables interactive rendering under rigorous wave optics, with orders-of-magnitude faster performance compared to existing techniques.
-                            </div>
-                            <div class="comments mb-2">
-                                <b>Comments:</b>
-                                ...
-                            </div>
-                            <div class="citation mb-2">
-                                <b>Citation:</b>
-                                Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr. 2023. A Generalized Ray Formulation For Wave-Optics Rendering. arXiv: 2303.15762 [cs.GR]
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="d-none d-lg-block">
-                                <div><img class="img-fluid img-paper" src="assets/img/waveoptics.jpg" alt="" width="388" height="380" loading="lazy" /></div>
                             </span>
                         </div>
                     </div>
@@ -676,7 +685,7 @@
                     <h3 class="mb-1">Committees</h3>
                     <ul>
                         <li>Papers Chair, Eurographics Symposium on Rendering 2020 (with Carsten Dachsbacher)</li>
-                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022, 2023</li>
+                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022, 2023, 2024</li>
                         <li>Program Chair, High Performance Graphics 2014</li>
                         <li>Conference Chair, High Performance Graphics 2011 (with John Owens)</li>
                         <li>Papers Chair, High Performance Graphics 2009 (with David McAllister and Ingo Wald)</li>
@@ -757,8 +766,7 @@
                         </li>
                         <li>
                             <b>vice:</b>
-                            In the "software with a very small audience" department, I've lately been hacking on an air traffic control simulator, patterened on the STARS radar scope used in the US. The intent is for it to be useful for practicing for TRACON controlling on
-                            <a href="https://vatsim.net">VATSIM.</a>
+                            In the "software with a small audience" department, I've lately been hacking on an air traffic control simulator, patterened on the STARS radar scope used in the US.
                             <a href="https://pharr.org/vice">[documentation]</a>
                             <a href="https://github.com/mmp/vice">[source]</a>
                         </li>
