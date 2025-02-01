@@ -762,7 +762,7 @@ Y90.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.11.6/Vice-v0.11.6-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.6 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.7/Vice-v0.11.7-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.7 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -771,7 +771,7 @@ Y90.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.11.6/Vice-v0.11.6-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.6 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.7/Vice-v0.11.7-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.7 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -797,6 +797,54 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.11.7 (31 January 2025)</h3>
+            <ul>
+              <li>New scenarios: MDT (Darius L), PVD (radarcontacto).</li>
+              <li>Scenario updates: DCA (radarcontacto), SCT (Aiden), JFK airspace (Mike LeGall), Y90 (Merry), L30, NCT, P80, SCT, SDF (Ketan K).</li>
+              <li>Airspace boundaries are now displayed using the scenario information window
+                (displayed by clicking <i class="fas fa-question-circle"></i> in the menubar.)</li>
+              <li>Improve fetching of airport weather (Makoto Sakaguchi.)</li>
+              <li>Fixed a bug that was causing vice to crash when loading saved sims.</li>
+              <li>Fixed a bug where "expedite" would be refused incorrectly.</li>
+              <li>Fixed a bug where departures would climb beyond upcoming altitude constraints in SIDs.</li>
+              <li>Fixed a bug where aircraft would incorrectly descend along an approach they weren't yet cleared for.</li>
+              <li>Fixed multiple bugs with the launch control window.</li>
+              <li>Removed text input from the messages pane: it's back to just printing radio calls and messages.</li>
+              <li>Updated handoffs so that there is a delay of 5-10 seconds before aircraft call in after the track is accepted.
+                <b>Note that you can't give control instructions to an aircraft until they call in and are on your frequency.</b></li>
+              <li>STARS:
+                <ul>
+                  <li>Continue to display the id for external facility handoffs in datablocks for a few seconds.</li>
+                  <li>Improved the accuracy of the mapping of precipitation to WX levels.</li>
+                  <li>Allow selecting "," as an alternative to ";" for TGT GEN.</li>
+                  <li>Departures are now auto-tracked by default.</li>
+                  <li>Improve representation of SPCs (Makoto Sakaguchi.)</li>
+                  <li>Improve handling of altimeters in SSA list: don't draw more than 6, allow developer to specify the ones
+                    to draw via "altimeters" in "stars_config" if there are more than 6.</li>
+                  <li>When a partial callsign is given to specify an aircraft to be given an instruction, it must be
+                    a unique suffix of an aircraft callsign; we no longer accept a prefix or the middle part of a callsign.</li>
+                  <li>OJTI mode now available where an instructor can issue aircraft control commands (Michael Trokel).</li>
+                </ul>
+              <li>Facility engineering:
+                <ul>
+                  <li>New adaptations under "stars_config": "handoff_acceptance_flash_duration" gives the number of seconds
+                    datablocks flash after an accepted handoff, "handoff_sector_display_duration" gives the number of seconds
+                    the external sector id is displayed after a handoff, and "display_handoff_facility_only" inhibits the
+                    display of external facility sector ids in datablocks.</li>
+                  <li>Airspace is now specified per-controller rather than being classified as departure/approach airspace.</li>
+                  <li>In controller specifications, "full_name" is now "radio_name" to better reflect its use.</li>
+                  <li>"/clearapp" can be added after a fix in a route to cause aircraft to be cleared for the approach at that fix.
+                    (Useful for ambient traffic under computer control.)</li>
+                  <li>An error is now issued if more than one controller has the same sector id assigned.</li>
+                  <li>Fix parsing of both approaches and altitude constraints in the ARINC424 data (Makoto Sakaguchi.)</li>
+                  <li>Updated to latest AIRAC cycle.</li>
+                  <li>Fixed a bug with Δ in scratchpad assignments in scenario definitions.</li>
+                  <li>"tower_controller" is no longer included in approach definitions.</li>
+                  <li>Expanded the magnetic declination database to include Japan and Puerto Rico.</li>
+                </ul>
+              </li>
+            </ul>
 
             <h3>0.11.6 (22 October 2024)</h3>
             <ul>
@@ -3983,28 +4031,9 @@ how it simulates aircraft or the STARS interface.
               <img src="violation.png" srcset="violation-2x.png 2x" width="136" height="66">
             </div>
             <br>
-            <p>
-              Two commands are available to draw the boundaries and altitude ranges of the departure and approach airspace.
-              (Note that the placement of the drawn altitude labels is not always ideal.)
-              </p>
-              <table class="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>Command</th>
-                    <th>Function</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>DA</code></td>
-                    <td>Draw the approach airspace, or stop drawing the approach airspace if it is currently being shown.</td>
-                  </tr>
-                  <tr>
-                    <td><code>DD</code></td>
-                    <td>Draw the departure airspace, or stop drawing the departure airspace if it is currently being shown.</td>
-                  </tr>
-                </tbody>
-              </table>
+            <p>The airspace volumes associated with controllers can be displayed by clicking on the
+              <i class="fas fa-question-circle"></i> button in the menubar to display the information window
+              and then opening the "Airspace" section.</p>
 
           </section>
 
@@ -4850,6 +4879,8 @@ how it simulates aircraft or the STARS interface.
                 and if it is under the control of a virtual controller,
                 issue a point out to the controller identified by the given TCP id (i.e., the
                 controller ID that would be used when doing a point out in STARS.)</li>
+              <li> <code>/clearapp</code>: the aircraft will be cleared for the assigned approach passing the fix.
+              (This is intended for ambient traffic that's not under the control for a human.)</li>       
               <li> <code>/iaf</code>: indicates that the fix is an IAF (initial approach fix)</li>
               <li> <code>/if</code>: indicates that the fix is the IF (intermediate fix)</li>
               <li> <code>/faf</code>: indicates that the fix is the FAF (final approach fix)</li>
@@ -4999,11 +5030,7 @@ how it simulates aircraft or the STARS interface.
                   <p>One additional member may be required.</p>
                   <ul>
                     <li>"default_airport": when CRDA is used, each
-                    controller must have a default airport for CRDA
-                      commands. <i>vice</i> tries to use the controller's
-                      callsign to determine this airport (e.g., LGA_V_APP has LGA as a default).
-                      If the start of the callsign does not identify a valid airport
-                      then the default must be specified explicitly.</li>
+                    controller must have a default airport specified for CRDA commands.</li>
                   </ul>
                 </td>
               </tr>
@@ -5031,10 +5058,11 @@ how it simulates aircraft or the STARS interface.
                 </td>
               </tr>
               <tr>
-                <td>"magnetic_variation"</td>
+                <td>"magnetic_adjustment"</td>
                 <td>Number</td>
-                <td>Number of degrees difference between true North and magnetic North.
-                  Around New York, for example, this value is approximately 13.</td>
+                <td>Number of degrees to add to the magnetic variation computed using the built-in magnetic model.
+                  (Sometimes when video maps are a few years old, they may be out of sync with the actual magnetic variation.)
+                  </td>
               </tr>
               <tr>
                 <td>"name"</td>
@@ -5925,10 +5953,46 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
               volumes of airspace, it's often useful to define boundaries just as polylines and to assemble multiple boundaries
               to define the lateral extent of a volume of airspace.
             </p>
-            <p>Given the boundaries, "volumes" specifies full 3D volumes of airspace.  Airspace volumes have three members; "boundaries"
-              is an array of strings that names the boundaries that give the airspace's lateral extent, and "lower" and "upper" specify the
-              altitude range of the airspace.  Here is an example from KPHL that uses the boundary defined above:
-              </p>
+            <p>Given the boundaries, "volumes" specifies full 3D volumes of airspace.  Airspace volumes have the following members:</p>
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"boundaries"</td>
+                <td>Array of strings</td>
+                <td>The names of one or more lateral airspace boundaries defined in the "airspace" "boundaries" object specifiers.</td>
+              </tr>
+              <tr>
+                <td>"lower"</td>
+                <td>Number</td>
+                <td>Lower altitude of the volume's vertical extent, in feet.</td>
+              </tr>
+              <tr>
+                <td>"upper"</td>
+                <td>Number</td>
+                <td>Upper altitude of the volume's vertical extent, in feet.</td>
+              </tr>
+              <tr>
+                <td>"label"</td>
+                <td>String</td>
+                <td>(<i>Optional</i>) The label to draw on the map for the volume when it is displayed. If not specified, the altitude range
+                (in hundreds of feet) is shown.</td>
+              </tr>
+              <tr>
+                <td>"label_position"</td>
+                <td>String</td>
+                <td>(<i>Optional</i>) If specified, this gives the position at which to draw the label.
+                  If not specified, the center point of the boundary polygons is used.</td>
+              </tr>
+            </tbody>
+            </table>
+            <p>Here is an example from KPHL that uses the boundary defined above:</p>
             <pre>
   "PHL_DU_APP27": [
     {
@@ -5959,10 +6023,13 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
             </thead>
             <tbody>
               <tr>
-                <td>"approach_airspace"</td>
-                <td>Array of strings</td>
-                <td>If <a href="#fe-airspace">airspace</a> has been specified in the scenario group, then these strings give the names
-                of the airspace volumes that arrivals should remain inside.</td>
+                <td>"airspace"</td>
+                <td>Object</td>
+                <td>Each member in the object defines the airspace associated with a control position.
+                  The object key is a controller id and the value is an array of strings, each of which
+                  corresponds to an airspace volume defined in the <a href="#fe-airspace">"airspace"</a>
+                  section of the scenario group.
+                </td>
               </tr>
               <tr>
                 <td>"arrival_runways"</td>
@@ -6110,6 +6177,15 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 </td>
               </tr>
               <tr>
+                <td>"altimeters"</td>
+                <td>Array of strings</td>
+                <td>If specified, lists the airports whose altimeters are displayed in the SSA list; no more than 6 airports can be given.
+                  The first altimeter value is also shown at the top of the list.
+                  If "altimeters" is not specified and if there are more than 6 airports in a scenario, only altimeters for the
+                  first 6 in alphabetical order will be shown and the first one will be shown at the top of the list.
+                </td>
+              </tr>
+              <tr>
                 <td>"airspace_awareness"</td>
                 <td>Array of objects</td>
                 <td>Each of these objects specify an airspace awareness rule for a TRACON. Each object has the
@@ -6169,11 +6245,29 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 </td>
               </tr>
               <tr>
+                <td>"display_handoff_facility_only"</td>
+                <td>Boolean</td>
+                <td>If true, then the sector id of external facilities is not shown in the datablock
+                  for inbound and outbound handoffs.</td>
+              </tr>
+              <tr>
                 <td>"force_ql_self"</td>
                 <td>Boolean</td>
                 <td>Indicates whether controllers may
                 enter <code>**[SLEW]</code> to make a track appear yellow
                 on their own scope.</td>
+              </tr>
+              <tr>
+                <td>"handoff_acceptance_flash_duration"</td>
+                <td>Number</td>
+                <td>If non-zero, gives the number of seconds that the datablock should flash after a handoff is accepted.
+                  If unset, datablocks will flash for 5 seconds.</td>
+              </tr>
+              <tr>
+                <td>"handoff_sector_display_duration"</td>
+                <td>Number</td>
+                <td>If non-zero, gives the number of seconds that the sector id for a handoff to/from an
+                  external facilities is shown in the datablock after the handoff has been accepted.</td>
               </tr>
               <tr>
                 <td>"inhibit_ca_volumes"</td>
