@@ -762,7 +762,7 @@ Y90.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.11.7/Vice-v0.11.7-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.7 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.8/Vice-v0.11.8-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.8 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -771,7 +771,7 @@ Y90.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.11.7/Vice-v0.11.7-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.7 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.11.8/Vice-v0.11.8-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.11.8 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -797,6 +797,43 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3>0.11.8 (19 February 2025)</h3>
+            <ul>
+              <li>New scenario: SBA (Ketan K).</li>
+              <li>Scenario updates: SAN, BUR, NCT, L30 (Ketan K), EWR, JFK (Mike LeGall), JAX (Jud Lopez), D01, GJT, ASE, COS (Andrew S), MDT (Darius L), BOS (radarcontacto).</li>
+              <li>Aircraft can now intercept the approach for non-ILS approaches.</li>
+              <li>Multiple fixes to the server that should reduce memory use and make the server more robust.</li>
+              <li>There's now a few minutes delay before takeoff for released "hold for release" aircraft.</li>
+              <li>Aircraft will now intercept an approach if they are direct to a fix on it.</li>
+              <li>Fixed bug where overflights would be climbed to their cruising altitude.</li>
+              <li>Aircraft wait 5-10 seconds before changing their beacon codes when a new one is assigned.</li>
+              <li>Fixed bug where departures would climb prematurely.</li>
+              <li>Aircraft that are too high when they cross the threshold go missed.</li>
+              <li>Fix bug with delayed descents when aircraft are cleared for the approach after being told to intercept.</li>
+              <li>UI: rework table layouts for departure/arrival rates to be more compact.</li>
+              <li>An audio alert can now be optionally played when aircraft check in or transmit radio messages.</li>
+              <li>Props now lose a bit of speed in climbs.</li>
+              <li>A notification sound can now be played when aircraft transmit on the radio or first call in.</li>
+              <li>STARS:
+                <ul>
+                  <li>Multiple bug fixes to how point outs are shown</li>
+                  <li>Flash "DB" in data blocks for duplicate beacon codes.</li>
+                  <li>Fixed bug where altimeter would not be shown for airports in "altimeters" under some circumstances.</li>
+                  <li>Controllers can now take control of point outs via <code>[HND OFF][SLEW]</code></li>
+                  <li>Point outs can now be recalled by slewing the target.</li>
+                  <li>Fix WX blocks to be 0.5nm wide.</li>
+                </ul>
+              </li>
+              <li>Facility engineering:
+                <ul>
+                  <li>All approaches must have a fix denoted as the FAF via <code>/faf</code>.</li>
+                  <li>"VOR" and "Localizer" may now be given for the "type" of approaches.</li>
+                  <li><code>/hoID</code> may be given after a fix in a route to cause the aircraft to be handed off to the given
+                    controller id at that fix. (Mostly useful for aircraft controlled by virtual controllers.)</li>
+                </ul>
+              </li>
+            </ul>
 
             <h3>0.11.7 (31 January 2025)</h3>
             <ul>
@@ -1001,6 +1038,12 @@ how it simulates aircraft or the STARS interface.
               field for departures (Xavier Caldwell).</li>
             </ul>
 
+            <div class="container">
+              <button id="toggleButton">🔍 Show Earlier Releases</button>
+              <br>
+            <div id="hiddenText" style="display:none;">
+              <br>
+
             <h3>0.10.27 (4 July 2024)</h3>
             <ul>
 	      <li>New scenarios: MCI (Brody Carty), P31 (Josh Lambert).</li>
@@ -1094,12 +1137,6 @@ how it simulates aircraft or the STARS interface.
               <li>Fixed various minor bugs with aircraft command input.</li>
               <li>Fixed bug where aircraft callsign numbers could start with 0.</li>
             </ul>
-
-            <div class="container">
-              <button id="toggleButton">🔍 Show Earlier Releases</button>
-              <br>
-            <div id="hiddenText" style="display:none;">
-              <br>
 
             <h3>0.10.22 (28 April 2024)</h3>
             <ul>
@@ -2363,6 +2400,11 @@ how it simulates aircraft or the STARS interface.
                     <td><code>UN[SLEW]</code></td>
                     <td>If the aircraft is being pointed out to the controller, rejects the point out.
                     </td>
+                  </tr>
+                  <tr>
+                    <td><code>[HND OFF][SLEW]</code></td>
+                    <td>If the aircraft is being pointed out to a controller, takes ownership of the aircraft's
+                      track.</td>
                   </tr>
                   <tr>
                     <td><code>[MULTIFUNC]O[SLEW]</code> /<br><code>[MULTIFUNC]O (ACID)</code></td>
@@ -4874,7 +4916,11 @@ how it simulates aircraft or the STARS interface.
               <li> <code>/delete</code><i>heading</i>: the aircraft will be deleted when it reaches the fix</li>
               <li> <code>/h</code><i>heading</i>: depart the fix at specified heading</li>
               <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
-              <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller to the user when it departs the fix</li>       
+              <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller departs the fix.
+                A TCP id may be specified after <code>/ho</code>, in which case the aircraft is handed off to the
+                corresponding virtual controller. If no TCP id is specified, the aircraft is handed off to the
+                appropriate human controller.
+              </li>
               <li> <code>/po</code><i>TCP id</i>: when the aircraft passes the waypoint
                 and if it is under the control of a virtual controller,
                 issue a point out to the controller identified by the given TCP id (i.e., the
@@ -4908,12 +4954,12 @@ how it simulates aircraft or the STARS interface.
             <p>For approach fixes that have procedure turns, a number of additional items can be specified:</p>
             <ul>
               <li><code>/hilpt</code>: there is a hold in lieu of procedure turn (i.e., a racetrack procedure turn) associated with the fix.
-                The default is right turns and a 1 minute limit for ILS approaches and a 4 nm limit for RNAV approaches.
+                The default is right turns and a 1 minute limit for ILS/VOR/LOC approaches and a 4 nm limit for RNAV approaches.
                 Different limits can be specified directly; for example <code>/hilpt6nm</code> gives a procedure turn with a 6 nm limit and
                 <code>/hilpt2min</code> specifies a 2 minute limit.  For left turns, add a <code>l</code> after the slash, like
                 <code>/lhilpt</code>.</li>
               <li><code>/pt45</code>: specifies that there is a standard 45 degree procedure turn at the fix. (This has the same defaults&mdash;
-                right turns, 1 minute (ILS) / 4 nm (RNAV)&mdash;as HILPTs. Alternative values are specified the same way.)</li>
+                right turns, 1 minute (ILS/VOR/LOC) / 4 nm (RNAV)&mdash;as HILPTs. Alternative values are specified the same way.)</li>
               <li><code>/pta</code><i>altitude</i>: if the aircraft should descend during the procedure turn, this can be used to specify
               the final altitude it should have at the end of the turn. (The altitude should be given in 100s of feet.)</li>
               <li><code>/nopt180</code>: specifies that aircraft approaching the fix in the 180 degree semicircle of directions aligned
@@ -5303,7 +5349,10 @@ Given the id, the approach can be specified with:</p>
               <tr>
                 <td>"cifp_id"</td>
                 <td>String</td>
-                <td>A string giving the identifier of the approach in the CIFP (e.g., "RZ14").</td>
+                <td>A string giving the identifier of the approach in the CIFP (e.g., "RZ14").
+                  When this is specified, the full name of the approach and the corresponding runway are determined
+                  automatically from the string.
+                </td>
               </tr>
               <tr>
                 <td>"tower_controller"</td>
@@ -5332,7 +5381,7 @@ Given the id, the approach can be specified with:</p>
                 <td>"full_name"</td>
                 <td>String</td>
                 <td><i>(Optional)</i> A string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
-                  If not specified and the approach is ILS or RNAV the approach's name is generated automatically using "runway" and "type".</td>
+                  If not specified and the approach is not a visual approach, the approach's name is generated automatically using "runway" and "type".</td>
               </tr>
               <tr>
                 <td>"runway"</td>
@@ -5349,7 +5398,7 @@ Given the id, the approach can be specified with:</p>
               <tr>
                 <td>"type"</td>
                 <td>String</td>
-                <td>The type of the approach; it must be "ILS", "RNAV", or "Visual".</td>
+                <td>The type of the approach; it must be "ILS", "Localizer", "RNAV", "Visual", or "VOR".</td>
               </tr>
               <tr>
                 <td>"waypoints"</td>
@@ -6207,6 +6256,12 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 <td>"center"</td>
                 <td>String</td>
                 <td>Default radar scope center (as a <a href="#fe-locations">latitude-longitude position</a>.)</td>
+              </tr>
+              <tr>
+                <td>"beacon_bank"</td>
+                <td>Number</td>
+                <td>This should be an integer between 1 and 7: it gives the range of beacon codes that should
+                  be assigned to aircraft: e.g. 1 means from 0101 to 0107.</td>
               </tr>
               <tr>
                 <td>"controller_configs"</td>
