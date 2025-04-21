@@ -107,6 +107,39 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Improved Stochastic Texture Filtering Through Sample Reuse</h3>
+                            <div class="authors">Bartlomiej Wronski, Matt Pharr, and Tomas Akenine-Möller</div>
+                            <div>ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D), 2025</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/stf_sample_reuse.pdf">[Paper]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/stf_sample_reuse_supplemental.pdf">[Supplemental]</a>
+                                <a href="https://research.nvidia.com/labs/rtr/publication/wronski2025stfreuse/stf_sample_reuse_video.mp4">[Video]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/quadcomm-stf.png" alt="" width="344" height="343" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Stochastic texture filtering (STF) has re-emerged as a technique that can bring down the cost of texture filtering of advanced texture compression methods, e.g., neural texture compression. However, during texture magnification, the swapped order of filtering and shading with STF can result in aliasing. The inability to smoothly interpolate material properties stored in textures, such as surface normals, leads to potentially undesirable appearance changes. We present a novel method to improve the quality of stochastically-filtered magnified textures and reduce the image difference compared to traditional texture filtering. When textures are magnified, nearby pixels filter similar sets of texels and we introduce techniques for sharing texel values among pixels with only a small increase in cost (0.04-0.14 ms per frame). We propose an improvement to weighted importance sampling that guarantees that our method never increases error beyond single-sample
+                                stochastic texture filtering. Under high magnification, our method has >10 dB higher PSNR than single-sample STF. Our results show greatly improved image quality both with and without spatiotemporal denoising.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Bartlomiej Wronski, Matt Pharr, and Tomas Akenine-Möller. 2025. Improved Stochastic Texture Filtering Through Sample Reuse. Proceedings of the ACM on Computer Graphics and Interactive Techniques (ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/quadcomm-stf.png" alt="" width="344" height="343" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Light Transport</h3>
                             <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
                             <div>ACM Transactions on Graphics (SIGGRAPH Asia)</div>
