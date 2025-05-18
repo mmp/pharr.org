@@ -3648,10 +3648,9 @@ how it simulates aircraft or the STARS interface.
               </table>
 
             <h3>Deleting Flight Plans</h3>
-            
-            [term ctrl](FLT ID) deletes the flight plan, even if not associated
 
-            TODO: [VP](FLT ID) delete VFR flight plan
+            <p>Two commands are available for deleting flight plans. If a flight plan is associated with a
+              track, the track becomes unassociated if it is deleted.</p>
 
             <table class="table table-bordered">
               <thead>
@@ -3661,6 +3660,14 @@ how it simulates aircraft or the STARS interface.
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td><code>[TERM CNTL](FLT ID)</code></td>
+                  <td>Deletes the flight plan identified by the flight identifier.</td>
+                </tr>
+                <tr>
+                  <td><code>[VP](FLT ID)</code></td>
+                  <td>Deletes the VFR flight plan identified by the flight identifier.</td>
+                </tr>
                 <tr>
                   <td><code></code></td>
                   <td></td>
@@ -6147,14 +6154,12 @@ how it simulates aircraft or the STARS interface.
               <tr>
                 <td>"vfr_reporting_points"</td>
                 <td>Array of objects</td>
-                <td>Each object specifies a VFR reporting point and a volume of airspace associated with it. VFR aircraft
-                  must be inside such a volume to be able to call and ask for flight following.
-                  VFR reporting point objects have the same members as <a href="#fe-stars-filters">Filter Regions</a>, with
-                  the following differences:
+                <td>Each object specifies a VFR reporting point. VFR aicraft that call for flight following will
+                  report their position referencing one of these points, a nearby airport, or a nearby VOR.
+                  Each object has two members:
                   <ul>
-                    <li>The "description" field is used as the location that they reference when they report their position.</li>
-                    <li>If not specified, the "type" is set to "circle".</li>
-                    <li>If the type of airspace volume is "circle" and no radius is specified, a default radius of 5nm is used.</li>
+                    <li>"description": string giving the location aircraft reference when they report their position.</li>
+                    <li>"location": the location of the reference point.</li>
                   </ul>
                 </td>
               </tr>
@@ -7246,7 +7251,7 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 <td>"default_maps"</td>
                 <td>Array of strings</td>
                 <td>The names of the initial video maps that should be displayed when this scenario is selected.
-                  Note that "default_maps" may not be used if "controller_configs" is specified in "stars_maps";
+                  Note that "default_maps" may not be used if "stars_maps" is specified in "controller_configs";
                   in that case controller-specific default maps can be specified there.
                 </td>
               </tr>
@@ -7410,8 +7415,8 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 <td>"controller_configs"</td>
                 <td>Object</td>
                 <td>Each entry specifies controller-specific configuration properties.
-                  The applicable control positions are specified via members given as a comma-separated string of TCP positions
-                  (e.g., "2G,2K"). The following properties may be specified for each one:
+                  The applicable control positions are specified via members given as a TCP position
+                  (e.g., "2G"). The following properties may be specified for each one:
                   <br>
                   <ul>
                     <li>"beacon_code_blocks": a string containing a comma-separated list of beacon code banks
@@ -7420,6 +7425,10 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                       If specified, this overrides any center specified in the scenario or scenario group.</li>
                     <li>"default_maps": an array of strings that specifies which maps in "video_maps"
                       should be initially displayed.</li>
+                    <li>"flight_following_airspace": an array of regions of airspace (both lateral and vertical)
+                      following the form that is used for defining <a href="#fe-stars-filters">filter regions</a>.
+                      (In this case, "id" and "description" are optional.") Only VFR aircraft within the specified
+                      region will call the controller for flight following.</li> 
                     <li>"range": the initial range for the controller's scope in nautical miles.
                       If specified, this overrides any range specified in the scenario or scenario group.</li>
                     <li>"video_maps": an array of strings specifying which video maps should be displayed
@@ -7488,7 +7497,6 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                       if none are specified. </li>
                     <li>"quicklook": the full datablock of any tracks owned by another controller is displayed
                       rather than the partial datablock for tracks in the filter region.</li>
-                    <li>"vfr_inhibit": random VFR routes will not be generated through this filter's airspace.</li>
 		    <li>"secondary_drop": if an associated <b>exits</b> a secondary drop filter region, is controlled
                       by a controller outside of the TRACON, and was previously controlled by a controller
                       inside the current TRACON, its flight plan disassociates and is deleted.
@@ -7496,6 +7504,9 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                       inside the region. Secondary drop region are thus often specified along the boundary of
                       a TRACON.)
                       There are no default "secondary_drop" filters.</li>
+                    <li>"surface_tracking": defines a region of airspace off the ground at airports where
+                      radar tracks are not shown. By default, up to 250' AGL 1.5nm around each airport.</li>
+                    <li>"vfr_inhibit": random VFR routes will not be generated through this filter's airspace.</li>
                   </ul>
                 </td>
               </tr>
