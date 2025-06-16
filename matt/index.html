@@ -107,6 +107,39 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Collaborative Texture Filtering</h3>
+                            <div class="authors">Tomas Akenine-Möller, Pontus Ebelin, Matt Pharr, and Bart Wronski</div>
+                            <div>ACM/EG Symposium on High Performance Graphics (HPG), 2025</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/collaborative_texfilt.pdf">[Paper]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/collaborative_texfilt_video1.mp4">[Video 1]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/collaborative_texfilt_video2.mp4">[Video 2]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/collaborative-texfilt.png" alt="" width="344" height="344" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Recent advances in texture compression provide major improvements in compression ratios, but cannot use the GPU's texture units for decompression and filtering. This has led to the development of stochastic texture filtering (STF) techniques to avoid the high cost of multiple texel evaluations with such formats. Unfortunately, those methods can give undesirable visual appearance changes under magnification and may contain visible noise and flicker despite the use of spatiotemporal denoisers. Recent work substantially improves the quality of magnification filtering with STF by sharing decoded texel values between nearby pixels (Wronski et al. 2025). Using GPU wave communication intrinsics, this sharing can be performed inside actively executing shaders without memory traffic overhead. We take this idea further and present novel algorithms that use wave communication between lanes to avoid repeated texel decompression prior to filtering. By distributing
+                                unique work across lanes, we can achieve zero-error filtering using ≤1 texel evaluations per pixel given a sufficiently large magnification factor. For the remaining cases, we propose novel filtering fallback methods that also achieve higher quality than prior approaches.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Tomas Akenine-Möller, Pontus Ebelin, Matt Pharr, and Bart Wronski. 2025. Collaborative Texture Filtering. Proceedings of the ACM/EG Symposium on High Performance Graphics (HPG).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/collaborative-texfilt.png" alt="" width="344" height="344" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Improved Stochastic Texture Filtering Through Sample Reuse</h3>
                             <div class="authors">Bartlomiej Wronski, Matt Pharr, and Tomas Akenine-Möller</div>
                             <div>ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D), 2025</div>
@@ -125,7 +158,9 @@
                             </div>
                             <div class="comments mb-2">
                                 <b>Comments:</b>
-                                None.
+                                For better or for worse, we developed significantly improved techniques for sharing texels among pixels shortly after the publication of this paper; those were published in
+                                <i>Collaborative Texture Filtering</i>
+                                . Nevertheless, this paper also includes a novel Monte Carlo estimator, improvements to blue noise masks for sample sharing, as well as new techniques for generating stochastic footprints for sharing among nearby pixels, all of which remain useful.
                             </div>
                             <div class="citation mb-2">
                                 <b>Citation:</b>
