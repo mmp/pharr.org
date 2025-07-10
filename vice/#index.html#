@@ -1073,6 +1073,7 @@ how it simulates aircraft or the STARS interface.
               <li>Fixed various bugs with altitude reporting, approach intercepts, and departure release flow.</li>
               <li>Fixed (hopefully) bugs that were causing the server to crash.</li>
               <li>Improved instructor sign-on flow: it's possible to be an instructor without signing into a control position.</li>
+              <li>Departures are automatically held as needed based on same-runway arrivals and intersecting-runway departures.<
               <li>STARS:
                 <ul>
                   <li>Don't draw history trails for unsupported datablocks.</li>
