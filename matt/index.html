@@ -107,6 +107,55 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">
+                                SZ Sequences: Binary-Constructed (0,2
+                                <sup>q</sup>
+                                )-Sequences
+                            </h3>
+                            <div class="authors">Abdalla G. M. Ahmed, Matt Pharr, Victor Ostromoukhov, and Hui Huang</div>
+                            <div>ACM Transactions on Graphics (SIGGRAPH Asia) 2025</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/sz-sequences.pdf">[Paper]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/sz-sequences-supplemental.pdf">[Supplemental]</a>
+                                <a href="https://arxiv.org/abs/2505.20434">[arXiv]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/sz-sequences.png" alt="" width="344" height="344" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Low-discrepancy sequences have seen widespread adoption in computer graphics thanks to the superior rates of convergence that they provide. Because rendering integrals often are comprised of products of lower-dimensional integrals, recent work has focused on developing sequences that are also well-distributed in lower-dimensional projections. To this end, we introduce a novel construction of binary-based (0, 4)-sequences; that is, progressive fully multi-stratified sequences of 4D points, and extend the idea to higher power-of-two dimensions. We further show that not only it is possible to nest lower-dimensional sequences in higher-dimensional ones—for example, embedding a (0, 2)-sequence within our (0, 4)-sequence—but that we can ensemble two (0, 2)-sequences into a (0, 4)-sequence, four (0, 4)-sequences into a (0, 16)-sequence, and so on. Such sequences can provide excellent rates of convergence when integrals include lower-dimensional integration
+                                problems in 2, 4, 16,… dimensions. Our construction is based on using 2×2 block matrices as symbols to construct larger matrices that potentially generate a sequence with the target (0,
+                                <i>s</i>
+                                )-sequence in base
+                                <i>s</i>
+                                property. We describe how to search for suitable alphabets and identify two distinct, cross-related alphabets of block symbols, which we call
+                                <i>s</i>
+                                and
+                                <i>z</i>
+                                , hence
+                                <i>SZ</i>
+                                for the resulting family of sequences. Given the alphabets, we construct candidate generator matrices and search for valid sets of matrices. We then infer a simple recurrence formula to construct full-resolution (64-bit) matrices. Because our generator matrices are binary, they allow highly-efficient implementation using bitwise operations and can be used as a drop-in replacement for Sobol matrices in existing applications. We compare SZ sequences to state-of-the-art low discrepancy sequences, and demonstrate mean relative squared error improvements up to 1.93× in common rendering applications.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Abdalla G. M. Ahmed, Matt Pharr, Victor Ostromoukhov, and Hui Huang. 2025. SZ Sequences: Binary-Constructed (0,2
+                                <sup>q</sup>
+                                )-Sequences. ACM Transactions on Graphics (Proceedings of SIGGRAPH Asia), 44(6).
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/sz-sequences.png" alt="" width="344" height="344" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Collaborative Texture Filtering</h3>
                             <div class="authors">Tomas Akenine-Möller, Pontus Ebelin, Matt Pharr, and Bart Wronski</div>
                             <div>ACM/EG Symposium on High Performance Graphics (HPG), 2025</div>
@@ -143,7 +192,7 @@
                         <div class="flex-grow-1">
                             <h3 class="mb-0">Improved Stochastic Texture Filtering Through Sample Reuse</h3>
                             <div class="authors">Bartlomiej Wronski, Matt Pharr, and Tomas Akenine-Möller</div>
-                            <div>ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D), 2025</div>
+                            <div>ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games (I3D) 2025</div>
                             <div class="mb-3">
                                 <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/stf_sample_reuse.pdf">[Paper]</a>
                                 <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/stf_sample_reuse_supplemental.pdf">[Supplemental]</a>
@@ -179,7 +228,7 @@
                         <div class="flex-grow-1">
                             <h3 class="mb-0">A Generalized Ray Formulation For Wave-Optics Light Transport</h3>
                             <div class="authors">Shlomi Steinberg, Ravi Ramamoorthi, Benedikt Bitterli, Eugene d'Eon, Ling-Qi Yan, and Matt Pharr</div>
-                            <div>ACM Transactions on Graphics (SIGGRAPH Asia)</div>
+                            <div>ACM Transactions on Graphics (SIGGRAPH Asia) 2024</div>
                             <div class="mb-3">
                                 <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/rtplt_paper.pdf">[Paper]</a>
                                 <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/rtplt_lowres.pdf">[Paper (lowres)]</a>
@@ -763,7 +812,7 @@
                     <h3 class="mb-1">Committees</h3>
                     <ul>
                         <li>Papers Chair, Eurographics Symposium on Rendering 2020 (with Carsten Dachsbacher)</li>
-                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015, 2016, 2017, 2018, 2022, 2023, 2024</li>
+                        <li>Academy of Motion Picture Arts and Sciences Digital Imaging Technology Surrogate Committee, 2015&ndash;2018, 2022&ndash;2025</li>
                         <li>Program Chair, High Performance Graphics 2014</li>
                         <li>Conference Chair, High Performance Graphics 2011 (with John Owens)</li>
                         <li>Papers Chair, High Performance Graphics 2009 (with David McAllister and Ingo Wald)</li>
