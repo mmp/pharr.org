@@ -113,11 +113,11 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a>
 	    <ul class="submenu">
+	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.12.2">0.13.1</a></li>
+	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.12.2">0.13.0</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.12.2">0.12.2</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.12.1">0.12.1</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.12.0">0.12.0</a></li>
-	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.11.10">0.11.10</a></li>
-	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.11.9">0.11.9</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-earlier">Earlier Releases</a></li>
 	    </ul>
 	  </li>
@@ -224,6 +224,7 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-vfr">VFR Aircraft</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-airspace">Controller Airspace</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-emergencies">Emergencies</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#fe-stars-videomaps">STARS and Video Maps</a>
 	    <ul class="submenu">
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-list-format">List Formatting</a></li>
@@ -618,6 +619,38 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <td><code>DLENDY/H180</code></td>
                   </tr>
                   <tr>
+                    <td><code>H</code><i>fix</i></td>
+                    <td><p>Directs the aircraft to hold at the specified fix using a published holding pattern.
+                        (The specified fix must be in the aircraft's flight plan; for one that is not, first give them <code>D</code><i>fix</i>
+                        to add it and send them direct to it.)</p>
+                      <p>There are three ways to cause an aircraft to exit a hold:
+                        1. Clearing them for the approach, if the hold is part of an approach assigned to the aircraft.
+                        2. Giving "direct FIX".
+                        3. Assigning a heading.
+                        In the first two, the aircraft will finish flying the current lap in the hold before proceeding;
+                        if a heading is given, they will turn to the heading directly. 
+                      <p>
+                    </td>
+                    <td><code>HJIMEE</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>H</code><i>fix</i><code>/</code><i>option</i><code>/</code><i>option</i></td>
+                    <td><p>Directs the aircraft to hold at the specified fix using controller-specified holding parameters.
+                    (The specified fix must be in the aircraft's flight plan.)</p>
+                    <p>Options may be:</p>
+                    <ul>
+                      <li><code>L</code>: left turns</li>
+                      <li><code>R</code>: right turns (default)</li>
+                      <li><i>xx</i><code>NM</code>: <i>xx</i> nautical mile legs</li>
+                      <li><i>xx</i><code>M</code>: <i>xx</i> minute legs (default: 1 minute)</li>
+                      <li><code>R</code><i>xxx</i>: inbound course on the <i>xxx</i> radial to the fix (required)</li>
+                    </ul>
+                    <p>The radial option (<code>R</code><i>xxx</i>) is required for controller-specified holds.
+                    Multiple options of the same type (e.g., both L and R, or both distance and time legs) are not allowed.</p>
+                    </td>
+                    <td><code>HJIMEE/L/5NM/R090</code><br><code>HJIMEE/R270/2M</code></td>
+                  </tr>
+                  <tr>
                     <td><code>SH</code></td>
                     <td>Directs the aircraft to say its current heading.</td>
                     <td><code>SH</code></td>
@@ -863,6 +896,11 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <td><code>CI2L</code></td>
                   </tr>
                   <tr>
+                    <td><code>C</code></td>
+                    <td>Clears the aircraft for the approach that was previously assigned.</td>
+                    <td><code>C</code></td>
+                  </tr>
+                  <tr>
                     <td><code>A</code><i>fix</i><code>/C</code><i>approach</i></td>
                     <td>Clears the aircraft for the specified approach when
                     it passes the given fix.</td>
@@ -977,7 +1015,7 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.12.2/Vice-v0.12.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.12.2 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.13.1/Vice-v0.13.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.13.1 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -986,7 +1024,7 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.12.2/Vice-v0.12.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.12.2 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.13.1/Vice-v0.13.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.13.1 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1012,6 +1050,78 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.13.1">0.13.1 (6 November 2025)</h3>
+            <ul>
+              <li>Fix Windows installer build.</li>
+              <li>Bugfix: when an aircraft in a hold is given a heading, they now fly the heading directly.</li> 
+            </ul>
+            
+            <h3 id="release-0.13.0">0.13.0 (5 November 2025)</h3>
+            <ul>
+              <li>Added initial support for ERAM 🎉🎉🎉 (Michael Trokel)
+                <ul>
+                  <li>Added ERAM scenarios: ZNY (Michael Trokel), ZLA (Ketan K), ZBW (Ryan G)</li>
+                  <li>A functioning toolbar with real videomaps, brightness (including map brightness), DEST & TYPE line 4 DB fields, and the master toolbar menu.</li>
+                  <li>Full and limited datablocks are simulated with line 4.</li>
+                  <li>Leader lines</li>
+                  <li>PTLs which can be extended using VECTOR or page up/down</li>
+                  <li>Many ERAM commands are simulated, including:</li>
+                  <li><code>QX</code> (drop track. Note: <code>QT</code> for initiate track is not simulated).</li>
+                  <li>Accept, recall, and send handoffs.</li>
+                  <li><code>QU</code> (including <code>QU /M</code>.)</li>
+                  <li>J rings, both 5nm and 3nm.</li>
+                  <li>Hard and temporary altitudes using QZ and QQ, respectively.</li>
+                  <li><code>//</code> for on frequency indicator</li>
+                  <li><code>MR</code> for geomaps</li>
+                  <li>ERAM menu in vice settings, which contains:</li>
+                  <li>Preference sets</li>
+                  <li>Toggle for mapping ERAM commands to radio commands.</li>
+                </ul>
+              </li>
+              <li>New scenario: SAT (Trey Hensley, Xavier Caldwell)</li>
+              <li>Scenario updates: PCT/DCA, CHP, RIC, NorCal, SoCal, P50 (Ketan K), JAX (Jud Lopez), D01 (Andrew S)</li>
+              <li>Control commands can be entered&mdash;but still not issued&mdash;during pilot readbacks</li>
+              <li>Wind/weather simulation is more accurate and based on historical real-world data
+                <ul>
+                  <li>Winds aloft are much more accurate, thanks to hourly wind data from the NOAA.
+                  <li>Added STARS <code>.WIND</code> command to visualize wind fields.</li>
+                  <li>VFR aircraft no longer launch in IMC</li>
+                  <li>Aircraft climb performance is now affected by weather (temperature, relative humidity, air pressure)</li>
+                </ul>
+              </li>
+              <li>Added support for holds
+                <ul>
+                  <li><code>H</code>fix to fly a published hold at a fix; see the <a href="#atc-commands">documentation</a> for how to specify arbitrary holds at fixes.</li>
+                  <li>To cancel a hold: clear them for the approach (if they're holding at an approach fix), give them a heading, or give them direct to a fix and the hold will be canceled.</li>
+                  <li>The available charted holds can be visualized via a new "Holds" section in the scenario "info" window.</li>
+                </ul>
+              </li>
+              <li>Single controller scenarios can now be run on the server, allowing RPO/Instructor sign ins for them.</li>
+              <li>Bug fixes:
+                <ul>
+                  <li>Fixed bugs with flight plan acquisition filters</li>
+                  <li>Fixed issue with VNAV descent rates that meant that altitude restrictions were sometimes missed.</li>
+                  <li>Fixed bug where airport departure rates were not being correctly followed.</li>
+                  <li>Fix CT instruction parsing after C/A/S instruction (Adam Engebretson).</li>
+                  <li>Prevent redundant altitutde assignment on arrivals (Adam Engebretson).</li>
+                  <li>Cleaned up formatting in the departure table (Ethan Malimon).</li> 
+                  <li>Fix crash with dropped tracks.</li>                  
+                  <li>The application on Windows is there again.</li>
+                </ul>
+              </li>
+              <li>Facility engineering:
+                <ul>
+                  <li>Updated to Oct 30 2025 AIRAC.</li>
+                  <li>In STARS filters, "arrival_acquisition" has been renamed to "auto_acquisition" to better describe what it does.</li>
+                  <li>Added <code>/c</code>ALT and <code>/d</code>ALT route specifiers for virtual-controller issued climb and descend instructions in routes.</li>
+                  <li>"wind" has changed: now "direction", "speed" and "flight_rules" can be specified; vice will randomly pick WX that matches. Ex: <code>"wind": { "direction": "130-180", "speed": "5+", "flight_rules": "IMC" }</code>. "speed" and "flight_rules" are optional. If no "wind" is specified, WX is selected based on the primary runway orientations.</li>
+                  <li>Added crc2vice-eram command</li>
+                </ul>
+              </li>
+                
+              
+            </ul>
 
             <h3 id="release-0.12.2">0.12.2 (29 August 2025)</h3>
             <ul>
@@ -1112,6 +1222,12 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               </li>
             </ul>
 
+            <div id="release-earlier" class="container">
+              <button id="toggleButton">🔍 Show Earlier Releases</button>
+              <br>
+            <div id="hiddenText" style="display:none;">
+              <br>
+
             <h3 id="release-0.11.10">0.11.10 (15 April 2025)</h3>
             <ul>
               <li>New scenarios: GTF (Merry), PCT SHD (Ketan K).</li>
@@ -1140,12 +1256,6 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 </ul>
               </li>
             </ul>
-
-            <div class="container">
-              <button id="toggleButton">🔍 Show Earlier Releases</button>
-              <br>
-            <div id="hiddenText" style="display:none;">
-              <br>
 
             <h3 id="release-0.11.9">0.11.9 (22 March 2025)</h3>
             <ul>
@@ -1271,7 +1381,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               </li>
             </ul>
 
-            <h3 id="release-earlier">0.11.6 (22 October 2024)</h3>
+            <h3 id="release-0.11.6">0.11.6 (22 October 2024)</h3>
             <ul>
               <li>New scenario: LGA HAARP (Tyler T).</li>
               <li>Scenario updates: CHS, F11 (Michael Knight), SCT, C90, MKE (Jud Lopez).</li>
@@ -6813,6 +6923,12 @@ Given the id, the approach can be specified with:</p>
                   initial control, e.g., for a departure from a nearby airport.</td>
               </tr>
               <tr>
+                <td>"departure_controller"</td>
+                <td>String</td>
+                <td><i>(Optional)</i> A string indicating which controller should initially control the aircraft. Controller must be 
+                  a virtual controller.</td>
+              </tr>
+              <tr>
                 <td>"sid"</td>
                 <td>String</td>
                 <td><i>(Optional)</i> A string naming the SID that the aircraft is flying.</td>
@@ -7656,7 +7772,148 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
             </tbody>
             </table>
           </section><!--//section-->
-          
+
+          <section class="docs-section" id="fe-emergencies">
+            <h2 class="section-heading">Emergencies</h2>
+
+            <p>
+              Emergency aircraft can be configured to randomly occur during simulation sessions.
+              The file <code>resources/emergencies.json</code> is used to store information about the
+              possible emergencies, including what phase of flight they apply to, what radio transmissions
+              pilots will make over the course of them, and what they will ask of ATC.
+              That file contains an array of emergency specifications, each with the following members:
+            </p>
+
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>name</td>
+                <td>String (required)</td>
+                <td>Human-readable name of the emergency, must be unique across other emergencies.</td>
+              </tr>
+              <tr>
+                <td>applicable_to</td>
+                <td>String (required)</td>
+                <td>Which phase(s) of flight the emergency applies to, should be one or more of <code>"departure"</code>, <code>"arrival"</code>, <code>"external"</code>, or <code>"approach"</code> (comma-separated for multiple).
+                  <ul>
+                    <li><code>"departure"</code>: Departures within 15nm of departure airport</li>
+                    <li><code>"arrival"</code>: Arrivals that have not been cleared for the approach</li>
+                    <li><code>"approach"</code>: Arrivals that have been cleared for the approach</li>
+                    <li><code>"external"</code>: Inbound arrivals that are handed off from an external facility (and presumed to have already declared an emergency).</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>weight</td>
+                <td>Number (optional)</td>
+                <td>Relative probability of this emergency occurring (default: 1.0). Higher values make the emergency happen more often.</td>
+              </tr>
+              <tr>
+                <td>stages</td>
+                <td>Array of objects</td>
+                <td>Defines how the emergency unfolds over time.</td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>
+              The emergency stages array in "stages" contains objects that define stages of the emergency.
+              For example, this allows aircraft to ask for vectors to troubleshoot before either resolving a situation
+              or going ahead and declaring an emergency. The objects have this structure:
+            </p>
+
+            <table class="table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>transmission</td>
+                <td>String (required)</td>
+                <td>Radio transmission text.
+                  Multiple phraseology alternatives can be specified using bracket notation: <code>[option1|option2|option3]</code>;
+                  if this is used, one of the alternatives will be randomly selected when the transmission is made.
+                  For example: <code>"[we have a|we've got a] gear unsafe indication"</code> will randomly say either
+                  "we have a gear unsafe indication" or "we've got a gear unsafe indication".
+                  The transmission field may be omitted if <code>request_return</code> is true,
+                  in which case the transmission will consist only of the return-to-field request.</td>
+              </tr>
+              <tr>
+                <td>duration_minutes</td>
+                <td>Array of 2 integers (required except for last stage)</td>
+                <td>Range [min, max] for how long to remain in this stage before advancing to next stage. Not needed for the final stage since there is no next stage.</td>
+              </tr>
+              <tr>
+                <td>request_return</td>
+                <td>Boolean (optional)</td>
+                <td>If true, aircraft will request at this stage to return to their departure airport.
+                  An automatically-generated return request will be added at the end of any transmission specified for them.
+                </td>
+              </tr>
+              <tr>
+                <td>stop_climb</td>
+                <td>Boolean (optional)</td>
+                <td>If true and aircraft is climbing, adds a transmission notifying the controller that the aircraft will be stopping
+                  its climb. (The altitude used will be the next higher altitude that's a multiple of 1,000 feet.)</td>
+              </tr>
+              <tr>
+                <td>request_delay_vectors</td>
+                <td>Boolean (optional)</td>
+                <td>If true, a request for delay vectors will be added to the aircraft's transmission.</td>
+              </tr>
+              <tr>
+                <td>declare_emergency</td>
+                <td>Boolean (optional)</td>
+                <td>If true, the aircraft goes ahead and declares an emergency.</td>
+              </tr>
+            </tbody>
+            </table>
+
+            <p>Here is an example of an emergency with two stages: a departing aircraft will level off and ask for delay vectors.
+              After 5-10 minutes, it will request to return to the departure airport.
+            </p>
+            <pre>{
+  "name": "Landing Gear Retraction Failure",
+  "applicable_to": "departure",
+  "stages": [
+    {
+      "transmission": "we have a gear unsafe indication, requesting delay vectors to troubleshoot",
+      "stop_climb": true,
+      "duration_minutes": [5, 10]
+    },
+    {
+      "transmission": "gear situation unresolved",
+      "request_return": true
+    }
+  ]
+}</pre>
+
+            <p>Here is an example of an emergency that applies to multiple phases of flight:</p>
+            <pre>{
+  "name": "Medical Emergency",
+  "applicable_to": "arrival,departure,approach",
+  "stages": [
+    {
+      "transmission": "medical emergency, request EMTs at the gate",
+      "request_return": true
+    }
+  ]
+}
+}</pre>
+
+          </section><!--//section-->
+
           <section class="docs-section" id="fe-stars-videomaps">
             <h2 class="section-heading">STARS and Video Maps</h2>
 
@@ -7801,14 +8058,14 @@ APPLE3.ALL  : RUUTH WNDYL BRAND/a8000 KORRY DEPDY TYKES MINKS JERZY RENUE APPLE 
                 <td>Each member of this object defines a <a href="#fe-stars-filters">filter region</a> inside
                   which STARS applies special rules to aircraft. The following types of filters may be specified:
                   <ul>
-		    <li>"arrival_acquisition": when an arrival enters this filter region, its flight plan
+		    <li>"auto_acquisition": when an aircraft enters this filter region, its flight plan
                       associates (if available), even if it is still controlled by an external controller
                       and a handoff hasn't been initiated.</li>
 		    <li>"arrival_drop": when an arrival enters one of the specified filters, their flight
                       plan disassociates from the aircraft and is deleted. A default volume 3f 2nm radius up to 500' AGL
                       around each arrival airport is generated if no filters are specified.</li>
-		    <li>"departure_acquisition": when a departure exits one of the filter volumes, STARS attempts
-                      to find the flight plan corresponding to the beacon code the aircraft is squawking.
+		    <li>"departure": if a departing flight in a departure filter is squawking a code other than 1200
+                      and there is no flight plan for that squawk code, "WHO" is displayed in its datablock.
                       The default volumes are 3nm circles from ground level to 500' AGL around the airport.</li>
                     <li>"inhibit_ca": collision alerts are disabled for aircraft within the filter's volume.
                       These are especially useful around airports so that alerts aren't issued for aircraft
