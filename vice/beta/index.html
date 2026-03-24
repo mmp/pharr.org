@@ -2988,6 +2988,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   <tr><td><code>[DCB-SHIFT]</code></td><td><code>[Ctrl-F7]</code></td></tr>
                   <tr><td><code>[DCB]</code></td><td><code>[Ctrl-F9]</code></td></tr>
                   <tr><td><code>[F13]</code></td><td><code>[Shift-F1]</code></td></tr>
+                  <tr><td><code>[F16 MACRO]</code></td><td><code>[Shift-F4]</code> or <code>[F16]</code></td></tr>
                   <tr><td><code>[FLT DATA]</code></td><td><code>[F6]</code></td></tr>
                   <tr><td><code>[HND OFF]</code></td><td><code>[F5]</code></td></tr>
                   <tr><td><code>[INIT CNTL]</code></td><td><code>[F1]</code></td></tr>
@@ -6127,7 +6128,6 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               <li>RR: range rings.</li>
               <li>BCN: beacon targets (not currently used).</li>
               <li>HST: history circles behind track paths.</li>
-              <li>WXC: <a href="#stars-weather">weather</a> contrast; i.e., the stippled patterns.</li>
               <li>BKC: background contrast.</li>
               <li>MPB: maps in group "B" (generally, the secondary maps).</li>
               <li>LST: <a href="#stars-system-lists">system lists</a>.</li>
@@ -6136,6 +6136,9 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               <li>CMP: the compass rose at the edges of the STARS display</li>
               <li>PRI: <a href="#stars-track-symbols">primary target symbols</a>.</li>
               <li>WX: <a href="#stars-weather">weather</a>.</li>
+              <li>WXC: <a href="#stars-weather">weather</a> contrast; i.e., the stippled patterns.</li>
+              <li>TPA: brightness of <a href="#stars-tpa-atpa">TPA graphics</a> (i.e., j-rings and p-cones).</li>
+              <li>ATPA: brightness of <a href="#stars-tpa-atpa">ATPA graphics</a> (automatic p-cones for aircraft on final approach).</li>
             </ul>
             <p>Some of these brightnesses can be set to 0, in which case "OFF" is shown in the BRITE menu and 
               the corresponding item isn't drawn at all. Others have a minimum required brightness.</p>
@@ -6753,7 +6756,25 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   </tr>
                 </tbody>
               </table>
-            
+
+            <h4>Command Macros</h4>
+
+            <p>Facilities may define <i>command macros</i> that chain multiple STARS
+              commands together into a single shortcut. Macros can be associated with any command mode;
+              when a macro matches the current mode and typed text, it takes priority over built-in commands.</p>
+            <p>For example, a macro with input <code>[F16]X[SLEW]</code> activates when the user presses
+              <code>[F16]</code>, types <code>X</code>, and slews a track. A macro with input
+              <code>[TERM CNTL]HELLO</code> activates when the user types <code>[TERM CNTL]HELLO[Enter]</code>.
+              Macros may also have empty matching text
+              (e.g., <code>[F16]</code> or <code>[F16][SLEW]</code>) to activate immediately on <code>[Enter]</code> or slew.</p>
+            <p>Macros support parameter substitution: commands may include <code>$1</code> through
+              <code>$9</code> placeholders that are replaced with words from the user's input.
+              A macro with no text in its input but with <code>$1</code> in its commands acts as a
+              <i>catch-all</i> for its command mode: any text the user types is passed as parameters.
+              Catch-all macros only activate as a fallback when no exact-name macro matches.</p>
+            <p>Macros are defined per-facility in the scenario configuration. The available macros for the current
+              facility can be seen in the scenario info window, accessed by clicking the
+              <i class="fas fa-question-circle"></i> button in the menubar.</p>
 
             <h3 id="stars-video-maps">Video Maps</h3>
 

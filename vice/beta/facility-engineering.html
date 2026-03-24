@@ -2369,6 +2369,79 @@
                       <td>Boolean</td>
                       <td>If "true", causes the legacy STARS font to be used in the STARS display.</td>
                     </tr>
+                    <tr>
+                      <td>"stars_macros"</td>
+                      <td>Array of objects</td>
+                      <td>Defines keyboard macros that chain multiple STARS commands together.</td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields" id="fe-stars-macros"><summary>"stars_macros" members</summary>
+                          <p>Each entry in the "stars_macros" array defines a macro that can be invoked from a specific
+                            command mode. When a macro matches the current mode and typed text, it takes priority over
+                            built-in commands.</p>
+                          <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                              <tr>
+                                <td>"input"</td>
+                                <td>String</td>
+                                <td>Specifies when the macro activates. Format: <code>[MODE]text[SLEW]</code>, where
+                                  all parts are optional except that at least a mode or text must be present.
+                                  The <code>[MODE]</code> prefix selects the command mode the user must be in
+                                  (e.g., <code>[F16]</code>, <code>[INIT CNTL]</code>, <code>[TERM CNTL]</code>);
+                                  if omitted, the macro matches when no command mode is active.
+                                  The text is what the user types.
+                                  Append <code>[SLEW]</code> at the end if the macro is activated by slewing (clicking)
+                                  a track rather than pressing Enter.
+                                  If the text is empty and the macro's commands use <code>$1</code> parameters,
+                                  the macro acts as a <i>catch-all</i> for its command mode: any text the user
+                                  types is passed as parameters (<code>$1</code>, <code>$2</code>, etc.).
+                                  Catch-all macros only activate as a fallback when no exact-name macro matches
+                                  the user's input.
+                                  Examples: <code>[F16]X[SLEW]</code>, <code>[TERM CNTL]HELLO</code>,
+                                  <code>[F16]</code>, <code>[F16][SLEW]</code>.
+                                  Valid modes: <code>INIT CNTL</code> / <code>F1</code>,
+                                  <code>TRK RPOS</code> / <code>F2</code>,
+                                  <code>TRK SUSP</code> / <code>F3</code>,
+                                  <code>TERM CNTL</code> / <code>F4</code>,
+                                  <code>HND OFF</code> / <code>F5</code>,
+                                  <code>FLT DATA</code> / <code>F6</code>,
+                                  <code>MULTI FUNC</code> / <code>F7</code>,
+                                  <code>F8</code>,
+                                  <code>VFR FP</code> / <code>F9</code>,
+                                  <code>F10</code>,
+                                  <code>CA</code> / <code>F11</code>,
+                                  <code>RESTR AREA</code> / <code>F12</code>,
+                                  <code>REL DEP</code> / <code>F13</code>,
+                                  <code>F14</code>,
+                                  <code>TGT GEN</code> / <code>F15</code>,
+                                  <code>F16</code>,
+                                  <code>MAP</code>.</td>
+                              </tr>
+                              <tr>
+                                <td>"commands"</td>
+                                <td>Array of strings</td>
+                                <td>The STARS commands to execute in sequence. Each command may optionally start with a
+                                  <code>[MODE]</code> prefix indicating the command mode for that command. If no prefix is
+                                  given, the command executes with no command mode set. If <code>[SLEW]</code> is specified
+                                  in the macro's "input", all commands are executed as slew commands using the
+                                  clicked track position. Commands may contain
+                                  <code>$1</code> through <code>$9</code> for argument substitution from the
+                                  user's input. For named macros (where "input" includes text), arguments are the
+                                  space-separated words after the macro name. For catch-all macros (empty text
+                                  with <code>$1</code> in commands), all words the user types become arguments.</td>
+                              </tr>
+                              <tr>
+                                <td>"output"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) Text displayed in the preview area on successful execution.</td>
+                              </tr>
+                              <tr>
+                                <td>"description"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) Human-readable description shown in the scenario info window.</td>
+                              </tr>
+                          </tbody></table>
+                        </details>
+                    </td></tr>
                   </tbody>
                 </table>
               </section><!--//section-->
