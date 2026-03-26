@@ -180,16 +180,7 @@
             <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-config"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Configuration</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-common">Common</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-eram">ERAM</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-stars">STARS</a>
-              <ul class="submenu">
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-datablocks">Datablocks</a></li>
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-lists">Lists</a></li>
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-restriction-areas">Restriction Areas</a></li>
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-filters">Filter Regions</a></li>
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-fdam">FDAM Regions</a></li>
-                <li class="submenu-item"><a class="submenu-link scrollto" href="#fe-stars-list-format">List Formatting</a></li>
-              </ul>
-            </li>
+            <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-stars">STARS</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-video-maps">Video Maps</a></li>
             <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-scenarios"><span class="theme-icon-holder me-2"><i class="fas fa-plane-departure"></i></span>Scenarios</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports</a></li>
@@ -1442,6 +1433,90 @@
                         <details class="json-fields" id="fe-stars-datablocks"><summary>"datablocks" members</summary>
                           <p>The "datablocks" object configures how full, partial, and limited datablocks are displayed.
                             It contains the following sub-objects:</p>
+                          <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                              <tr><td>"clock_phase"</td><td>Object</td><td>Clock Phase Timing</td></tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"clock_phase" members</summary>
+                                    <table class="table">
+                                      <thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"sequence"</td>
+                                          <td>Array of integers</td>
+                                          <td>The clock phase sequence that determines which phase is displayed at each position in the cycle.
+                                            Values must be 1-4. Valid sequences: <code>[1,2]</code>, <code>[1,2,3]</code>,
+                                            <code>[1,2,1,3]</code>, <code>[1,2,3,4]</code>, <code>[1,2,1,3,1,4]</code>.
+                                            Default: <code>[1,2,1,3]</code>.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"intervals"</td>
+                                          <td>Array of numbers</td>
+                                          <td>Duration in seconds for each position in the sequence. Must have the same length
+                                            as "sequence". Values must be 0.5-5.0 seconds. Default: <code>[2, 1, 2, 1]</code>.</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                          </tbody></table>
+
+                          <h4>Clock Phase Timesharing</h4>
+                          <p>Several datablock fields cycle their content according to the clock phase sequence.
+                            The default sequence <code>[1,2,1,3]</code> with intervals <code>[2,1,2,1]</code> produces
+                            a 6-second cycle: phase 1 for 2s, phase 2 for 1s, phase 1 again for 2s, phase 3 for 1s.
+                            Limited datablocks have no timesharing; all fields are static.</p>
+
+                          <h5>Full Datablock (FDB)</h5>
+                          <table class="table">
+                            <thead><tr><th>Field</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th><th>Phase 4</th></tr></thead>
+                            <tbody>
+                              <tr><td>Line 0 (alerts)</td><td colspan="4" style="text-align:center; font-style:italic">All phases: SPC, MSAW, CA, track quality</td></tr>
+                              <tr><td>Line 1 (ACID)</td><td colspan="4" style="text-align:center; font-style:italic">All phases: callsign + pointout/RD indicators</td></tr>
+                              <tr>
+                                <td>Line 2 left (alt/scratchpad)</td>
+                                <td>Mode-C altitude</td>
+                                <td>Scratchpad 1 (or SP2, or altitude)</td>
+                                <td>Handoff TCP, or SP2, or SP1 (or altitude)</td>
+                                <td>Blank</td>
+                              </tr>
+                              <tr>
+                                <td>Line 2 right (speed/type)</td>
+                                <td>Groundspeed + rules/CWT</td>
+                                <td>Aircraft type (or groundspeed)</td>
+                                <td>Requested altitude (or actype, or groundspeed)</td>
+                                <td>Same as phase 2</td>
+                              </tr>
+                              <tr>
+                                <td>Line 3 left (ATPA/beacon)</td>
+                                <td>ATPA distance first, then beacon</td>
+                                <td>ATPA first, then beacon</td>
+                                <td>Beacon mismatch first, then ATPA</td>
+                                <td>Blank</td>
+                              </tr>
+                              <tr>
+                                <td>Line 3 right (assigned alt)</td>
+                                <td colspan="4" style="text-align:center; font-style:italic">All phases: assigned altitude and beacon mismatch timeshared; with "scratchpad2_on_line3", SP2 also timeshares</td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                          <h5>Partial Datablock (PDB)</h5>
+                          <table class="table">
+                            <thead><tr><th>Field</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th><th>Phase 4</th></tr></thead>
+                            <tbody>
+                              <tr><td>Line 0 (alerts)</td><td colspan="4" style="text-align:center; font-style:italic">All phases: SPC, track quality</td></tr>
+                              <tr>
+                                <td>Line 1 left (alt/scratchpad)</td>
+                                <td>Mode-C altitude</td>
+                                <td>Scratchpad 1 (or altitude)</td>
+                                <td>SP2 if adapted, else SP1 (or altitude)</td>
+                                <td>Mode-C altitude</td>
+                              </tr>
+                              <tr><td>Line 1 right (GS/CWT)</td><td colspan="4" style="text-align:center; font-style:italic">All phases: GS/CWT (adaptation-based alternate shown in phase 2)</td></tr>
+                            </tbody>
+                          </table>
+
+                          <h4>Datablock Configuration Fields</h4>
                           <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
                               <tr>
                                 <td>"allow_long_scratchpad"</td>
