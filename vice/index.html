@@ -115,6 +115,7 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a>
 	    <ul class="submenu">
+	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.2">0.14.2</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.1">0.14.1</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.0">0.14.0</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.13.3">0.13.3</a></li>
@@ -191,7 +192,7 @@
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#airspace">Controller Airspace</a></li>
 	    </ul>
 	  </li>
-	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-configuration">STARS Configuration</a>
+	  <li class="nav-item"><a class="nav-link scrollto" href="#stars-configuration">Configuration</a>
 	    <ul class="submenu">
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#stars-range-center">Range and Center</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#stars-character-size">Character Size</a></li>
@@ -212,6 +213,8 @@
 	    </ul>
 	  </li>
 
+	  <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-eram"><span class="theme-icon-holder me-2"><svg><use xlink:href="#radar"></use></svg></span>ERAM</a></li>
+
 	</ul>
       </nav><!--//docs-nav-->
     </div><!--//docs-sidebar-->
@@ -222,101 +225,43 @@
 	  <header class="docs-header">
             <div class="text-center">
               <img src="vice-demo.gif" srcset="vice-demo-2x.gif 2x" width="1428" height="606" class="img-fluid">
-<!--
-diff --git a/stars/tools.go b/stars/tools.go
-index ea6067b..acfde15 100644
---- a/stars/tools.go
-+++ b/stars/tools.go
-@@ -241,7 +241,7 @@ func fetchWeather(reqChan chan math.Point2LL, cbChan chan [NumWxLevels]renderer.
- 	fetchRate := 100 * time.Second
- 
- 	// center stores the current center position of the radar image
--	var center math.Point2LL
-+	var center, trueCenter math.Point2LL
- 	var lastFetch time.Time
- 	for {
- 		var ok, timedOut bool
-@@ -253,6 +253,14 @@ func fetchWeather(reqChan chan math.Point2LL, cbChan chan [NumWxLevels]renderer.
- 				for len(reqChan) > 0 {
- 					center = <-reqChan
- 				}
-+
-+				trueCenter = center
-+				var err error
-+				center, err = math.ParseLatLong([]byte("N36.30.24.000,W90.23.34.000"))
-+				if err != nil {
-+					panic(err)
-+				}
-+
- 			} else {
- 				// The channel is closed; wrap up.
- 				close(cbChan)
-@@ -308,6 +316,9 @@ func fetchWeather(reqChan chan math.Point2LL, cbChan chan [NumWxLevels]renderer.
- 			continue
- 		}
- 
-+		rb = math.Extent2D{P0: math.Sub2LL(trueCenter, math.Point2LL{WxLatLongExtent, WxLatLongExtent}),
-+			P1: math.Add2LL(trueCenter, math.Point2LL{WxLatLongExtent, WxLatLongExtent})}
-+
- 		cbChan <- makeWeatherCommandBuffers(img, rb)
- 
- 		lg.Info("finish weather fetch")
-diff --git a/pkg/sim/dispatcher.go b/pkg/sim/dispatcher.go
-index ca31f47..48159e0 100644
---- a/pkg/sim/dispatcher.go
-+++ b/pkg/sim/dispatcher.go
-@@ -347,6 +347,12 @@ func (sd *Dispatcher) RunAircraftCommands(cmds *AircraftCommandsArgs, result *Ai
- 		return ErrNoSimForControllerToken
- 	}
- 
-+	if cmds.Commands == "S" {
-+		cmds.Commands = "ER3L SPR3L DASALT D30 TS210 AASALT/CR3L"
-+	} else if cmds.Commands == "N" {
-+		cmds.Commands = "ER2L SPR2L DCAPIT D30 TS210 ACAPIT/CR2L"
-+	}
-+
- 	commands := strings.Fields(cmds.Commands)
- 
- 	for i, command := range commands {
-@@ -667,6 +673,11 @@ func (sd *Dispatcher) RunAircraftCommands(cmds *AircraftCommandsArgs, result *Ai
- 					rewriteError(err)
- 					return nil
- 				}
-+			} else if len(command) > 3 && command[:2] == "SP" {
-+				if err := sim.SetScratchpad(token, callsign, command[2:]); err != nil {
-+					rewriteError(err)
-+					return nil
-+				}
- 			} else {
- 				if kts, err := strconv.Atoi(command[1:]); err != nil {
- 					rewriteError(err)
--->
             </div>
             <br>
 	    <h1 class="docs-heading">About Vice</h1>
 
 	    <section class="docs-intro">
-	      <p><i>vice</i> is an air traffic control simulator, focused on TRACON.
-                It presents a STARS-like interface, but with simulated traffic and other controllers.
-                It also supports multiple users, where each person controls a different position at a facility.
+              <p>
+                <i>vice</i> is an air traffic control simulator, focused on TRACON and enroute scenarios; it provides an accurate simulation of the STARS system for TRACON and the ERAM system for enroute.
+                Simulations have simulated traffic and virtual controllers covering other positions.
+                Instructions may be given to aircraft verbally or via the keyboard; pilot responses are generated using speech synthesis.
+                <i>vice</i> also supports multiple-user scenarios, where each person controls a different position at a facility.
+                Pilot readbacks are generated via speech synthesis.
               </p>
               <p><i>vice</i> supports departure and arrival control
-                scenarios in numerous TRACONs and ATCT/TRACONs, currently:
-A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, BTV, BUF, C90, CHS, CID, CLE, CLT, COS, CPR, CVG, D01, D10, D21, DAB, F11, GSO, GSP, GTF, HNL, I90, IND, JAX, L30, M98, MCI, MDT, MIA, MKE, MYR, N90, NCT, OGG, OKC, P31, P50, P80, PCT, PHL, PIT, PVD, PWM, R90, RDU, S46, S56, SAT, SAV, SBA, SBN, SCT, SDF, SGF, SYR, TPA, and Y90.
+                scenarios in numerous TRACONs and ATCT/TRACONs:
+A11 A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, BTV, BUF, C90, CHS,
+CID, CLE, CLT, COS, CPR, CVG, D01, D10, D21, DAB, F11, GSO, GSP, GTF, HNL, I90, IND, JAX, L30, M98,
+MCI, MDT, MIA, MKE, MYR, N90, NCT, OGG, OKC, P31, P50, P80, PCT, PHL, PIT, PVD, PWM, R90, RDU, S46,
+S56, SAT, SAV, SBA, SBN, SCT, SDF, SGF, SYR, TPA, and
+Y90.
+Enroute scenarios are available for 
+ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 New scenarios are regularly added.
+              </p>
+              <p>
                 Adding scenarios at additional airports is a matter of writing JSON configuration files that describe them;
-                see <a href="facility-engineering.html">the Facility Engineering guide</a> for
+                see the <a href="facility-engineering.html">Facility Engineering Guide</a> for
                 documentation about how scenarios are defined.</p>
-              <p>There is a <i>discord</i> server for <i>vice</i>: the <a href="https://discord.gg/y993vgQxhY">Vice ATC Simulator</a> server,
+              <p>There is a <a href="https://discord.gg/y993vgQxhY">vice discord server</a>
                 for general discussion, bug reports and feature requests, and for discussing facility engineering.
               </p>
-              <p>Documentation for the current beta build of vice (may be) found <a href="beta/index.html">here.</a></p>
+                <p>Documentation for the current beta build of vice (may be) found <a href="beta/index.html">here.</a></p>
 	    </section><!--//docs-intro-->
 	  </header>
 
 	  <section class="docs-section" id="started">
             <h2 class="section-heading">Getting Started</h2>
-            <p>The radar client interface that <i>vice</i> provides is based on STARS.
+            <p>The radar client interfaces that <i>vice</i> provides are based on STARS and ERAM.
               For familiarity to VATSIM controllers, <i>vice</i> generally follows the keyboard command scheme implemented
               in <a href="https://crc.virtualnas.net/docs/#/">CRC's STARS implementation</a>; see
               the discussion of <a href="#section-stars"><i>vice</i>'s STARS
@@ -604,10 +549,25 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <td><code>DWAVEY</code></td>
                   </tr>
                   <tr>
+                    <td><code>LD</code><i>fix</i></td>
+                    <td>Proceed left direct to the given fix (forces a left turn).</td>
+                    <td><code>LDHAYES</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>RD</code><i>fix</i></td>
+                    <td>Proceed right direct to the given fix (forces a right turn).</td>
+                    <td><code>RDHAYES</code></td>
+                  </tr>
+                  <tr>
                     <td><code>D</code><i>fix</i><code>/H</code><i>heading</i></td>
                     <td>Directs the aircraft to depart the specified fix at the given heading.
                     (The specified fix must be in the aircraft's flight plan.)</td>
                     <td><code>DLENDY/H180</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>D</code><i>fix</i><code>/D</code><i>fix2</i></td>
+                    <td>Directs the aircraft to depart the specified fix and proceed direct to the second fix.</td>
+                    <td><code>DLENDY/DWAVEY</code></td>
                   </tr>
                   <tr>
                     <td><code>H</code><i>fix</i></td>
@@ -715,10 +675,10 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <td><code>EC</code></td>
                   </tr>
                   <tr>
-                    <td><code>C</code><i>fix</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i></td>
-                    <td><p>Directs the aircraft to cross the specified fix at the given altitude and speed.
-                      Either one or both of <code>A</code>
-                        and <code>S</code> may be specified.</p>
+                    <td><code>C</code><i>fix</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i><code>/M</code><i>mach</i></td>
+                    <td><p>Directs the aircraft to cross the specified fix at the given altitude, speed, and/or mach.
+                      Any combination of <code>A</code>,
+                        <code>S</code>, and <code>M</code> may be specified.</p>
                       <p>Altitudes may be given as single altitudes (corresponding to
                       "at"), an altitude and a plus sign ("at or above"),
                       an altitude and a minus sign ("at or below"), or a
@@ -809,6 +769,12 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <td><code>S</code><i>kts</i><code>-</code></td>
                     <td>Assigns a speed ceiling: aircraft should not exceed the specified speed. Currently treated as a standard speed assignment.</td>
                     <td><code>S180-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>S</code><i>kts</i><code>/U</code><i>spec</i></td>
+                    <td>Assigns a speed restriction for an aircraft cleared for an approach until a specified point.
+                      The specification may be a fix name, a number (for mile final), or a number followed by <code>DME</code>.</td>
+                    <td><code>S210/U5</code>, <code>S210/U5DME</code>, <code>S210/UROSLY</code></td>
                   </tr>
                   <tr>
                     <td><code>SS</code></td>
@@ -1023,6 +989,11 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                   </tr>
                 </thead>
                 <tbody>
+                  <tr>
+                    <td><code>VISSEP</code></td>
+                    <td>Instructs the aircraft to maintain visual separation.</td>
+                    <td><code>VISSEP</code></td>
+                  </tr>
                   <tr>
                     <td><code>X</code></td>
                     <td>Deletes the specified aircraft from the simulation. This command is useful when one starts going down the tubes.</td>
@@ -1271,6 +1242,18 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                     <i>Direct (fix)</i> /  <i>Proceed direct (fix)</i> /  <i>Cleared direct (fix)</i>
                   </td>
                 </tr>
+                <tr><td>Left/Right Direct</td>
+                  <td>
+                    <i>Left direct (fix)</i> / <i>Proceed left direct (fix)</i> /
+                    <i>Right direct (fix)</i> / <i>Proceed right direct (fix)</i>
+                  </td>
+                </tr>
+                <tr><td>Expect Direct (STT only)</td>
+                  <td>
+                    <i>Expect direct (fix)</i> / <i>Expect to rejoin the arrival at (fix)</i> /
+                    <i>Expect to resume the arrival at (fix)</i>
+                  </td>
+                </tr>
                 <tr><td>Depart Fix</td>
                   <td>
                     <i>Depart (fix) heading (heading)</i>
@@ -1414,12 +1397,7 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
               </tbody>
             </table>
             <h3>Corrections</h3>
-            <p>If STT misidentifies the callsign and sends a command to the wrong aircraft, you can
-              correct it by saying "negative, that was for (correct callsign)" followed by the
-              command for the correct aircraft. This will undo the command sent to the wrong aircraft
-              and apply the new command to the correct one. Do not repeat the wrong aircraft's callsign&mdash;this
-              avoids confusing them.
-            </p>
+            <p>Unfortunately, sometimes STT misinterprets speech, leading to the wrong pilot reading back (and starting to perform) the instruction or the right pilot reading back an incorrect instruction. These issues can be corrected using the following commands.</p> 
             <table class="table">
               <thead>
                 <tr>
@@ -1432,6 +1410,12 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                   <td>
                     <i>Negative, that was for (callsign). (Callsign), (command)</i>&mdash;e.g., "Negative, that was for Delta 456. Delta 456, turn left heading 270."
                     This undoes the previous command (which went to the wrong aircraft) and issues the new command to the correct aircraft.
+                  </td>
+                </tr>
+                <tr><td>Instruction Correction</td>
+                  <td>
+                    <i>(Callsign), (command)</i> / <i>Negative, (command)</i>&mdash;e.g., "Negative, turn left heading 270."
+                    The updated instruction is issued to the last aircraft that read back an instruction. In addition to reissuing the command and repeating the callsign, you may use the "negative" shortcut to issue a corrected instruction without repeating the callsign.
                   </td>
                 </tr>
               </tbody>
@@ -1499,7 +1483,7 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.1/Vice-v0.14.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.2/Vice-v0.14.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.2 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -1508,7 +1492,7 @@ A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, 
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.1/Vice-v0.14.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.2/Vice-v0.14.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.2 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1536,6 +1520,55 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.14.2">0.14.2 (30 Mar 2026)</h3>
+            <ul>
+              <li>New scenarios: LBB (Gecko), ZNY E/F (Ryan G), ZJX 88 (manaphy), TYS (Jake Magee / manaphy), FAT (Ketan K)</li>
+              <li>Scenario updates: MIA (Gecko), ZNY, PHL, BOS (Ryan G), BOS, DCA (radarcontacto), I90, NCT, SCT, ZLA (Ketan K), ZJX (manaphy), N90 (manaphy, Ryan G)</li>
+              <li>Updated to AIRAC 260319 (Ketan K)</li>
+              <li>Adjusted radio noise simulation to reduce muffling of pilot responses</li>
+              <li>Added pin in subwindow top bars to control whether they stay on top of the main radar scope window (all are pinned by default)</li>
+              <li>Fixed a few crashes under unusual circumstances.</li>
+              <li>Flight simulation:
+                <ul>
+                  <li>Added &quot;left/right direct {fix}&quot; instruction (<code>LDFIX</code>, <code>RDFIX</code> if you're not using stt)</li>
+                  <li>Improved pilot initial contact messages to include SIDs/STARs, altitude/speed restrictions, assigned headings, etc.</li>
+                  <li>Aircraft will continue to descend after reaching the end of a STAR</li>
+                  <li>Fixed some bugs with meeting altitude restrictions on STARs</li>
+                  <li>There are now VFR aircraft doing pattern work at airports with VFR traffic</li>
+                  <li>Fixed a number of bugs with flying and drawing procedure turns</li>
+                  <li>You can now tell VFR aircraft to &quot;contact tower&quot; without them complaining that they weren't assigned an approach.</li>
+                </ul>
+              </li>
+              <li>STT:
+                <ul>
+                  <li>&quot;Negative, ...&quot; actually causes the aircraft that misheard the instruction to ignore it.</li>
+                  <li>&quot;Negative, (updated instructions)&quot; is allowed when an aircraft reads back the wrong instructions (i.e., the callsign isn't required).</li>
+                  <li>If a VFR calls in with a request, replying &quot;(callsign), XYZ approach&quot; is treated as &quot;go ahead&quot;</li>
+                  <li>Added support for &quot;expect direct (fix)&quot; / &quot;expect to rejoin the arrival at (fix)&quot;</li>
+                  <li>Fixed some issues with &quot;at (fix), cleared (approach)&quot;</li>
+                  <li>Many other improvements to interpreting ambiguous instructions</li>
+                </ul>
+              </li>
+              <li>STARS:
+                <ul>
+                  <li>Fixed a bug with datablock formatting when aircraft are squawking the wrong code.</li>
+                  <li>Trying to hand off or point out a track with a local flight plan now gives an ILL TRK - LCL FP error</li>
+                  <li>Added controls for TPA and ATPA brightness in the BRITE menu in the DCB</li>
+                  <li>Improved realism of datablock clock phases, add FE controls to specify cycle and lengths</li>
+                </ul>
+              </li>
+              <li>Facility engineering:
+                <ul>
+                  <li>Added support for per-area and per-controller &quot;altimeters&quot; lists</li>
+                  <li>Added &quot;cleared_altitude&quot; for arrivals/overflights: this is like &quot;cleared_altitude&quot; for departures--aircraft try to get to that altitude when able, but obey altitude restrictions in their route while doing so.</li>
+                  <li>When specifying routes, you can now use &quot;/t&quot; to specify departing a fix on a track heading, and &quot;/lt&quot; and &quot;/rt&quot; with a heading to specify a left/right turn to the given track heading.</li>
+                  <li>When specifying routes, you can use &quot;/ld&quot; to specify to turn left when proceeding to the next fix, and similarly for &quot;/rd&quot; for turning right.</li>
+                  <li>Improved restriction area specification in configs: RA numbers are now part of the specification, and auto-RAs-from-TFRs can be disabled</li>
+                </ul>
+              </li>
+            </ul>
+
 
             <h3 id="release-0.14.1">0.14.1 (9 Mar 2026)</h3>
             <ul>
@@ -3004,6 +3037,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   <tr><td><code>[DCB-SHIFT]</code></td><td><code>[Ctrl-F7]</code></td></tr>
                   <tr><td><code>[DCB]</code></td><td><code>[Ctrl-F9]</code></td></tr>
                   <tr><td><code>[F13]</code></td><td><code>[Shift-F1]</code></td></tr>
+                  <tr><td><code>[F16 MACRO]</code></td><td><code>[Shift-F4]</code> or <code>[F16]</code></td></tr>
                   <tr><td><code>[FLT DATA]</code></td><td><code>[F6]</code></td></tr>
                   <tr><td><code>[HND OFF]</code></td><td><code>[F5]</code></td></tr>
                   <tr><td><code>[INIT CNTL]</code></td><td><code>[F1]</code></td></tr>
@@ -3340,8 +3374,8 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
 
             <p>The main DCB menu offers the following controls:</p>
               <ul>
-                <li>RANGE: sets the range of the radar scope (see <a href="#stars-range-center">STARS Configuration</a>).</li>
-                <li>PLACE CNTR/OFF CNTR: controls to set the center point of the radar scope (see <a href="#stars-range-center">STARS Configuration</a>).</li>
+                <li>RANGE: sets the range of the radar scope (see <a href="#stars-range-center">Configuration</a>).</li>
+                <li>PLACE CNTR/OFF CNTR: controls to set the center point of the radar scope (see <a href="#stars-range-center">Configuration</a>).</li>
                 <li>RR/PLACE RR/RR CNTR: controls for <a href="#stars-range-rings">range rings</a> that are shown on the display</li>
                 <li>MAPS (and the six buttons to the right): controls the <a href="#stars-video-maps">visible video maps</a>.</li>
                 <li>WX*: controls which levels of <a href="#stars-weather">weather intensity</a> are displayed.</li>
@@ -5995,7 +6029,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
             </p>
             <ul>
               <li><code>CCC</code>: specifies that the location of the CCC VOR should be used.</li>
-              <li><code>CCC/320/2.5</code>: specifies a point 2.5nm miles along the 320 bearing from the CCC VOR.</li>
+              <li><code>CCC 320 2.5</code>: specifies a point 2.5nm miles along the 320 bearing from the CCC VOR.</li>
               <li><code>403758N/0734617W</code>: specifies a latitude-longitude coordinate 40.37.58N, 73.46.17W.
                 In other words, for latitude, the first two digits are degrees, the next two are minutes, and the next two
                 are seconds, followed by a "N" or an "S". For longitude, three digits are used for degrees (and leading
@@ -6019,11 +6053,11 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>[F12]E(###)</code></td>
+                    <td><code>[F12](###)E</code></td>
                     <td>Displays the restriction area with the given number.</td>
                   </tr>
                   <tr>
-                    <td><code>[F12]I(###)</code></td>
+                    <td><code>[F12](###)I</code></td>
                     <td>Hides the restriction area with the given number.</td>
                   </tr>
                   <tr>
@@ -6083,7 +6117,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
 
 	  <section class="docs-section" id="stars-configuration">
 
-            <h2 class="section-heading">STARS Configuration</h2>
+            <h2 class="section-heading">Configuration</h2>
 
             <h3 id="stars-range-center">Range and Center</h3>
 
@@ -6143,7 +6177,6 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               <li>RR: range rings.</li>
               <li>BCN: beacon targets (not currently used).</li>
               <li>HST: history circles behind track paths.</li>
-              <li>WXC: <a href="#stars-weather">weather</a> contrast; i.e., the stippled patterns.</li>
               <li>BKC: background contrast.</li>
               <li>MPB: maps in group "B" (generally, the secondary maps).</li>
               <li>LST: <a href="#stars-system-lists">system lists</a>.</li>
@@ -6152,6 +6185,9 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               <li>CMP: the compass rose at the edges of the STARS display</li>
               <li>PRI: <a href="#stars-track-symbols">primary target symbols</a>.</li>
               <li>WX: <a href="#stars-weather">weather</a>.</li>
+              <li>WXC: <a href="#stars-weather">weather</a> contrast; i.e., the stippled patterns.</li>
+              <li>TPA: brightness of <a href="#stars-tpa-atpa">TPA graphics</a> (i.e., j-rings and p-cones).</li>
+              <li>ATPA: brightness of <a href="#stars-tpa-atpa">ATPA graphics</a> (automatic p-cones for aircraft on final approach).</li>
             </ul>
             <p>Some of these brightnesses can be set to 0, in which case "OFF" is shown in the BRITE menu and 
               the corresponding item isn't drawn at all. Others have a minimum required brightness.</p>
@@ -6769,7 +6805,25 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   </tr>
                 </tbody>
               </table>
-            
+
+            <h4>Command Macros</h4>
+
+            <p>Facilities may define <i>command macros</i> that chain multiple STARS
+              commands together into a single shortcut. Macros can be associated with any command mode;
+              when a macro matches the current mode and typed text, it takes priority over built-in commands.</p>
+            <p>For example, a macro with input <code>[F16]X[SLEW]</code> activates when the user presses
+              <code>[F16]</code>, types <code>X</code>, and slews a track. A macro with input
+              <code>[TERM CNTL]HELLO</code> activates when the user types <code>[TERM CNTL]HELLO[Enter]</code>.
+              Macros may also have empty matching text
+              (e.g., <code>[F16]</code> or <code>[F16][SLEW]</code>) to activate immediately on <code>[Enter]</code> or slew.</p>
+            <p>Macros support parameter substitution: commands may include <code>$1</code> through
+              <code>$9</code> placeholders that are replaced with words from the user's input.
+              A macro with no text in its input but with <code>$1</code> in its commands acts as a
+              <i>catch-all</i> for its command mode: any text the user types is passed as parameters.
+              Catch-all macros only activate as a fallback when no exact-name macro matches.</p>
+            <p>Macros are defined per-facility in the scenario configuration. The available macros for the current
+              facility can be seen in the scenario info window, accessed by clicking the
+              <i class="fas fa-question-circle"></i> button in the menubar.</p>
 
             <h3 id="stars-video-maps">Video Maps</h3>
 
@@ -6972,11 +7026,97 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
 
           </article>
 
+        <article class="docs-article" id="section-eram">
+          <header class="docs-header">
+            <h1 class="docs-heading">ERAM</h1>
+
+            <section class="docs-intro">
+              <p><i>vice's</i> support for ERAM and enroute scenarios is relatively new; it was first released on November 5, 2025.
+                Development is ongoing, though the current implementation is stable and well fleshed-out (though documentation is incomplete.)
+              </p>
+              <p>Inbound handoffs are accepted by slewing the track;
+                an outbound handoff is recalled by slewing. For an owned
+                track, slewing it toggles display of its full datablock.
+              </p>
+              <p>To hand off a track to another controller, either enter the controller's sector id and slew the track, or enter the sector id, a space, and the aircraft's flight id.</p>
+              <p>Entering a number and slewing an owned track sets the leader line direction accordingly.</p>
+              <p>The following is an (incomplete) list of the currently-supported ERAM commands:
+              </p>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th style="width:30%">Command</th>
+                    <th>Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>//</code></td>
+                    <td>Toggle VCI (on-frequency indicator)</td>
+                  </tr>
+                  <tr>
+                    <td><code>/</code></td>
+                    <td>Leader line length</td>
+                  </tr>
+                  <tr>
+                    <td><code>LA</code></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td><code>LB</code></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td><code>LF</code></td>
+                    <td>Continuous range readout</td>
+                  </tr>
+                  <tr>
+                    <td><code>MR</code></td>
+                    <td>Map request</td>
+                  </tr>
+                  <tr>
+                    <td><code>TG</code></td>
+                    <td>"Target gen": used for issuing instructions to aircraft using <i>vice</i>'s <a href="#atc-commands">keyboard instruction commands</a>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QQ</code></td>
+                    <td>Set interim altitude.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QZ</code></td>
+                    <td>Set assigned altitude.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QX</code></td>
+                    <td>Drop track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QU</code></td>
+                    <td>Direct to fix / route display / clear all route displays</td>
+                  </tr>
+                  <tr>
+                    <td><code>QP</code></td>
+                    <td>J rings</td>
+                  </tr>
+                  <tr>
+                    <td><code>QF</code></td>
+                    <td>Flight plan display</td>
+                  </tr>
+                  <tr>
+                    <td><code>QS</code></td>
+                    <td>Heading / speed-mach / free-text scratchpad handling</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </header>
+        </article>
+
         <footer class="footer">
           <div class="container text-center py-5">
             <!-- Bootstrap template licensed from themes.3rdwavemedia.com -->
             <small class="copyright">
-              <i>vice</i> documentation (c)2023-2024 Matt Pharr, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
+              <i>vice</i> documentation (c)2023-2026 <i>vice</i> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
           </div>
         </footer>
       </div> 
