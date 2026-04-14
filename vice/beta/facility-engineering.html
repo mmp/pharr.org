@@ -481,6 +481,11 @@
                 <li> <code>/r</code><i>heading</i>: turn right to the specified heading at the fix</li>
                 <li> <code>/lt</code><i>heading</i>: turn left to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
                 <li> <code>/rt</code><i>heading</i>: turn right to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
+                <li> Heading specifiers and action specifiers such as <code>/ho</code>, <code>/po</code>, <code>/tc</code>, scratchpad changes, <code>/c</code>, and <code>/d</code> may be chained in order using <code>@</code> conditions.</li>
+                <li> <code>@a</code><i>altitude</i>: after an action group, fly its heading until reaching the specified altitude in feet, then start the next action group.
+                  For example, <code>_EWR4_4La/h039@a500/r055</code> flies heading 039 after <code>_EWR4_4La</code> until 500 feet, then turns right to heading 055.</li>
+                <li> <code>@d</code><i>distance</i><i>fix</i>: after an action group, fly its heading until reaching the given DME distance from the named fix or navaid.
+                  For example, <code>_EWR4_4La/h039@a500/r055@d4.0IEZA/l290/ho5W</code> flies heading 039 until 500 feet, turns right to heading 055 until D4.0 from IEZA, then turns left to heading 290 and hands off to 5W.</li>
                 <li> <code>/ld</code>: left direct to the next fix (force a left turn to reach the next waypoint)</li>
                 <li> <code>/rd</code>: right direct to the next fix (force a right turn to reach the next waypoint)</li>
                 <li> <code>/iaf</code>: indicates that the fix is an IAF (initial approach fix)</li>
@@ -490,7 +495,9 @@
                   default, <i>fly-by</i>). Aircraft must pass directly over flyover
                   fixes before turning to the next fix, while they may turn early with fly-by fixes.</li>
                 <li> <code>/ph</code>: fly present heading (rounded to the nearest 5 degree increment) departing the fix.</li>
-                <li> <code>/s</code><i>speed</i>: cross the fix at the given speed</li>
+                <li> <code>/s</code><i>speed</i>: cross the fix at the given speed. The speed may include a
+                  <code>+</code> suffix for "at or above" (e.g. <code>/s210+</code>) or a <code>-</code> suffix
+                  for "at or below" (e.g. <code>/s250-</code>). A range may also be specified (e.g. <code>/s180-210</code>).</li>
                 <li> <code>/c</code><i>altitude</i>: climb to the specified altitude (in 100s of feet, between 0 and 600) when passing the waypoint, as if the controller issued that instruction. Cannot be combined with <code>/d</code> at the same waypoint.</li>
                 <li> <code>/d</code><i>altitude</i>: descend to the specified altitude (in 100s of feet, between 0 and 600) when passing the waypoint, as if the controller issued that instruction. Cannot be combined with <code>/c</code> at the same waypoint.</li>
               </ul>
@@ -1004,6 +1011,13 @@
                         </table>
                       </details>
                   </td></tr>
+                  <tr>
+                    <td>"disable_tfr_restriction_areas"</td>
+                    <td>Boolean</td>
+                    <td>(<i>Optional</i>) If true, TFR (Temporary Flight Restriction) areas are not automatically
+                      added as system restriction areas when a simulation starts. By default, TFRs are converted
+                      to restriction areas and assigned keys in the 101&ndash;200 range.</td>
+                  </tr>
                 </tbody>
               </table>
               <section class="docs-section" id="fe-config-common">
@@ -2102,6 +2116,12 @@
                                             first 6 in alphabetical order will be shown and the first one will be shown at the top of the list.
                                           </td>
                                         </tr>
+                                        <tr>
+                                          <td>"flash_on_atis_update"</td>
+                                          <td>Boolean</td>
+                                          <td>If true, ATIS and GI text lines in the SSA list flash on STARS's half-second cadence whenever their text changes.
+                                            The flashing is local to each controller display and can be stopped with the triangle command.</td>
+                                        </tr>
                                       </tbody>
                                     </table>
                                   </details>
@@ -2239,12 +2259,16 @@
                     </td></tr>
                     <tr>
                       <td>"restriction_areas"</td>
-                      <td>Array of objects</td>
-                      <td>Defines restriction areas that controllers may display in the STARS window.</td>
+                      <td>Map of integer keys (1&ndash;200) to objects</td>
+                      <td>Defines restriction areas that controllers may display in the STARS window.
+                        Keys 1&ndash;100 are user restriction areas (can be created/modified/deleted at runtime);
+                        keys 101&ndash;200 are system restriction areas (can only be toggled for display).
+                        TFR-generated restriction areas are automatically assigned keys in the 101&ndash;200 range.</td>
                     </tr>
                     <tr><td colspan="3">
                         <details class="json-fields" id="fe-stars-restriction-areas"><summary>"restriction_areas" members</summary>
-                          <p>The "restriction_areas" array specifies restriction areas that controllers may display in the STARS window.
+                          <p>The "restriction_areas" map specifies restriction areas that controllers may display in the STARS window.
+                            Each key is an integer from 1 to 200; keys 1&ndash;100 are user restriction areas and keys 101&ndash;200 are system restriction areas.
                             There are three types: text-only, circular, and polygonal.</p>
                           <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
                               <tr>
@@ -2410,6 +2434,11 @@
                           </table>
                         </details>
                     </td></tr>
+                    <tr>
+                      <td>"thick_20nm_range_ring"</td>
+                      <td>Boolean</td>
+                      <td>If "true", the range ring at 20 nm radius is drawn with a 2 pixel thick line.</td>
+                    </tr>
                     <tr>
                       <td>"untracked_position_symbol_overrides"</td>
                       <td>Object</td>
@@ -3283,14 +3312,14 @@
                 as their exit fix.  Here is an excerpt from the KJFK departure routes:
               </p>
               <pre>
-                "departure_routes": {
-                "13R": {
-                "ARD,DIXIE,RBV,WHITE": {
-                "cleared_altitude": 5000,
-                "sid": "JFK5",
-                "waypoints": "KJFK-31L/h185"
-                },
-                ...
+"departure_routes": {
+  "13R": {
+    "ARD,DIXIE,RBV,WHITE": {
+      "cleared_altitude": 5000,
+      "sid": "JFK5",
+      "waypoints": "KJFK-31L/h185"
+    },
+    ...
               </pre>
               <p>The members of "departure_routes" are strings identifying the departure runway; each departure runway's routes
                 are then represented by an object with one or more members that specify comma-separated lists of exit fixes.
@@ -3373,11 +3402,6 @@
                     <td><i>(Optional)</i> A string naming the SID that the aircraft is flying.</td>
                   </tr>
                   <tr>
-                    <td>"speed_restriction"</td>
-                    <td>Number</td>
-                    <td><i>(Optional)</i> If present, gives a speed restriction in knots which aircraft will maintain until told otherwise by the controller.</td>
-                  </tr>
-                  <tr>
                     <td>"waypoints"</td>
                     <td>String</td>
                     <td>The initial series of waypoints that the aircraft follows. <i>vice</i> automatically
@@ -3394,18 +3418,18 @@
               </p>
               <pre>
                 {
-                "airlines": [
-                {
-                "fleet": "long",
-                "icao": "AFR"
-                }
-                ],
-                "destination": "LPFG",
-                "exit": "HAPIE",
-                "route": "HAPIE YAHOO WHALE N251A JOOPY NATZ MALOT NATZ GISTI LESLU M142 LND N160 NAKID M25 ANNET UM25 UVSUV UM25 INGOR UM25 LUKIP LUKIP9E",
-                "scratchpad": "HAP",
-                },
-                ...
+  "airlines": [
+    {
+      "fleet": "long",
+      "icao": "AFR"
+    }
+  ],
+  "destination": "LPFG",
+  "exit": "HAPIE",
+  "route": "HAPIE YAHOO WHALE N251A JOOPY NATZ MALOT NATZ GISTI LESLU M142 LND N160 NAKID M25 ANNET UM25 UVSUV UM25 INGOR UM25 LUKIP LUKIP9E",
+  "scratchpad": "HAP",
+  },
+  ...
               </pre>
               <p>A few additional things must be specified with each departure:</p>
               <table class="table">
@@ -3601,8 +3625,8 @@
                   </tr>
                   <tr>
                     <td>"speed_restriction"</td>
-                    <td>Number</td>
-                    <td>If present, gives a speed restriction in knots</td>
+                    <td>Number or String</td>
+                    <td>If present, gives a speed restriction in knots. May use <code>"250-"</code> (at or below) or <code>"210+"</code> (at or above) syntax.</td>
                   </tr>
                   <tr>
                     <td>"star"</td>
@@ -3719,16 +3743,16 @@
                 Note that all start with JIIMS, the same fix at the end of "waypoints".
               </p>
               <pre>
-                "runway_waypoints": {
-                "KPHL": {
-                "27L": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-                "27R": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
-                "17": "JIIMS/a8000 SNEDE/h312",
-                "35": "JIIMS/a8000 SNEDE/h312",
-                "9L": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268",
-                "9R": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268"
-                }
-                },
+  "runway_waypoints": {
+    "KPHL": {
+      "27L": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+      "27R": "JIIMS/a8000 ZMRMN CHPMN PSOUT MKORD/h087",
+      "17": "JIIMS/a8000 SNEDE/h312",
+      "35": "JIIMS/a8000 SNEDE/h312",
+      "9L": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268",
+      "9R": "JIIMS/a8000 WUDRR WEVVE ERNYY/h268"
+     }
+  },
               </pre>
               <h4 id="fe-overflights">Overflights</h4>
               <p>An overflight is an aircraft that enters the TRACON already airborne, and flies through it
@@ -3773,6 +3797,13 @@
                     <td>(<i>Optional</i>) A description of the overflight for use in <i>vice</i>'s user interface.</td>
                   </tr>
                   <tr>
+                    <td>"flight_type"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) How STARS should classify aircraft spawned from this overflight. Valid values are
+                      <code>"overflight"</code>, <code>"arrival"</code>, and <code>"departure"</code>. If omitted,
+                      <code>"overflight"</code> is used.</td>
+                  </tr>
+                  <tr>
                     <td>"initial_altitude"</td>
                     <td>Number or array of numbers</td>
                     <td>The altitude aircraft will have when they are spawned at the initial fix.
@@ -3807,9 +3838,9 @@
                   </tr>
                   <tr>
                     <td>"speed_restriction"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) If specified, gives a speed restriction to the aircraft (e.g., as would
-                      happen after passing a waypoint on a route with a speed restriction.)</td>
+                    <td>Number or String</td>
+                    <td>(<i>Optional</i>) If specified, gives a speed restriction to the aircraft. May use
+                      <code>"250-"</code> (at or below) or <code>"210+"</code> (at or above) syntax.</td>
                   </tr>
                   <tr>
                     <td>"waypoints"</td>
@@ -4030,13 +4061,13 @@
                 Here is an example from the KPHL airspace:
               </p>
               <pre>
-                "PHL_DQO27_33": [
-                "N039.21.58.949,W075.28.55.977",
-                "N039.25.56.240,W075.29.47.255",
-                "N039.26.20.204,W075.27.28.196",
-                "N039.22.24.699,W075.26.48.535",
-                "N039.21.58.949,W075.28.55.977"
-                ]
+  "PHL_DQO27_33": [
+    "N039.21.58.949,W075.28.55.977",
+    "N039.25.56.240,W075.29.47.255",
+    "N039.26.20.204,W075.27.28.196",
+    "N039.22.24.699,W075.26.48.535",
+    "N039.21.58.949,W075.28.55.977"
+  ]
               </pre>
               <p>Note that the first point and the last point are at the same location and thus, "PHL_DQO27_33" is a closed polygon.
                 Airspace boundaries do not have to be polygons like this; because boundaries are generally shared between different

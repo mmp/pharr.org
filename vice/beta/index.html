@@ -663,16 +663,29 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     <td><code>A120</code></td>
                   </tr>
                   <tr>
-                    <td><code>ED</code></td>
+                    <td><code>ED</code>[<i>alt</i>]</td>
                     <td>Directs the aircraft to expedite the descent to its
-                    assigned altitude.</td>
-                    <td><code>ED</code></td>
+                    assigned altitude. Optionally specify an altitude to expedite through
+                    (e.g., <code>ED50</code> to expedite through 5,000).</td>
+                    <td><code>ED</code>, <code>ED50</code></td>
                   </tr>
                   <tr>
-                    <td><code>EC</code></td>
+                    <td><code>EC</code>[<i>alt</i>]</td>
                     <td>Directs the aircraft to expedite the climb to its
-                    assigned altitude.</td>
-                    <td><code>EC</code></td>
+                    assigned altitude. Optionally specify an altitude to expedite through
+                    (e.g., <code>EC100</code> to expedite through 10,000).</td>
+                    <td><code>EC</code>, <code>EC100</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>GRD</code>, <code>GRC</code></td>
+                    <td>"Good rate" descent or climb. Faster than normal rate but
+                    not as fast as expedite.</td>
+                    <td><code>GRD</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>GR</code><i>alt</i></td>
+                    <td>"Good rate" through an altitude. Direction is inferred from current state.</td>
+                    <td><code>GR50</code></td>
                   </tr>
                   <tr>
                     <td><code>C</code><i>fix</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i><code>/M</code><i>mach</i></td>
@@ -684,6 +697,17 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                       an altitude and a minus sign ("at or below"), or a
                       range of altitudes separated by a minus sign ("between").</p></td>
                     <td><code>CCAMRN/A110+</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>C</code><i>fix</i><code>/</code><i>dist</i><i>dir</i><code>/A</code><i>altitude</i><code>/S</code><i>speed</i><code>/M</code><i>mach</i></td>
+                    <td><p>Directs the aircraft to cross a point a given distance and direction from the fix at the
+                      given altitude, speed, and/or mach. The direction is specified as
+                      <code>N</code>, <code>S</code>, <code>E</code>, <code>W</code>,
+                      <code>NE</code>, <code>NW</code>, <code>SE</code>, or <code>SW</code>.
+                      Any combination of <code>A</code>, <code>S</code>, and <code>M</code>
+                      may be specified, just like the regular cross-fix command.
+                      For example, <code>CDETGY/5W/A30</code> means "cross 5 miles west of DETGY at 3,000."</p></td>
+                    <td><code>CDETGY/5W/A30</code></td>
                   </tr>
                   <tr>
                     <td><code>CVS</code></td>
@@ -762,12 +786,12 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                   </tr>
                   <tr>
                     <td><code>S</code><i>kts</i><code>+</code></td>
-                    <td>Assigns a speed floor: aircraft should fly at or above the specified speed. Currently treated as a standard speed assignment.</td>
+                    <td>Assigns a speed floor: aircraft should fly at or above the specified speed.</td>
                     <td><code>S180+</code></td>
                   </tr>
                   <tr>
                     <td><code>S</code><i>kts</i><code>-</code></td>
-                    <td>Assigns a speed ceiling: aircraft should not exceed the specified speed. Currently treated as a standard speed assignment.</td>
+                    <td>Assigns a speed ceiling: aircraft should not exceed the specified speed.</td>
                     <td><code>S180-</code></td>
                   </tr>
                   <tr>
@@ -775,6 +799,13 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     <td>Assigns a speed restriction for an aircraft cleared for an approach until a specified point.
                       The specification may be a fix name, a number (for mile final), or a number followed by <code>DME</code>.</td>
                     <td><code>S210/U5</code>, <code>S210/U5DME</code>, <code>S210/UROSLY</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>S</code><i>kts</i><code>/U</code><i>fix</i><code>/</code><i>kts</i>[<code>/U</code><i>fix</i><code>/</code><i>kts</i>]...</td>
+                    <td>Compound speed assignment: multiple speed segments separated by fixes.
+                      The aircraft flies the first speed until the first fix, then the next speed until the next fix, and so on.
+                      Each speed may have a <code>+</code> or <code>-</code> suffix for "or greater" or "or less".</td>
+                    <td><code>S250/UROSLY/210</code>, <code>S250/UROSLY/210/UCAMRN/180</code></td>
                   </tr>
                   <tr>
                     <td><code>SS</code></td>
@@ -923,6 +954,22 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     <td><code>AROSLY/I</code></td>
                   </tr>
                   <tr>
+                    <td><code>A</code><i>fix</i><code>/S</code><i>speed</i>[<code>+</code>|<code>-</code>]</td>
+                    <td>After passing the fix, maintain the given speed.
+                    Append <code>+</code> for "or greater" or <code>-</code> for "or less".</td>
+                    <td><code>AROSLY/S230</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>A</code><i>fix</i><code>/C</code><i>alt</i></td>
+                    <td>After passing the fix, climb and maintain the given altitude.</td>
+                    <td><code>AROSLY/C50</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>A</code><i>fix</i><code>/D</code><i>alt</i></td>
+                    <td>After passing the fix, descend and maintain the given altitude.</td>
+                    <td><code>AROSLY/D30</code></td>
+                  </tr>
+                  <tr>
                     <td><code>CAC</code></td>
                     <td>Cancels approach clearance for an aircraft.</td>
                     <td><code>CAC</code></td>
@@ -940,6 +987,26 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     which point it will follow the localizer's lateral path
                     but not descend until it is cleared for the approach.)</td>
                     <td><code>I</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>AP/</code><i>oclock</i><code>/</code><i>miles</i></td>
+                    <td>Tells the pilot where to look for the airport
+                    (e.g., "airport, 2 o'clock, 8 miles"). The pilot
+                    responds "field in sight" or "looking" depending
+                    on conditions. The pilot must have the field in
+                    sight before you can clear the visual approach.</td>
+                    <td><code>AP/2/8</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>CVA</code><i>runway</i></td>
+                    <td>Clears the aircraft for a visual approach to the
+                    specified runway. Requires the pilot to have the
+                    field in sight (via AP command or spontaneous
+                    report) or preceding traffic in sight (via traffic
+                    advisory). The aircraft will fly a straight-in
+                    if aligned or insert a base turn if offset from the
+                    centerline.</td>
+                    <td><code>CVA13L</code></td>
                   </tr>
                 </tbody>
               </table>
@@ -1074,7 +1141,8 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 </tr>
                 <tr><td>Altitude at Fix</td>
                   <td>
-                    <i>Cross (fix) at (altitude)</i> /  <i>Cross (fix) at or above (altitude)</i>
+                    <i>Cross (fix) at (altitude)</i> /  <i>Cross (fix) at or above (altitude)</i> /
+                    <i>Cross (distance) miles (direction) of (fix) at (altitude)</i>
                   </td>
                 </tr>
                 <tr><td>Altitude after Speed</td>
@@ -1084,7 +1152,16 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 </tr>
                 <tr><td>Expedite Altitude</td>
                   <td>
-                    <i>Expedite descent</i> /  <i>Expedite climb</i>
+                    <i>Expedite descent</i> /  <i>Expedite climb</i> /
+                    <i>Expedite descent through (altitude)</i> /  <i>Expedite climb through (altitude)</i> /
+                    <i>Best rate descent</i> / <i>Best rate climb</i> /
+                    <i>Best rate descent through (altitude)</i> / <i>Best rate climb through (altitude)</i>
+                  </td>
+                </tr>
+                <tr><td>Good Rate</td>
+                  <td>
+                    <i>Good rate (of) descent</i> / <i>Good rate (of) climb</i> /
+                    <i>Good rate through/to (altitude)</i>
                   </td>
                 </tr>
                 <tr><td>Say Altitude</td>
@@ -1165,7 +1242,29 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 </tr>
                 <tr><td>Speed at Fix</td>
                   <td>
-                    <i>Cross (fix) at (speed) knots</i> / <i>Cross (fix) at Mach (mach)</i>
+                    <i>Cross (fix) at (speed) knots</i> / <i>Cross (fix) at Mach (mach)</i> /
+                    <i>Cross (distance) miles (direction) of (fix) at (speed) knots</i> /
+                    <i>Cross (distance) miles (direction) of (fix) at Mach (mach)</i>
+                  </td>
+                </tr>
+                <tr><td>Speed after Fix</td>
+                  <td>
+                    <i>After (fix), maintain (speed) knots</i> /
+                    <i>After (fix), (speed) knots or greater</i> /
+                    <i>After (fix), (speed) knots or less</i>
+                  </td>
+                </tr>
+                <tr><td>Compound Speed</td>
+                  <td>
+                    <i>Speed (speed) until (fix), then (speed)</i> /
+                    <i>Speed (speed) until (fix), then (speed) until (fix)</i> /
+                    <i>Speed (speed) until (fix), (speed) until (fix), then (speed)</i>
+                  </td>
+                </tr>
+                <tr><td>Altitude after Fix</td>
+                  <td>
+                    <i>After (fix), climb and maintain (altitude)</i> /
+                    <i>After (fix), descend and maintain (altitude)</i>
                   </td>
                 </tr>
                 <tr><td>Speed after Altitude</td>
@@ -1306,6 +1405,17 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                   <td>
                     <i>Cancel approach clearance</i>
                   </td>
+                </tr>
+                <tr><td>Cleared Visual Approach</td>
+                  <td>
+                    <i>Cleared visual (runway)</i> /  <i>Cleared the visual approach runway (runway)</i>
+                  </td>
+                </tr>
+                <tr><td>Airport Advisory</td>
+                  <td>
+                    <i>Airport (N) o'clock (N) miles</i> /  <i>Field (N) o'clock (N) miles</i>
+                  </td>
+                </tr>
               </tbody>
             </table>
             <h3>VFR Aircraft</h3>
@@ -1483,16 +1593,16 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.1/Vice-v0.14.1-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.1 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.2/Vice-v0.14.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.2 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
             <h2 class="section-heading"><i class="fa-brands fa-apple"></i> Macintosh</h2>
 
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
-              on both Intel and Apple CPUs. Note that MacOS Big Sur or a more recent version of OSX is required.
+              on both Intel and Apple CPUs. Note that MacOS Ventura or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.1/Vice-v0.14.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.1 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.2/Vice-v0.14.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.2 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1520,6 +1630,55 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.14.2">0.14.2 (30 Mar 2026)</h3>
+            <ul>
+              <li>New scenarios: LBB (Gecko), ZNY E/F (Ryan G), ZJX 88 (manaphy), TYS (Jake Magee / manaphy), FAT (Ketan K)</li>
+              <li>Scenario updates: MIA (Gecko), ZNY, PHL, BOS (Ryan G), BOS, DCA (radarcontacto), I90, NCT, SCT, ZLA (Ketan K), ZJX (manaphy), N90 (manaphy, Ryan G)</li>
+              <li>Updated to AIRAC 260319 (Ketan K)</li>
+              <li>Adjusted radio noise simulation to reduce muffling of pilot responses</li>
+              <li>Added pin in subwindow top bars to control whether they stay on top of the main radar scope window (all are pinned by default)</li>
+              <li>Fixed a few crashes under unusual circumstances.</li>
+              <li>Flight simulation:
+                <ul>
+                  <li>Added &quot;left/right direct {fix}&quot; instruction (<code>LDFIX</code>, <code>RDFIX</code> if you're not using stt)</li>
+                  <li>Improved pilot initial contact messages to include SIDs/STARs, altitude/speed restrictions, assigned headings, etc.</li>
+                  <li>Aircraft will continue to descend after reaching the end of a STAR</li>
+                  <li>Fixed some bugs with meeting altitude restrictions on STARs</li>
+                  <li>There are now VFR aircraft doing pattern work at airports with VFR traffic</li>
+                  <li>Fixed a number of bugs with flying and drawing procedure turns</li>
+                  <li>You can now tell VFR aircraft to &quot;contact tower&quot; without them complaining that they weren't assigned an approach.</li>
+                </ul>
+              </li>
+              <li>STT:
+                <ul>
+                  <li>&quot;Negative, ...&quot; actually causes the aircraft that misheard the instruction to ignore it.</li>
+                  <li>&quot;Negative, (updated instructions)&quot; is allowed when an aircraft reads back the wrong instructions (i.e., the callsign isn't required).</li>
+                  <li>If a VFR calls in with a request, replying &quot;(callsign), XYZ approach&quot; is treated as &quot;go ahead&quot;</li>
+                  <li>Added support for &quot;expect direct (fix)&quot; / &quot;expect to rejoin the arrival at (fix)&quot;</li>
+                  <li>Fixed some issues with &quot;at (fix), cleared (approach)&quot;</li>
+                  <li>Many other improvements to interpreting ambiguous instructions</li>
+                </ul>
+              </li>
+              <li>STARS:
+                <ul>
+                  <li>Fixed a bug with datablock formatting when aircraft are squawking the wrong code.</li>
+                  <li>Trying to hand off or point out a track with a local flight plan now gives an ILL TRK - LCL FP error</li>
+                  <li>Added controls for TPA and ATPA brightness in the BRITE menu in the DCB</li>
+                  <li>Improved realism of datablock clock phases, add FE controls to specify cycle and lengths</li>
+                </ul>
+              </li>
+              <li>Facility engineering:
+                <ul>
+                  <li>Added support for per-area and per-controller &quot;altimeters&quot; lists</li>
+                  <li>Added &quot;cleared_altitude&quot; for arrivals/overflights: this is like &quot;cleared_altitude&quot; for departures--aircraft try to get to that altitude when able, but obey altitude restrictions in their route while doing so.</li>
+                  <li>When specifying routes, you can now use &quot;/t&quot; to specify departing a fix on a track heading, and &quot;/lt&quot; and &quot;/rt&quot; with a heading to specify a left/right turn to the given track heading.</li>
+                  <li>When specifying routes, you can use &quot;/ld&quot; to specify to turn left when proceeding to the next fix, and similarly for &quot;/rd&quot; for turning right.</li>
+                  <li>Improved restriction area specification in configs: RA numbers are now part of the specification, and auto-RAs-from-TFRs can be disabled</li>
+                </ul>
+              </li>
+            </ul>
+
 
             <h3 id="release-0.14.1">0.14.1 (9 Mar 2026)</h3>
             <ul>
@@ -4622,6 +4781,28 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                       the beacon code: <code>E</code> for enroute IFR, <code>V</code> for VFR, or <code>P</code> for VFR on top.
                       If no suffix is given, a local non-enroute IFR flight plan is created.</td>
                   </tr>
+                  <tr>
+                    <td><code>[VP][SLEW]</code></td>
+                    <td>Create an interfacility VFR flight plan from an active local VFR track,
+                      using the scratchpad as the destination. The track must have an aircraft type
+                      assigned and a destination in the scratchpad. The new plan appears in the VFR
+                      list; after a few seconds, the NAS-assigned beacon code is transferred to the
+                      track, creating a beacon code mismatch until the pilot squawks the new code.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[VP]*[SLEW]</code></td>
+                    <td>Same as above, but the scratchpad is treated as an intermediate fix rather
+                      than a destination.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[VP](REQ ALT)[SLEW]</code></td>
+                    <td>Same as <code>[VP][SLEW]</code>, with a requested altitude (three digits,
+                      giving hundreds of feet).</td>
+                  </tr>
+                  <tr>
+                    <td><code>[VP]*(REQ ALT)[SLEW]</code></td>
+                    <td>Same as <code>[VP]*[SLEW]</code>, with a requested altitude.</td>
+                  </tr>
                 </tbody>
               </table>
 
@@ -6375,7 +6556,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   </tr>
                 </tbody>
               </table>
-              <p>The SSA list also includes the ATIS letter and GI (General Information) text, which can be set with the following commands:</p>
+              <p>The SSA list also includes the ATIS letter and GI (General Information) text. These values are shared across all controllers in the sim. They can be set with the following commands:</p>
               <table class="table table-bordered">
                 <thead>
                   <tr>
@@ -6443,6 +6624,10 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                     <td><code>[MULTIFUNC]S(#) * (TEXT)</code></td>
                     <td>Clear ATIS in given line and set GI text
                     </td>
+                  </tr>
+                  <tr>
+                    <td><code>∆</code></td>
+                    <td>Stop blinking ATIS and GI text (signaling a change)</td>
                   </tr>
                 </tbody>
                 </table>
