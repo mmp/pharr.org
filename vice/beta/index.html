@@ -1008,6 +1008,16 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     centerline.</td>
                     <td><code>CVA13L</code></td>
                   </tr>
+                  <tr>
+                    <td><code>CDME</code><i>nm</i><code>/A</code><i>alt</i></td>
+                    <td>Adds a "cross <i>nm</i> DME at <i>alt</i>" crossing
+                    restriction to a cleared visual approach, with the
+                    runway threshold as the DME reference. Append
+                    <code>+</code> for "at or above" or <code>-</code>
+                    for "at or below". Combine with <code>/S</code><i>spd</i>
+                    (or <code>/M</code><i>mach</i>) for a speed restriction.</td>
+                    <td><code>CDME10/A30+</code></td>
+                  </tr>
                 </tbody>
               </table>
 
@@ -1060,6 +1070,11 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                     <td><code>VISSEP</code></td>
                     <td>Instructs the aircraft to maintain visual separation.</td>
                     <td><code>VISSEP</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>APPROVED</code></td>
+                    <td>Approves a pilot's offer to maintain visual separation after a traffic advisory. The pilot does not read back this command.</td>
+                    <td><code>APPROVED</code></td>
                   </tr>
                   <tr>
                     <td><code>X</code></td>
@@ -1142,7 +1157,8 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <tr><td>Altitude at Fix</td>
                   <td>
                     <i>Cross (fix) at (altitude)</i> /  <i>Cross (fix) at or above (altitude)</i> /
-                    <i>Cross (distance) miles (direction) of (fix) at (altitude)</i>
+                    <i>Cross (distance) miles (direction) of (fix) at (altitude)</i> /
+                    <i>Cross (distance) DME at (altitude)</i> (on a cleared visual approach, optionally combined with <i>cleared visual approach runway (runway)</i>)
                   </td>
                 </tr>
                 <tr><td>Altitude after Speed</td>
@@ -1496,12 +1512,22 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
               <tbody>
                 <tr><td>Traffic Advisory</td>
                   <td>
-                    <i>Traffic (o'clock), (miles), (aircraft type), (altitude)</i> / <i>Traffic (o'clock), (miles), (aircraft type), (altitude), report in sight</i>
+                    <i>Traffic (o'clock), (miles), (aircraft type), (altitude)</i> / <i>Traffic (o'clock), (miles), (aircraft type), (altitude), report in sight</i> / <i>Traffic (o'clock), (miles), (aircraft type), (altitude), they have you in sight and will maintain visual separation</i>
+                  </td>
+                </tr>
+                <tr><td>Caution Wake Turbulence</td>
+                  <td>
+                    <i>Caution wake turbulence, following a (aircraft type)</i>
                   </td>
                 </tr>
                 <tr><td>Visual Separation</td>
                   <td>
                     <i>Maintain visual separation from the traffic</i> (after traffic has been reported in sight).
+                  </td>
+                </tr>
+                <tr><td>Approve Visual Separation</td>
+                  <td>
+                    <i>Approved</i> (after the pilot reports traffic in sight and offers to maintain visual separation; no pilot readback follows).
                   </td>
                 </tr>
               </tbody>

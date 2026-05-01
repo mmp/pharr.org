@@ -605,6 +605,12 @@
                     <td>(<i>Optional</i>) If specified, gives one or more aircraft types to use.
                       It is not allowed to specify both "fleet" and "types".</td>
                   </tr>
+                  <tr>
+                    <td>"callsign"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) If specified, gives the specific callsign that the aircraft will have.
+                    It is not allowed to use "fleet", or "icao". Also, "types" must be defined.</td>
+                  </tr>
                 </tbody>
               </table>
               <p>If neither "fleet" nor "types" is specified, <i>vice</i> randomly chooses an aircraft type from the "default" fleet, but if
@@ -3290,7 +3296,7 @@
                   <tr>
                     <td>"type"</td>
                     <td>String</td>
-                    <td>The type of the approach; it must be "ILS", "Localizer", "RNAV", "Visual", or "VOR".</td>
+                    <td>The type of the approach; it must be "ILS", "Localizer", "RNAV", "ChartedVisual", or "VOR".</td>
                   </tr>
                   <tr>
                     <td>"waypoints"</td>
