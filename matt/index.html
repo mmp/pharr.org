@@ -107,6 +107,38 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">NILE: Nested Interleaving of Low-Dimensional Elements</h3>
+                            <div class="authors">Abdalla G. M. Ahmed, Matt Pharr, Victor Ostromoukhov, and Hui Huang</div>
+                            <div>ACM Transactions on Graphics (Proceedings of SIGGRAPH)</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/nile.pdf">[Paper]</a>
+                                <a href="https://doi.org/10.1145/3811283">[DOI]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/nile.png" alt="" width="344" height="268" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Sampling strategies in computer graphics have long been divided between local approaches, which optimize sample distributions independently at each pixel, and global approaches, which use high-dimensional low-discrepancy sequences to ensure uniformity across all dimensions, including adjacent pixels. While global samplers are most-commonly used thanks to generally having better convergence rates, it comes at a cost of very limited user control over the distribution of samples on subspaces, making it difficult to handle common aliasing artifacts.
+                            </div>
+                            <div class="abstract mb-2">We introduce a novel modular meta-sampler architecture that bridges local and global sampling, allowing integrator designers to employ specialized low-dimensional samplers while still achieving high-dimensional uniformity. Our approach leverages high-dimensional low-discrepancy sequences to orchestrate sample generation by a collection of local samplers operating over power-of-two hierarchical intervals. We demonstrate how existing local sampling techniques, including stratified, blue noise, and dyadic nets sampling, can be reformulated to be used with this framework, enabling hybrid sampling strategies that combine the benefits of both paradigms.</div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Abdalla G. M. Ahmed, Matt Pharr, Victor Ostromoukhov, and Hui Huang. 2026. NILE: Nested Interleaving of Low-Dimensional Elements. ACM Transactions on Graphics (Proceedings of SIGGRAPH), 45(1). DOI: 10.1145/3811283.
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/nile.png" alt="" width="344" height="268" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">Wave Tracing: Generalizing The Path Integral To Wave Optics</h3>
                             <div class="authors">Shlomi Steinberg, Matt Pharr</div>
                             <div>Eurographics 2026 (Computer Graphics Forum)</div>
