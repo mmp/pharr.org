@@ -182,7 +182,7 @@
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-eram">ERAM</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-stars">STARS</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-video-maps">Video Maps</a></li>
-            <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-scenarios"><span class="theme-icon-holder me-2"><i class="fas fa-plane-departure"></i></span>Scenarios</a></li>
+            <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-scenario-groups"><span class="theme-icon-holder me-2"><i class="fas fa-plane-departure"></i></span>Scenario Groups</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-approaches">Approaches</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-departures">Departures</a></li>
@@ -190,6 +190,7 @@
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-vfr">VFR Aircraft</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-airspace">Controller Airspace</a></li>
             <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
+            <li class="nav-item"><a class="nav-link scrollto" href="#fe-briefings">Briefings</a></li>
           </ul>
         </nav><!--//docs-nav-->
       </div><!--//docs-sidebar-->
@@ -229,7 +230,7 @@
                 <p>When developing scenarios, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations,
                   or you or might specify completely new scenario and video map files if you're working on support for a new TRACON.
                   One way to try out your work is to open the "Settings" menu (shown by clicking the <i class="fas fa-cog"></i> icon in the menu bar)
-                  and selecting "Scenario Files". There, you can specify the locations of additional scenario and/or video map files to load when <i>vice</i> is launched.</p>
+                  and selecting "Facility Engineering". There, you can specify the locations of additional scenario and/or video map files to load when <i>vice</i> is launched.</p>
                 <div class="text-center">
                   <img src="fe-scenario-videomap-ui.png" srcset="fe-scenario-videomap-ui-2x.png 2x" width="550" height="128">
                 </div>
@@ -504,6 +505,9 @@
               <p>A number of specifiers are intended for ambient traffic that's not under the control for a human:</p>
               <ul>
                 <li> <code>/clearapp</code>: the aircraft will be cleared for the assigned approach passing the fix.</li>
+                <li> <code>/intercept</code>: passing the fix, the virtual controller issues "intercept the localizer/approach course"
+                  (equivalent to the <code>I</code> command). The aircraft must already have an assigned approach (e.g., from a STAR's
+                  <code>expect_approach</code>).</li>
                 <li> <code>/ho</code>: the aircraft should be handed off from the virtual controller when it passes the fix.
                   A TCP may be specified after <code>/ho</code>, in which case the aircraft is handed off to the
                   corresponding virtual controller. If no TCP is specified, the aircraft is handed off to the
@@ -1118,6 +1122,10 @@
                                 <td>"range"</td>
                                 <td>Number</td>
                                 <td>The initial range for the scope in nautical miles.
+                                  For STARS facilities this is the scope radius (distance from
+                                  center to scope edge); for ERAM facilities this is the vertical
+                                  extent of the scope (top edge to bottom edge), matching the
+                                  value shown on the ERAM RANGE toolbar button.
                                   This is overridden by any range specified in "controllers" and overrides
                                   the top-level "range" in the facility configuration.</td>
                               </tr>
@@ -1145,7 +1153,7 @@
                                   The first 6 are shown in the main DCB and all are available under the "MAPS" sub-menu.
                                   An empty string, <code>""</code>, may be given to specify an empty map button in the DCB.
                                   No more than 38 maps may be specified.
-                                  Run <code>vice.exe -listmaps [path-to-XXX-videomaps.gob.zst]</code> to list the
+                                  Run <code>vice.exe -listmaps [path-to-XXX.mappack]</code> to list the
                                   available maps for an ARTCC.</td>
                               </tr>
                             </tbody>
@@ -1244,7 +1252,10 @@
                       <td>Object</td>
                       <td><p>Each entry specifies controller-specific configuration properties.
                           The applicable control positions are specified via members given as a TCP position
-                          (e.g., "2G"). The following properties may be specified for each one:</p>
+                          (e.g., "2G"). A comma-separated list of TCPs (e.g., "1A,1D,1E") may also be given as a key;
+                          the same configuration is then applied to each of the listed positions, which is convenient
+                          when several controllers share an identical configuration.
+                          The following properties may be specified for each one:</p>
 
                       </td>
                     </tr>
@@ -1292,6 +1303,10 @@
                                 <td>"range"</td>
                                 <td>Number</td>
                                 <td>The initial range for the controller's scope in nautical miles.
+                                  For STARS facilities this is the scope radius (distance from
+                                  center to scope edge); for ERAM facilities this is the vertical
+                                  extent of the scope (top edge to bottom edge), matching the
+                                  value shown on the ERAM RANGE toolbar button.
                                   This takes highest priority, overriding "areas" range and the top-level range.</td>
                               </tr>
                               <tr>
@@ -1300,7 +1315,7 @@
                                 <td>Overrides the video map file for this controller.
                                   Takes priority over the area-level and facility-level <code>"video_map_file"</code>.
                                   Use this when a controller's video maps come from a different file
-                                  than the rest of the facility (e.g., "videomaps/ZBW-videomaps.gob.zst").</td>
+                                  than the rest of the facility (e.g., "videomaps/ZBW.mappack").</td>
                               </tr>
                               <tr>
                                 <td>"video_maps"</td>
@@ -1308,7 +1323,7 @@
                                 <td>Specifies which video maps should be displayed
                                   in the DCB for the controller. If specified, these override the area-level "video_maps"
                                   in "areas". When "video_map_file" is also specified, the map names are
-                                  validated against that file's manifest.</td>
+                                  validated against that file.</td>
                               </tr>
                             </tbody>
                           </table>
@@ -1322,12 +1337,17 @@
                     <tr>
                       <td>"range"</td>
                       <td>Number</td>
-                      <td>Default radar scope center range in nautical miles. If unspecified, a 50 mile range is the default.</td>
+                      <td>Default radar scope range in nautical miles.
+                        For STARS facilities this is the scope radius (distance from center to
+                        scope edge); for ERAM facilities this is the vertical extent of the
+                        scope (top edge to bottom edge), matching the value shown on the ERAM
+                        RANGE toolbar button.
+                        If unspecified, the default is 50 NM (STARS) or 300 NM vertical (ERAM).</td>
                     </tr>
                     <tr>
                       <td>"video_map_file"</td>
                       <td>String</td>
-                      <td>Filename of the video map file from which the video maps are found (e.g., "videomaps/ZNY-videomaps.gob.zst")</td>
+                      <td>Filename of the video map file from which the video maps are found (e.g., "videomaps/ZNY.mappack")</td>
                     </tr>
                   </tbody>
                 </table>
@@ -2558,23 +2578,43 @@
               <section class="docs-section" id="fe-video-maps">
                 <h3 class="section-heading">Video Maps</h3>
                 <p>Video maps are specified separately from the rest of the configuration since they require fairly large files and are not generally edited by hand.
-                  Two utilities are available to generate maps for <i>vice</i> from other formats:</p>
+                  They are stored in a single <code>.mappack</code> file per facility (named <code>&lt;facility&gt;.mappack</code>).
+                  Two utilities are available to generate maps for <i>vice</i> from other formats:
+                  <code>crc2vice</code> and <code>dat2vice</code>.</p>
+                <p>Where to find them:</p>
+                <ul>
+                  <li><b>Windows:</b> both <code>crc2vice.exe</code> and <code>dat2vice.exe</code> are
+                    installed into the <i>vice</i> installation directory
+                    (typically <code>C:\Program Files\Vice</code>) alongside <code>Vice.exe</code>.
+                    Open a Command Prompt and either <code>cd</code> to that directory or
+                    invoke them by their full path.</li>
+                  <li><b>macOS:</b> the tools are not bundled with <code>Vice.app</code>; download the
+                    separate <code>Vice-&lt;version&gt;-osx-tools.zip</code> archive from the
+                    <a href="https://github.com/mmp/vice/releases">releases page</a>. Unzipping
+                    produces <code>crc2vice</code> and <code>dat2vice</code>; run them from a Terminal
+                    in whichever directory you put them. (They are signed and notarized, but you
+                    may need to right-click → Open on first run.)</li>
+                </ul>
                 <h4 id="fe-video-maps-crc2vice">crc2vice</h4>
-                <p><code>crc2vice</code> extracts video maps from installed CRC ARTCCs and converts them to <i>vice</i>'s internal format.</p>
+                <p><code>crc2vice</code> extracts both STARS and ERAM video maps from an installed CRC ARTCC
+                  and converts them to <i>vice</i>'s internal format.</p>
                 <p>Usage:</p>
                 <ul>
                   <li>Open a command prompt and go to your <code>%AppData%\Local\CRC</code> directory.</li>
-                  <li>Run <code>crc2vice</code> and give it the name of an installed ARTCC (e.g.,
-                    <code>crc2vice ZNY</code>). You can see which ARTCCs are installed by examining the
-                    <code>ARTCCs</code> folder there.</li>
-                  <li>Two files will be written, one containing the video map details
-                    (e.g., <code>ZNY-videomaps.gob</code>) and one with information about the
-                    individual maps (e.g., <code>ZNY-manifest.gob</code>). You can then either copy
-                    both files to the <code>resources/videomaps</code> folder in your <code>%AppData/Local/Vice</code>
-                    directory, or can use the <code>-videomap</code> command-line option to <i>vice</i>;
-                    if you use <code>-videomap</code>, only provide it with the path to the
-                    <code>ZXX-videomaps.gob</code> file. It will look for the <code>ZXX-manifest.gob</code> file
-                    in the same folder.</li>
+                  <li>Run <code>crc2vice -artcc &lt;ARTCC&gt;</code> (e.g., <code>crc2vice -artcc ZNY</code>).
+                    You can see which ARTCCs are installed by examining the <code>ARTCCs</code> folder there.</li>
+                  <li>The tool emits two kinds of files in the current directory:
+                    <ul>
+                      <li>one <code>&lt;ARTCC&gt;-&lt;facility&gt;.mappack</code> per STARS-equipped child facility
+                        (e.g., for ZNY: <code>ZNY-N90.mappack</code>,
+                        <code>ZNY-PHL.mappack</code>, <code>ZNY-ABE.mappack</code>, etc.), and</li>
+                      <li>a single <code>&lt;ARTCC&gt;.mappack</code> if the ARTCC has any ERAM geomaps.</li>
+                    </ul>
+                  </li>
+                  <li>Pass <code>-out &lt;dir&gt;</code> to write to a different output directory.</li>
+                  <li>Copy the resulting <code>.mappack</code> file(s) to the <code>resources/videomaps</code> folder
+                    in your <code>%AppData%\Local\Vice</code> directory, or pass the path to a file via the
+                    <code>-videomap</code> command-line option to <i>vice</i>.</li>
                 </ul>
                 <h4 id="fe-video-maps-dat2vice">dat2vice</h4>
                 <p><code>dat2vice</code>  extracts video maps from the FAA DAT video map file format and converts them to <i>vice</i>'s internal format.</p>
@@ -2676,18 +2716,16 @@
                 <pre><code>&gt; dat2vice -radius 40 manifest.json ZXX</code></pre>
                 <p>If <code>-radius</code> is given and per-map <code>"radius"</code> values are present, the per-map
                   value takes precedence.</p>
-                <p>If successful, <code>dat2vice</code> will generate two files in the current directory,
-                  <code>ZXX-manifest.gob</code> and <code>ZXX-videomaps.gob.zst</code>. These can then be used
-                  in <i>vice</i> scenarios.</p>
+                <p>If successful, <code>dat2vice</code> will generate <code>ZXX.mappack</code>
+                  in the current directory. This file can then be used in <i>vice</i> scenarios.</p>
               </section><!--//section-->
             </section><!--//section-->
           </article>
-          <article class="docs-article" id="section-scenarios">
+          <article class="docs-article" id="section-scenario-groups">
             <header class="docs-header">
-              <h1 class="docs-heading">Scenarios</h1>
+              <h1 class="docs-heading">Scenario Groups</h1>
             </header>
             <section class="docs-section" id="fe-scenario-groups">
-              <h2 class="section-heading">Scenarios</h2>
               <p><i>vice</i> offers users a variety of ATC scenarios, where a scenario consists of one or more airports being controlled,
                 a control position (departure, approach, etc.), and airport configurations—the runways that are active at each
                 airport.  Scenarios are organized in <i>scenario groups</i>, which generally collect multiple control scenarios at a single
@@ -2950,9 +2988,12 @@
                   <tr>
                     <td>"crda_pairs"</td>
                     <td>Array of objects</td>
-                    <td><p>Each object specifies a pair of converging CRDA regions that
-                        will be included in the STARS CRDA list. Each object has
-                        the following members:</p>
+                    <td><p>Each object specifies a one-directional ghosting relationship between two
+                        CRDA regions: aircraft flying through the <code>source_region</code>'s
+                        qualification volume have ghost data blocks plotted on the
+                        <code>ghost_region</code>'s centerline. To ghost in both directions, define
+                        two pairs with the roles swapped. Each pair appears as one entry in the
+                        STARS CRDA list.</p>
 
                     </td>
                   </tr>
@@ -2965,15 +3006,32 @@
                           <tbody>
 
                             <tr>
-                              <td>"crda_regions"</td>
-                              <td>Array of two strings</td>
-                              <td>References two regions defined in "crda_regions".</td>
+                              <td>"source_region"</td>
+                              <td>String</td>
+                              <td>Name of a region defined in "crda_regions". Aircraft flying through this
+                                region's qualification volume produce ghost data blocks.</td>
                             </tr>
                             <tr>
-                              <td>"leader_directions"</td>
-                              <td>Array of two strings</td>
-                              <td>Compass directions ("N", "NE", "E", ...) used for leader lines for ghost
-                                aircraft from the two respective regions.</td>
+                              <td>"ghost_region"</td>
+                              <td>String</td>
+                              <td>Name of a region defined in "crda_regions". Ghost data blocks derived
+                                from <code>source_region</code>'s traffic are plotted on this region's
+                                centerline.</td>
+                            </tr>
+                            <tr>
+                              <td>"source_leader_direction"</td>
+                              <td>String</td>
+                              <td>Compass direction ("N", "NE", "E", ...) for leader lines on ghost data
+                                blocks derived from <code>source_region</code>'s traffic.</td>
+                            </tr>
+                            <tr>
+                              <td>"ghost_leader_direction"</td>
+                              <td>String</td>
+                              <td>Compass direction for leader lines on ghost data blocks when the
+                                pair is enabled in the reverse direction (via the per-runway
+                                <code>N&lt;runway&gt;E</code> command); these ghosts are derived from
+                                <code>ghost_region</code>'s traffic and plotted on
+                                <code>source_region</code>'s centerline.</td>
                             </tr>
                             <tr>
                               <td>"stagger_symbol"</td>
@@ -3595,8 +3653,10 @@
                   </tr>
                   <tr>
                     <td>"initial_altitude"</td>
-                    <td>Number</td>
-                    <td>The aircraft's altitude when first spawned.</td>
+                    <td>Number or array of numbers</td>
+                    <td>The altitude aircraft will have when first spawned.
+                      If multiple altitudes are specified, one is chosen at random.
+                    </td>
                   </tr>
                   <tr>
                     <td>"initial_controller"</td>
@@ -3940,7 +4000,7 @@
                             <tr>
                               <td>"rate"</td>
                               <td>Number</td>
-                              <td>The average number of VFR departures per hour.</td>
+                              <td>The average number of VFR departures per hour. Fractional values are accepted.</td>
                             </tr>
                           </tbody>
                         </table>
@@ -3984,7 +4044,7 @@
                             <tr>
                               <td>"rate"</td>
                               <td>Number</td>
-                              <td>The average number of departures along this route per hour.</td>
+                              <td>The average number of departures along this route per hour. Fractional values are accepted.</td>
                             </tr>
                             <tr>
                               <td>"waypoints"</td>
@@ -4281,7 +4341,7 @@
                             <tr>
                               <td>"rate"</td>
                               <td>Number</td>
-                              <td>Number of departures per hour.</td>
+                              <td>Number of departures per hour. Fractional values are accepted.</td>
                             </tr>
                             <tr>
                               <td>"runway"</td>
@@ -4293,13 +4353,21 @@
                       </details>
                   </td></tr>
                   <tr>
+                    <td>"description"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) Free-form text describing the scenario—goals, tips, or other context for the controller.
+                      When provided, it is shown in a bordered box in the new simulation selection window.
+                      Newlines in the string are preserved.
+                    </td>
+                  </tr>
+                  <tr>
                     <td>"inbound_rates"</td>
                     <td>Object</td>
                     <td>Each member specifies an inbound flow group and is an object that is a map
                       specifying default rates for corresponding flows. Each entry should either be
                       the name of an airport, in which case it specifies the rate of arrivals to that
                       airport along arrivals in the flow, or the string "overflights", in which it
-                      gives the rate of overflights.
+                      gives the rate of overflights. Rates are aircraft per hour; fractional values are accepted.
                       It can be useful to specify a rate of zero—in this case, the inbound flow
                       will still be included in the UI shown to the user, which allows the user to enable it.
                     </td>
@@ -4361,13 +4429,293 @@
                 </tbody>
               </table>
             </section><!--//section-->
+
+            <section class="docs-section" id="fe-briefings">
+              <h3 class="section-heading">Briefings</h3>
+              <p>A <i>scenario brief</i> is a Markdown document that describes a
+                facility's procedures, airspace, and conventions. Briefs are
+                shown to the controller in the scenario info window, below the
+                controller list.</p>
+
+              <p>Briefs live in the folder
+                <code>resources/briefs/&lt;ARTCC&gt;/&lt;facility&gt;.md</code>:
+                the facility identifier (the base filename) is a TRACON for
+                STARS scenarios or an ARTCC for ERAM scenarios, and the
+                enclosing directory is that facility's ARTCC. For example, the
+                N90 TRACON's brief lives at
+                <code>resources/briefs/ZNY/N90.md</code> and a ZNY ARTCC-level
+                brief would live at <code>resources/briefs/ZNY/ZNY.md</code>.
+              </p>
+              
+              <p>An additional brief file can be loaded with the
+                <code>-scenariobrief</code> command-line option or selected from
+                the "Facility Engineering" entry in the settings menu; if its
+                filename matches a facility that already has a built-in
+                brief, it replaces the built-in one&mdash;this is handy for iterating on a
+                brief without modifying the installed resources.</p>
+
+              <p>While the brief is visible, pressing <code>Ctrl+R</code> (or <code>Command-R</code> on Macs)
+                reloads it from disk, so iteration on a brief is fast: edit the Markdown,
+                switch back to <i>vice</i>, and reload.</p>
+
+              <h4>Supported Markdown</h4>
+              <p>Here are some of the main differences from standard Markdown:
+              <ul>
+                <li>Headings at levels 1 and 2 (<code>#</code> and <code>##</code>)
+                  become collapsible sections, with level-2 sections indented
+                  inside their enclosing level-1 section. Headings at level 3
+                  and deeper are rendered inline as plain text and are not
+                  collapsible.</li>
+                <li>Paragraphs, horizontal rules (<code>---</code>), block
+                  quotes, ordered and unordered lists with nesting, fenced and
+                  indented code blocks, GFM-style tables, inline code spans, and
+                  inline emphasis (<code>*italic*</code>, <code>**bold**</code>,
+                  <code>***bold italic***</code>) all render. Code spans and code
+                  blocks use a monospaced font.</li>
+                <li>Inline emphasis and code spans are styled only inside
+                  paragraphs and list items. In headings and table cells the
+                  literal markup characters are shown.</li>
+                <li>Inline and reference links, images, raw HTML, and autolinks
+                  are not rendered. Link text is shown but the URL is dropped.</li>
+                <li>Tables from extended Markdown are supported; they may be captioned if they are followed by a paragraph
+                  that starts with a colon and a space.
+              <pre><code class="language-markdown">| Gate | Fixes (Scratchpads) |
+|---|---|
+| North | COATE (COA), NEION (NEI), HAAYS (HAY) |
+| East  | GREKI (GRE), MERIT (MER), BAAYS (BAY) |
+
+: JFK/FRG Departure Gates and Standard Fixes</code></pre>
+                </li>
+                <li>There is support for conditionally-displayed text (based on active airports, the
+                  position(s) the user is covering, and user-selected configurations); this is discussed further below.</li>
+                <li>Annotated video maps may be shown to help illustrate typical flows, exit gates, etc.;
+                  this is also discussed below.</li>
+              </ul>
+
+              <h4>Configuration Selectors</h4>
+              <p>A fenced code block with the info string
+                <code>configurations</code> creates a radio button group that allows the
+                user to select among various configurations or scenario options.
+                The user's selection can then be used to conditionally include
+                text in the rendered markdown, as described in the next section.</p>
+              <p>Here is an example:</p>
+              <pre><code class="language-markdown">```configurations jfk-dep
+4-LGA: Depart 4R, LGA owns Coney
+4-JFK: Depart 4R, JFK owns Coney
+13: Depart 13L/R
+22: Depart 22R
+31: Depart 31L
+```</code></pre>
+              <p>In the scenario brief window, this is rendered as:</p>
+<div class="text-center">
+<img src="brief-config-selector.png" srcset="brief-config-selector-2x.png 2x" width="628" height="96">
+</div><br>
+              <p>In this example, the configuration group name, after the colon after <code>configurations</code>,
+                is <code>jfk-dep</code>.
+                There are then five possible configurations; for each one, the text to the left of the colon is a short
+                identifier and the text on the right is the text shown in the rendered markdown.
+                Thus, if the user has selected "Depart 4R, LGA owns Coney", as shown above,
+                the selected configuration is <code>jfk-dep:4-LGA</code>.</p>
+              <p>A group name is required (a bare <code>configurations</code>
+                fence is rejected). Each configuration group name must be
+                unique within a brief; <i>vice</i> reports an error at load
+                time if the same name is defined more than once. The name
+                <code>tcp</code> is reserved for the TCP-based conditional
+                blocks described below and cannot be used as a group name.
+                The user's selection persists as they navigate through the
+                brief and as conditional content is shown and hidden.</p>
+
+              <h4>Conditional Blocks</h4>
+              <p>Portions of a brief can be shown or hidden based on runtime
+                context using <code>::: if</code> and <code>::: endif</code>
+                directives. When the condition does not match, every line between the opening
+                <code>::: if</code> and the matching <code>::: endif</code> is
+                dropped before the Markdown is processed. Both directives must
+                repeat the same condition text verbatim, which makes mismatched
+                or unclosed blocks easy to detect; <i>vice</i> surfaces such errors at
+                load time and inline in the rendered brief.</p>
+              <p>A condition is a comma-separated list of names; the block is
+                included if <i>any</i> of the names match. Three kinds of names
+                are recognized:</p>
+              <ul>
+                <li><i>Configuration option names</i>: names defined by a
+                  <code>configurations</code> code block (see above), written in
+                  <code>group:option</code> form (e.g. <code>jfk-dep:13</code>).
+                  Matches when the user has that option selected in the
+                  corresponding selector.</li>
+                <li><i>Airport ICAO codes</i>: any four-letter all-uppercase
+                  name (e.g. <code>KJFK</code>). Matches when the scenario has
+                  IFR arrivals or departures at that airport.</li>
+                <li><i>TCP patterns</i>: names of the form
+                  <code>tcp:&lt;pattern&gt;</code> where the pattern is 1–3
+                  characters of letters, digits, or the wildcard <code>*</code>.
+                  The wildcard is only supported as a trailing suffix:
+                  <code>tcp:2*</code> matches any TCP starting with "2";
+                  <code>tcp:5A</code> matches the controller "5A" exactly.
+                  A wildcard anywhere other than the end (e.g. <code>tcp:*A</code>)
+                  is not supported.
+                  Matches against the TCPs of the controller viewing the brief.</li>
+              </ul>
+              <p>Conditional blocks may be nested. Conditions inside a
+                non-matching block are skipped entirely, even if they would
+                otherwise have matched.</p>
+              <p>Here is an example of the use of conditional blocks from the N90 brief;
+                in this case we have a section of the brief describing airspace that
+                may be assigned to either LGA-area (TCP 1*) or JFK-area (TCP 2*)
+                controllers. Thus, this information isn't included in the brief for N90
+                controllers covering ISP (TCP 3*), for example.</p>
+              <pre><code class="language-markdown">::: if tcp:1*,tcp:2*
+## Belmont / Belmont Extension
+
+[...]
+::: endif tcp:1*,tcp:2*</code></pre>
+
+              <h4>Annotated Video Maps</h4>
+              <p>A fenced code block with the info string <code>videomap</code>
+                embeds an inline rendering of one or more video maps,
+                optionally overlaid with lines, polygons, fixes, points,
+                labels, and controller-airspace boundaries. The text after the
+                <code>videomap</code> keyword on the fence line is used as the
+                map's title. Here is an example:</p>
+              <pre><code class="language-markdown">```videomap Kennedy CAMRN5/OWENZ
+map: JFK ARR/DEP RWY 31L/R
+file: videomaps/ZNY-N90.mappack
+width: 60%
+
+arrow: N039.56.02.818,W073.30.14.199 CAMRN N040.04.37.281,W073.49.15.294/d4000 N040.07.42.084,W073.47.05.244
+
+arrow: KARRS N039.58.04.368,W073.53.41.466
+
+fix: CAMRN
+point: N040.01.32.491,W073.58.01.649
+label: CAMRN
+
+point: N039.53.00.747,W073.54.37.304
+label: CAMRN5 @ 11000/250kts
+
+point: N039.56.15.013,W073.27.22.456
+label: OWENZ @ 9000
+
+fix: N039.57.30.833,W073.37.04.566
+point: N039.58.27.687,W073.34.54.515
+label: Control for turns up to 60 right
+```</code></pre>
+              <p>This image is rendered for that map specification.
+                Note that it includes labeled fixes, a suggested descent point (to 4,000'),
+                and annotations describing the arrival flows.
+              </p> 
+<div class="text-center">
+<img src="brief-annotated-map.png" srcset="brief-annotated-map-2x.png 2x" width="507" height="451">
+</div><br>
+
+              <p>Each non-empty line inside the block is a
+                <code>key: value</code> directive. Lines whose key is one of
+                <code>line</code>, <code>arrow</code>, <code>polygon</code>,
+                <code>fix</code>, <code>point</code>, or <code>airspace</code>
+                begin a new annotation; subsequent <code>label:</code> lines
+                attach to that annotation until the next annotation starts. To
+                place a standalone text label, use a <code>point:</code> at the
+                desired location followed by one or more <code>label:</code>
+                lines. Locations may be specified in any of the formats listed
+                in the <a href="#fe-locations">Specifying Locations</a>
+                section, including lat-longs, names of fixes, etc.
+              </p>
+              <p>Here are all of the entries allowed inside <code>videomap</code> blocks.</p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:18%">Key</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>file</code></td>
+                    <td>Required. Path to the video map file that contains the
+                      named maps (e.g.,
+                      <code>videomaps/ZNY-N90.mappack</code>).</td>
+                  </tr>
+                  <tr>
+                    <td><code>map</code></td>
+                    <td>Required. Name of a video map within the file. Multiple <code>map:</code> lines stack
+                      the named maps in a single rendering.</td>
+                  </tr>
+                  <tr>
+                    <td><code>width</code></td>
+                    <td>(<i>Optional</i>) Width of the rendered map as a
+                      percentage of the brief's available width, 1–100. Default
+                      is 100. The trailing <code>%</code> is optional.</td>
+                  </tr>
+                  <tr>
+                    <td><code>extent</code></td>
+                    <td>(<i>Optional</i>) Two space-separated locations
+                      defining a bounding box (upper-left and lower-right
+                      corners) that the rendered view should span. If omitted,
+                      the bounds are computed from the annotations (or, if
+                      there are no annotations, from the referenced maps) with
+                      a small amount of padding.</td>
+                  </tr>
+                  <tr>
+                    <td><code>line</code>, <code>arrow</code></td>
+                    <td>A space-separated list of two or more locations, drawn
+                      as connected line segments; <code>arrow</code> adds an
+                      arrowhead on the final segment.</td>
+                  </tr>
+                  <tr>
+                    <td><code>polygon</code></td>
+                    <td>A space-separated list of three or more locations
+                      defining a closed polygon.</td>
+                  </tr>
+                  <tr>
+                    <td><code>fix</code></td>
+                    <td>A single location, drawn with a small circle.</td>
+                  </tr>
+                  <tr>
+                    <td><code>point</code></td>
+                    <td>A single location, drawn as a small dot. Useful as an
+                      anchor for a label when a fix glyph would be misleading.</td>
+                  </tr>
+                  <tr>
+                    <td><code>airspace</code></td>
+                    <td>Overlays controller airspace boundaries with altitude
+                      ranges (if specified via "airspace" in the config/scenario.)
+                      With no value (<code>airspace:</code>), the
+                      airspace owned by the user's consolidated positions is
+                      drawn. With a TCP (e.g. <code>airspace: 2J</code>),
+                      that controller's airspace is drawn instead.</td>
+                  </tr>
+                  <tr>
+                    <td><code>label</code></td>
+                    <td>Adds a line of text to the current annotation. Multiple
+                      <code>label:</code> lines stack as a multi-line label.
+                      The label is placed automatically based on the current
+                      annotation's geometry; <code>point:</code> entries are
+                      useful as label anchors when none of the geometry
+                      annotations are well-positioned for a label.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p>Locations for <code>line</code>, <code>arrow</code>, and
+                <code>polygon</code> may carry an optional climb or descent
+                annotation introduced by a slash:
+                <code>/c&lt;ALT&gt;</code> marks a climb-to altitude and
+                <code>/d&lt;ALT&gt;</code> marks a descend-to altitude,
+                both in feet. For example,
+                <code>arrow: LGA KIWIE/c5000 NTHNS/c11000</code> draws an arrow
+                from LGA through KIWIE and NTHNS with climb annotations at the
+                two intermediate waypoints.</p>
+
+              <p>Note that <code>::: if</code> conditionals can be used within
+                a <code>videomap</code> block, making it possible to adapt the annotations drawn
+                or the video maps displayed.</p>
+            </section><!--//section-->
           </article>
           <footer class="footer">
             <div class="container text-center py-5">
               <!-- Bootstrap template licensed from themes.3rdwavemedia.com -->
               <small class="copyright">
-                <i>vice</i> documentation (c)2023-2024 Matt Pharr, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
-            </div>
+                <i>vice</i> documentation (c) <i>vice</i> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0 License</a>.</small>
           </footer>
         </div>
       </div>
