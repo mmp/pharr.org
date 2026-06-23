@@ -33,6 +33,11 @@
       color: #5d6778;
       text-decoration: underline;
     }
+
+    .eram-toolbar-list strong,
+    .eram-toolbar-list b {
+      font-weight: 500;
+    }
   </style>
   
   <!-- Meta -->
@@ -120,7 +125,9 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a>
 	    <ul class="submenu">
-      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.3">0.14.3</a></li>
+              <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.5">0.14.5</a></li>
+              <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.4">0.14.4</a></li>
+              <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.3">0.14.3</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.2">0.14.2</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.1">0.14.1</a></li>
 	      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.0">0.14.0</a></li>
@@ -257,7 +264,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
               <p>There is a <a href="https://discord.gg/y993vgQxhY">vice discord server</a>
                 for general discussion, bug reports and feature requests, and for discussing facility engineering.
               </p>
-                <p>Documentation for the current beta build of vice (may be) found <a href="beta/index.html">here.</a></p>
+                <p>Documentation for the current beta build of vice (may be) found <a href="/vice/beta/index.html">here.</a></p>
 	    </section><!--//docs-intro-->
 	  </header>
 
@@ -1673,7 +1680,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.3/Vice-v0.14.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.3 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.5/Vice-v0.14.5-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.5 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -1682,7 +1689,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Ventura or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.3/Vice-v0.14.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.3 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.5/Vice-v0.14.5-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.5 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1710,6 +1717,58 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.14.5">0.14.5 (17 Jun 2026)</h3>
+            <ul>
+              <li>Fixed bug with downloading resources that prevented launching vice.</li>
+            </ul>
+
+
+            <h3 id="release-0.14.4">0.14.4 (16 Jun 2026)</h3>
+            <ul>
+              <li>New scenarios: ZBW Nantucket 17 (Ryan G), M03 (manaphy, Ryan G), ZJX West combined (manaphy), PBI (Ketan K), ORF (Ryan H)</li>
+              <li>Scenario updates: BOI (Elliot B), MIA, ZJX (manaphy), PCT, NCT (Ketan K), ZNY (Ryan G), BTV (EkimWasHere), BOS (radarcontacto), I90 (Ethan Hawes), Y90 (CiceroIsBack)</li>
+              <li>Pronunciation fixes: I90 (Ethan Hawes)</li>
+              <li>Added support for scenario briefings (only JFK and LGA for now)</li>
+              <li>Improve handling of arrival airport winds on final approach (radarcontacto)</li>
+              <li>Fixed bug where aircraft would speed up after missing an approach intercept</li>
+              <li>STT:
+                <ul>
+                  <li>Fixed handling of &quot;maintain best forward speed&quot;</li>
+                  <li>Added support for &quot;cross (fix) at or below (altitude)&quot;</li>
+                </ul>
+              </li>
+              <li>Visual approaches
+                <ul>
+                  <li>Fixed bugs where aircraft cleared for approaches would still report the field in sight</li>
+                  <li>Fixed descent profile for aircraft cleared for visual approaches</li>
+                </ul>
+              </li>
+              <li>STARS
+                <ul>
+                  <li>Fixed bug where aircraft on visual approaches could have unwanted MSAW alerts</li>
+                  <li>Fixed bugs with cursor disappearing at inopportune times</li>
+                </ul>
+              </li>
+              <li>ERAM
+                <ul>
+                  <li>Fixed bugs with drawing map annotations and map brightness handling</li>
+                </ul>
+              </li>
+              <li>Facility engineering
+                <ul>
+                  <li>Fractional values (not just integers) can now be used when specifying aircraft launch rates in scenarios</li>
+                  <li>Added &quot;description&quot; field to JSON to provide short descriptive text that is shown in the scenario launch window (radarcontacto)</li>
+                  <li>Added <code>/intercept</code> to indicate virtually-controlled aircraft should intercept the approach</li>
+                  <li>Updated video map file format: this makes it possible to fix a number of bugs with handling maps with conflicting STARS ids</li>
+                  <li>&quot;controllers&quot; entries in facility configurations now accept a comma-separated list of TCPs</li>
+                  <li>CRDA: renamed &quot;crda_regions&quot; array -&gt; &quot;source_region&quot; / &quot;ghost_region&quot;</li>
+                  <li>CRDA: renamed &quot;leader_directions&quot; array -&gt; &quot;source_direction&quot; / &quot;ghost_direction&quot;</li>
+                  <li>An array of multiple altitudes may be given for &quot;initial_altitude&quot; for arrivals</li>
+                </ul>
+              </li>
+            </ul>
+
 
             <h3 id="release-0.14.3">0.14.3 (8 May 2026)</h3>
             <ul>
@@ -7316,75 +7375,281 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 track, slewing it toggles display of its full datablock.
               </p>
               <p>To hand off a track to another controller, either enter the controller's sector id and slew the track, or enter the sector id, a space, and the aircraft's flight id.</p>
-              <p>Entering a number and slewing an owned track sets the leader line direction accordingly.</p>
-              <p>The following is an (incomplete) list of the currently-supported ERAM commands:
-              </p>
-              <table class="table table-bordered">
+              <p>Entering a number 1&ndash;9 and slewing an owned track sets the leader line direction accordingly
+                (the digit corresponds to a position on the numeric keypad relative to the track). Prefixing the
+                command with <code>/</code> instead sets the leader line length: <code>/0</code> hides the leader
+                line (W/E datablock positions only), <code>/1</code> is normal, and <code>/2</code> and <code>/3</code>
+                are 2&times; and 3&times; respectively. Direction and length may be set together by entering
+                <code>[1-9]/[0-3]</code> followed by a slew or flight id.</p>
+
+              <h2 id="eram-pointouts">Point Outs</h2>
+              <p>Point outs in ERAM are initiated and acknowledged with the <code>QP</code> command. They are restricted to other
+                ERAM sectors within the same ARTCC; point outs to a different ARTCC or to a STARS controller are rejected with
+                an <code>ILLEGAL POSITION</code> error.</p>
+              <table class="table table-striped">
                 <thead>
-                  <tr>
-                    <th style="width:30%">Command</th>
-                    <th>Function</th>
-                  </tr>
+                  <tr><th>Command</th><th>Description</th></tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>//</code></td>
-                    <td>Toggle VCI (on-frequency indicator)</td>
+                    <td><code>QP [SECTOR_ID] [FLID]</code> or <code>QP [SECTOR_ID][SLEW]</code></td>
+                    <td>Initiates a point out of the specified track to the given sector. The user must own the track.</td>
                   </tr>
                   <tr>
-                    <td><code>/</code></td>
-                    <td>Leader line length</td>
+                    <td><code>QP A [FLID]</code> or <code>QP A[SLEW]</code></td>
+                    <td>Acknowledges every inbound point out for this aircraft directed at any sector the user controls.</td>
                   </tr>
                   <tr>
-                    <td><code>LA</code></td>
-                    <td></td>
-                  </tr>
-                  <tr>
-                    <td><code>LB</code></td>
-                    <td></td>
-                  </tr>
-                  <tr>
-                    <td><code>LF</code></td>
-                    <td>Continuous range readout</td>
-                  </tr>
-                  <tr>
-                    <td><code>MR</code></td>
-                    <td>Map request</td>
-                  </tr>
-                  <tr>
-                    <td><code>TG</code></td>
-                    <td>"Target gen": used for issuing instructions to aircraft using <i>vice</i>'s <a href="#atc-commands">keyboard instruction commands</a>.</td>
-                  </tr>
-                  <tr>
-                    <td><code>QQ</code></td>
-                    <td>Set interim altitude.</td>
-                  </tr>
-                  <tr>
-                    <td><code>QZ</code></td>
-                    <td>Set assigned altitude.</td>
-                  </tr>
-                  <tr>
-                    <td><code>QX</code></td>
-                    <td>Drop track.</td>
-                  </tr>
-                  <tr>
-                    <td><code>QU</code></td>
-                    <td>Direct to fix / route display / clear all route displays</td>
-                  </tr>
-                  <tr>
-                    <td><code>QP</code></td>
-                    <td>J rings</td>
-                  </tr>
-                  <tr>
-                    <td><code>QF</code></td>
-                    <td>Flight plan display</td>
-                  </tr>
-                  <tr>
-                    <td><code>QS</code></td>
-                    <td>Heading / speed-mach / free-text scratchpad handling</td>
+                    <td><code>QP [FLID]</code> or <code>QP[SLEW]</code></td>
+                    <td>Clears the post-point-out FDB lock, returning the datablock to a LDB. The standard
+                      <code>[FLID]</code> Implied command will not unforce a FDB once an aircraft has been involved in a point
+                      out; only this command will.</td>
                   </tr>
                 </tbody>
               </table>
+              <p>When a point out is pending, a yellow <code>P</code> is drawn on line 0 of the FDB on both the originator's and
+                the receiver's scopes; the datablock is forced to FDB. Clicking the <code>P</code> opens a pop-up listing the
+                other sector(s); on the receiver's scope, clicking any entry acknowledges every inbound point out for the
+                aircraft. Once acknowledged the originator sees a white <code>A</code> indicator on line 0 that persists until
+                clicked away. The FDB stays forced after the point-out lifecycle ends &mdash; <code>QP [FLID]</code> is the only
+                way to convert it back to a LDB.</p>
+
+              <p>The following sections summarize current support for ERAM commands and capabilities in <i>vice</i>.</p>
+
+              <h2>Toolbars</h2>
+
+              <h3>Master Toolbar (top bar)</h3>
+
+              <ul class="eram-toolbar-list">
+                <li><b>DRAW</b> — not implemented</li>
+                <li><strong>ATC TOOLS</strong>
+                  <ul>
+                    <li><strong>CRR FIX</strong> — implemented</li>
+                    <li><strong>SPEED ADVISORY</strong> — not implemented</li>
+                    <li><strong>WX</strong> — not implemented</li>
+                  </ul>
+                </li>
+                <li><strong>RANGE</strong> — read-only display of current range</li>
+                <li><strong>CURSOR</strong>
+                  <ul>
+                    <li><strong>SPEED</strong> — not implemented</li>
+                    <li><strong>SIZE</strong> — fully implemented</li>
+                    <li><strong>VOLUME</strong> — not implemented</li>
+                  </ul>
+                </li>
+                <li><strong>BRIGHT</strong>
+                  <ul>
+                    <li><strong>CPDLC</strong> — not implemented</li>
+                    <li><strong>BCKGRD, CURSOR, TEXT, PR TGT, UNP TGT, PR HST, UNP HST, LDB, SLDB, WX, NEXRAD, BCKLGHT, BUTTON, BORDER, TOOLBAR, TB
+                        BRDR, AB BRDR, FDB, PORTAL, SATCOMM, ON-FREQ, LINE 4, DWELL, FENCE, DBFEL, OUTAGE</strong> — all 26 brightness sliders fully
+                      implemented</li>
+                    <li><strong>MAP BRIGHT (per-BCG)</strong> — up to 20 BCGs with per-group brightness sliders, fully implemented</li>
+                  </ul>
+                </li>
+                <li><strong>FONT</strong>
+                  <ul>
+                    <li><strong>LINE4, FDB, PORTAL, TOOLBAR, LDB, RDB, OUTAGE</strong> — all sliders fully implemented</li>
+                  </ul>
+                </li>
+                <li><strong>DB FIELDS</strong>
+                  <ul>
+                    <li><strong>NON-RVSM, VRI, CODE, SPEED</strong> — not implemented</li>
+                    <li><strong>DEST</strong> — fully implemented (Line 4 = destination)</li>
+                    <li><strong>TYPE</strong> — fully implemented (Line 4 = aircraft type)</li>
+                    <li><strong>FDB LDR</strong> — fully implemented (leader length 0–3)</li>
+                    <li><strong>BCAST FLID, PORTAL FENCE, NON-ADS-B, NONADSB 90,  SAT COMM,  TFM REROUTE, CRR RDB, STA RDB, DELAY RDB, DELAY FORMAT</strong> — not implemented</li>
+                  </ul>
+                </li>
+                <li><strong>VECTOR</strong> — fully implemented (cycles 0/1/2/4/8 minutes)</li>
+                <li><strong>VIEWS</strong>
+                  <ul>
+                    <li><strong>ALTIM SET</strong> — fully implemented</li>
+                    <li><strong>AUTO HO INHIB, CFR, CODE, CONFLCT ALERT, CPDLC ADV, CPDLC HIST, CPDLC MSGOUT, CPDLC TOC SET</strong> — not implemented</li>
+                    <li><strong>CRR</strong> — fully implemented</li>
+                    <li><strong>DEPT LIST, FLIGHT EVENT, GROUP SUP, HOLD LIST, INBND LIST, MRP LIST, SAA FILTER, UA</strong> — not implemented</li>
+                    <li><strong>WX REPORT</strong> — fully implemented</li>
+                  </ul>
+                </li>
+                <li><strong>CHECK LISTS</strong>
+                  <ul>
+                    <li><strong>POS CHECK, EMERG CHECK</strong> — not implemented</li>
+                  </ul>
+                </li>
+                <li><strong>COMMAND MENUS</strong> — not implemented</li>
+                <li><strong>VIDEOMAP</strong>
+                  <ul>
+                    <li>Dynamic per-map toggles, up to 20 maps; <strong>Alt</strong> reveals an extended set (≈20–42). Fully implemented.</li>
+                  </ul>
+                </li>
+                <li><strong>ALT LIM</strong> — read-only display of current altitude filter range</li>
+                <li><strong>RADAR FILTER</strong>
+                  <ul>
+                    <li><strong>ALL LDBS, PR LDB, UNP LDB, ALL PRIM, MODE MODE-C, SELECT BEACON, PERM ECHO, STROBE LINES</strong> — not
+                      implemented</li>
+                    <li><strong>HISTORY</strong> — fully implemented (0–5)</li>
+                  </ul>
+                </li>
+                <li><strong>PREFSET</strong> — not implemented as a toolbar action (save/load only via Settings UI)</li>
+                <li><strong>AB SETTINGS</strong> — not implemented</li>
+                <li><strong>DELETE TEAROFF</strong> — fully implemented (enters delete-mode for torn-off menus)</li>
+                <li><strong>Tear-off mechanism</strong> — fully implemented across submenus: each major button has an adjacent tear-off control;
+                  torn-off positions persist; delete mode removes them.</li>
+              </ul>
+
+              <h2>Radar Scope</h2>
+
+              <h3>Tracks and Data Blocks</h3>
+
+              <h4>Not implemented</h4>
+              <ul class="eram-toolbar-list">
+                <li><strong>Enhanced Limited Data Block (EDB / ELDB)</strong></li>
+                <li><strong>Coast / freeze tracks</strong></li>
+                <li><strong>Conflict detection / STCA</strong> — reduced J-ring geometry exists but no 4-minute predictor, no separation-loss alerting,
+                  no dynamic J-ring color change</li>
+                <li><strong>RADAR FILTER</strong> — submenu present, only HISTORY actually filters</li>
+                <li><strong>Ownership/handoff visual cues</strong> — <code>O</code> and <code>H</code> shown in field E, but no per-symbol color
+                  change; HIJK / RDOF / EMRG markers not rendered</li>
+                <li><strong>Line 4 mode</strong> — DEST and TYPE modes render; the HSF mode-toggle arrow (↴) is not drawn</li>
+                <li><strong>Data-block visibility</strong> — always-on; no Portal Fence rendering and no dwell-emphasis highlighting</li>
+                <li>Special highlighting for emergency squawks (7500/7600/7700)</li>
+                <li>Block-altitude filtering and block-altitude data-block format</li>
+                <li>Free-text labels anchored to a target (independent of HSF)</li>
+                <li>Target age / dwell fading</li>
+                <li>Cone-shaped separation indicators</li>
+                <li>Conflict Data Block (TFC)</li>
+                <li>Range Data Blocks (CRR RDB, STA RDB, DELAY RDB) — toolbar buttons exist but no rendering</li>
+                <li>On-scope velocity-vector line (the VECTOR control sets a value but no line is drawn)</li>
+                <li>CJS / CRD coordination characters</li>
+                <li>NON-RVSM indicator</li>
+                <li>Satcomm <code>*</code> next to ADS-B callsign</li>
+                <li>Additional altitude status characters: <code>X</code> (no Mode C), <code>N</code> (no correlated target), <code>A</code> /
+                  <code>#</code> (CERA), <code>B</code> (block), <code>+</code> / <code>-</code> (through-altitude)</li>
+                <li>Justification of data-block contents by leader direction</li>
+                <li>Circle-clear / weather glyph rendering in line 4</li>
+              </ul>
+
+              <h3>NEXRAD / Weather</h3>
+
+              <p>Not yet implemented.</p>
+              
+              <h2>Commands</h2>
+
+              <h3>Fully implemented</h3>
+              <ul>
+                <li><strong>Track control / display</strong>
+                  <ul>
+                    <li><code>QX</code> — drop track</li>
+                    <li><code>QU</code> — route display: no-arg clear, <code>QU /M [FLID]</code> max, <code>QU N [FLID]</code> N-minute, <code>QU [FIX]
+                        [FLID]</code> direct-to-fix</li>
+                    <li><code>QP J</code> — toggle 5 nm J-ring</li>
+                    <li><code>QP T</code> — toggle 3 nm reduced J-ring (suppressed above FL230)</li>
+                    <li><code>QS</code> — HSF scratchpad: free text (with backtick clear), <code>/SPEED</code>, heading, <code>*/</code> delete
+                      heading, <code>/*</code> delete speed, <code>*</code> delete all, bare toggle</li>
+                  </ul>
+                </li>
+                <li><strong>Point outs</strong> (same-ARTCC only; cross-ARTCC and STARS targets are rejected)
+                  <ul>
+                    <li><code>QP [SECTOR] [FLID]</code> — initiate point out to a sector in the same ARTCC</li>
+                    <li><code>QP A [FLID]</code> — acknowledge every inbound point out for the aircraft</li>
+                    <li><code>QP [FLID]</code> — clear the post-point-out FDB lock (FDB &rarr; LDB)</li>
+                  </ul>
+                </li>
+                <li><strong>Quick look</strong>
+                  <ul>
+                    <li><code>QL [SECTOR_LIST]</code> — toggle quick look on the listed sector(s)</li>
+                    <li><code>QL</code> — disable all quick look</li>
+                  </ul>
+                </li>
+                <li><strong>Altitudes</strong>
+                  <ul>
+                    <li><code>QQ</code> — interim altitude (assign, with optional P/L type, and clear)</li>
+                    <li><code>QZ</code> — assigned altitude</li>
+                  </ul>
+                </li>
+                <li><strong>Information</strong>
+                  <ul>
+                    <li><code>QF</code> — flight-plan readout</li>
+                    <li><code>//</code> — toggle VCI (on-frequency indicator)</li>
+                  </ul>
+                </li>
+                <li><strong>Range / bearing</strong>
+                  <ul>
+                    <li><code>LA</code> — between two locations or FLID-to-location, with optional <code>/SPEED</code> and <code>T</code> true-bearing
+                      variants</li>
+                    <li><code>LB</code> — from fix to location, FLID, or clicked track, with optional <code>/SPEED</code></li>
+                    <li><code>LC</code> — speed to reach a fix at a given UTC time (<code>LC [FIX]/HHMM [FLID]</code> or clicked track)</li>
+                  </ul>
+                </li>
+                <li><strong>CRR groups</strong>
+                  <ul>
+                    <li><code>LF</code> — create with aircraft, create labeled group, auto-label, add clicked position, toggle aircraft membership</li>
+                  </ul>
+                </li>
+                <li><strong>Stations / weather</strong>
+                  <ul>
+                    <li><code>AR</code> — add/remove airport in ALTIM SET list</li>
+                    <li><code>WR</code> — add/remove airport in WX REPORT list</li>
+                    <li><code>WR R</code> — display station METAR in response area</li>
+                  </ul>
+                </li>
+                <li><strong>Maps</strong>
+                  <ul>
+                    <li><code>MR</code> — list groups, load group</li>
+                  </ul>
+                </li>
+                <li><strong>Handoff (basic)</strong>
+                  <ul>
+                    <li><code>[SECTOR] [FLID]</code> — initiate handoff</li>
+                    <li><code>[FLID]</code> alone — accept pending handoff / recall handed-off track / toggle forced FDB depending on state</li>
+                  </ul>
+                </li>
+                <li><strong>Leader line</strong>
+                  <ul>
+                    <li><code>[1–9] [FLID]</code> — numpad direction, with configurable normal/flipped layout</li>
+                    <li><code>/[0-3] [FLID]</code> — length (0 = no line, 1 = normal, 2 = 2×, 3 = 3×)</li>
+                  </ul>
+                </li>
+                <li><strong>Simulation / target generator</strong>
+                  <ul>
+                    <li><code>TG P</code> — pause/unpause</li>
+                    <li><code>TG [CMDS]</code> — run on last aircraft</li>
+                    <li><code>TG [CMDS][SLEW]</code> — run on clicked aircraft</li>
+                  </ul>
+                </li>
+                <li><strong>Utility</strong>
+                  <ul>
+                    <li><code>.DRAWROUTE</code> — custom route drawing mode</li>
+                  </ul>
+                </li>
+              </ul>
+
+              <h3>Partially implemented</h3>
+              <ul>
+                <li><strong><code>AM</code> (amend flight plan)</strong> — altitude amendments and the underlying field-specifier plumbing work, but
+                  the documented dot-notation route syntax (e.g. <code>AM AAL123 RTE SSOXS.BUZRD.SEY</code>) and amendment of aircraft type, discrete
+                  beacon, filed cruise speed, and remarks via <code>AM</code> are not handled.</li>
+                <li><strong>Route conformance</strong> — display via <code>QU</code> exists, but there is no automatic deviation/conformance
+                  alerting.</li>
+              </ul>
+
+              <h3>Not implemented</h3>
+              <ul>
+                <li><strong>Track control</strong>: <code>QH</code> freeze/hold, <code>QB</code> beacon assignment, <code>QR</code> controller-entered
+                  reported altitude (CERA), <code>QD</code> altimeter / altitude-limit toggle, <code>QN</code> implied-command prefix</li>
+                <li><strong>Flight plan</strong>: <code>VP</code> VFR FP creation, <code>SR</code> flight-plan editor, <code>DM</code> activate FP,
+                  <code>RF</code> force facility transfer</li>
+                <li><strong>Handoff</strong>: <code>RJ</code> reject, <code>AC</code> accept-with-acknowledge, <code>RD</code> handoff readout,
+                  <code>/OK</code> force-handoff/"steal"</li>
+                <li><strong>Coordination / messaging</strong>: <code>MS</code>, <code>PO</code>, <code>CO</code>, <code>FP</code>, <code>RR</code>
+                  route readout, <code>HO</code> handoff procedure</li>
+                <li><strong>Trial plan / conflict probe</strong>: <code>TP</code> and all derived trial-planning commands</li>
+                <li><strong>Other documented short commands</strong>: <code>FR</code>, <code>FB</code>, <code>FA</code>, <code>FX</code>,
+                  <code>FH</code>, <code>FZ</code></li>
+                <li><strong>FRD (Fix/Radial/Distance)</strong> syntax in route operations (direct-to currently accepts fix names only)</li>
+                <li><strong>Block altitudes</strong> in <code>QZ</code></li>
+                <li><strong>Multi-step interactive command sequences</strong> and the documented "button-as-prefix" patterns</li>
+              </ul>
+
             </section>
           </header>
         </article>

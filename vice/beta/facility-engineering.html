@@ -1252,7 +1252,10 @@
                       <td>Object</td>
                       <td><p>Each entry specifies controller-specific configuration properties.
                           The applicable control positions are specified via members given as a TCP position
-                          (e.g., "2G"). The following properties may be specified for each one:</p>
+                          (e.g., "2G"). A comma-separated list of TCPs (e.g., "1A,1D,1E") may also be given as a key;
+                          the same configuration is then applied to each of the listed positions, which is convenient
+                          when several controllers share an identical configuration.
+                          The following properties may be specified for each one:</p>
 
                       </td>
                     </tr>
@@ -2575,9 +2578,23 @@
               <section class="docs-section" id="fe-video-maps">
                 <h3 class="section-heading">Video Maps</h3>
                 <p>Video maps are specified separately from the rest of the configuration since they require fairly large files and are not generally edited by hand.
-                  The file format is a single <code>.mappack</code> file per facility (named <code>&lt;facility&gt;.mappack</code>);
-                  there is no longer a separate manifest file.
-                  Two utilities are available to generate maps for <i>vice</i> from other formats:</p>
+                  They are stored in a single <code>.mappack</code> file per facility (named <code>&lt;facility&gt;.mappack</code>).
+                  Two utilities are available to generate maps for <i>vice</i> from other formats:
+                  <code>crc2vice</code> and <code>dat2vice</code>.</p>
+                <p>Where to find them:</p>
+                <ul>
+                  <li><b>Windows:</b> both <code>crc2vice.exe</code> and <code>dat2vice.exe</code> are
+                    installed into the <i>vice</i> installation directory
+                    (typically <code>C:\Program Files\Vice</code>) alongside <code>Vice.exe</code>.
+                    Open a Command Prompt and either <code>cd</code> to that directory or
+                    invoke them by their full path.</li>
+                  <li><b>macOS:</b> the tools are not bundled with <code>Vice.app</code>; download the
+                    separate <code>Vice-&lt;version&gt;-osx-tools.zip</code> archive from the
+                    <a href="https://github.com/mmp/vice/releases">releases page</a>. Unzipping
+                    produces <code>crc2vice</code> and <code>dat2vice</code>; run them from a Terminal
+                    in whichever directory you put them. (They are signed and notarized, but you
+                    may need to right-click → Open on first run.)</li>
+                </ul>
                 <h4 id="fe-video-maps-crc2vice">crc2vice</h4>
                 <p><code>crc2vice</code> extracts both STARS and ERAM video maps from an installed CRC ARTCC
                   and converts them to <i>vice</i>'s internal format.</p>
@@ -2971,9 +2988,12 @@
                   <tr>
                     <td>"crda_pairs"</td>
                     <td>Array of objects</td>
-                    <td><p>Each object specifies a pair of converging CRDA regions that
-                        will be included in the STARS CRDA list. Each object has
-                        the following members:</p>
+                    <td><p>Each object specifies a one-directional ghosting relationship between two
+                        CRDA regions: aircraft flying through the <code>source_region</code>'s
+                        qualification volume have ghost data blocks plotted on the
+                        <code>ghost_region</code>'s centerline. To ghost in both directions, define
+                        two pairs with the roles swapped. Each pair appears as one entry in the
+                        STARS CRDA list.</p>
 
                     </td>
                   </tr>
@@ -2986,15 +3006,32 @@
                           <tbody>
 
                             <tr>
-                              <td>"crda_regions"</td>
-                              <td>Array of two strings</td>
-                              <td>References two regions defined in "crda_regions".</td>
+                              <td>"source_region"</td>
+                              <td>String</td>
+                              <td>Name of a region defined in "crda_regions". Aircraft flying through this
+                                region's qualification volume produce ghost data blocks.</td>
                             </tr>
                             <tr>
-                              <td>"leader_directions"</td>
-                              <td>Array of two strings</td>
-                              <td>Compass directions ("N", "NE", "E", ...) used for leader lines for ghost
-                                aircraft from the two respective regions.</td>
+                              <td>"ghost_region"</td>
+                              <td>String</td>
+                              <td>Name of a region defined in "crda_regions". Ghost data blocks derived
+                                from <code>source_region</code>'s traffic are plotted on this region's
+                                centerline.</td>
+                            </tr>
+                            <tr>
+                              <td>"source_leader_direction"</td>
+                              <td>String</td>
+                              <td>Compass direction ("N", "NE", "E", ...) for leader lines on ghost data
+                                blocks derived from <code>source_region</code>'s traffic.</td>
+                            </tr>
+                            <tr>
+                              <td>"ghost_leader_direction"</td>
+                              <td>String</td>
+                              <td>Compass direction for leader lines on ghost data blocks when the
+                                pair is enabled in the reverse direction (via the per-runway
+                                <code>N&lt;runway&gt;E</code> command); these ghosts are derived from
+                                <code>ghost_region</code>'s traffic and plotted on
+                                <code>source_region</code>'s centerline.</td>
                             </tr>
                             <tr>
                               <td>"stagger_symbol"</td>
@@ -3616,8 +3653,10 @@
                   </tr>
                   <tr>
                     <td>"initial_altitude"</td>
-                    <td>Number</td>
-                    <td>The aircraft's altitude when first spawned.</td>
+                    <td>Number or array of numbers</td>
+                    <td>The altitude aircraft will have when first spawned.
+                      If multiple altitudes are specified, one is chosen at random.
+                    </td>
                   </tr>
                   <tr>
                     <td>"initial_controller"</td>
