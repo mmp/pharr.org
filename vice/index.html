@@ -125,6 +125,7 @@
 	  <li class="nav-item"><a class="nav-link scrollto" href="#bugs">Reporting Bugs</a></li>
 	  <li class="nav-item"><a class="nav-link scrollto" href="#releases">Release History</a>
 	    <ul class="submenu">
+      <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.6">0.14.6</a></li>
               <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.5">0.14.5</a></li>
               <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.4">0.14.4</a></li>
               <li class="submenu-item"><a class="submenu-link scrollto" href="#release-0.14.3">0.14.3</a></li>
@@ -1680,7 +1681,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.5/Vice-v0.14.5-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.5 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.6/Vice-v0.14.6-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.6 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -1689,7 +1690,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Ventura or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.14.5/Vice-v0.14.5-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.5 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.14.6/Vice-v0.14.6-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.14.6 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1717,6 +1718,43 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.14.6">0.14.6 (5 Jul 2026)</h3>
+            <ul>
+              <li>New scenarios: T75 (Ryan H), RSW (Nelson Tieku)</li>
+              <li>Scenario update: F11 (manaphy)</li>
+              <li>ERAM
+                <ul>
+                  <li>Added support for Nexrad weather radar (Michael Trokel)</li>
+                  <li>Added FDB altitude, speed, and free-form text menus (Michael Trokel)</li>
+                  <li>Added support for point outs (<code>QP</code> commands)</li>
+                  <li>Added support for quicklook (<code>QL</code> commands)</li>
+                  <li>Fixed bug with placement of dwell boxes with leader line length 0</li>
+                  <li>Fixed bugs in <code>LA</code>/<code>LB</code> commands, added <code>LC</code> command</li>
+                  <li>Added support for setting leader line position and length together: <code>#/# [FLID]</code></li>
+                  <li>Fixed bugs with left vs. middle click of tracks behaving differently when entering commands</li>
+                  <li>Added support for pop-up menus to configure more views</li>
+                  <li>Added checklist views</li>
+                  <li>Adjusted scrollwheel sensitivity for zooming into scope</li>
+                  <li>Fixed bug with ERAM cursors not being drawn</li>
+                  <li>Added support for F-key shortcuts (F1 -&gt; QF, etc.)</li>
+                </ul>
+              </li>
+              <li>STARS
+                <ul>
+                  <li>Fixed bug with &quot;create / modify interfacility VFR flight plan&quot; command (e.g. <code>N123AB LAS*SAN C172 165</code>)</li>
+                </ul>
+              </li>
+              <li>Slightly reduced TTS readback speed, added slider to control it.</li>
+              <li>STT: fixed a bug where fixes in the expected approach weren't considered for matching fix names in instructions</li>
+              <li>Facility engineering
+                <ul>
+                  <li>Added &quot;flight_following_request_rate&quot; to scenario specifications (10/hour by default)</li>
+                  <li>Allow arrays of altitudes for &quot;cruise_altitude&quot; for arrivals/overflights</li>
+                </ul>
+              </li>
+            </ul>
+
 
             <h3 id="release-0.14.5">0.14.5 (17 Jun 2026)</h3>
             <ul>
@@ -7375,9 +7413,69 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 track, slewing it toggles display of its full datablock.
               </p>
               <p>To hand off a track to another controller, either enter the controller's sector id and slew the track, or enter the sector id, a space, and the aircraft's flight id.</p>
-              <p>Entering a number and slewing an owned track sets the leader line direction accordingly.</p>
+              <p>Entering a number 1&ndash;9 and slewing an owned track sets the leader line direction accordingly
+                (the digit corresponds to a position on the numeric keypad relative to the track). Prefixing the
+                command with <code>/</code> instead sets the leader line length: <code>/0</code> hides the leader
+                line (W/E datablock positions only), <code>/1</code> is normal, and <code>/2</code> and <code>/3</code>
+                are 2&times; and 3&times; respectively. Direction and length may be set together by entering
+                <code>[1-9]/[0-3]</code> followed by a slew or flight id.</p>
+
+              <h2 id="eram-pointouts">Point Outs</h2>
+              <p>Point outs in ERAM are initiated and acknowledged with the <code>QP</code> command. They are restricted to other
+                ERAM sectors within the same ARTCC; point outs to a different ARTCC or to a STARS controller are rejected with
+                an <code>ILLEGAL POSITION</code> error.</p>
+              <table class="table table-striped">
+                <thead>
+                  <tr><th>Command</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>QP [SECTOR_ID] [FLID]</code> or <code>QP [SECTOR_ID][SLEW]</code></td>
+                    <td>Initiates a point out of the specified track to the given sector. The user must own the track.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QP A [FLID]</code> or <code>QP A[SLEW]</code></td>
+                    <td>Acknowledges every inbound point out for this aircraft directed at any sector the user controls.</td>
+                  </tr>
+                  <tr>
+                    <td><code>QP [FLID]</code> or <code>QP[SLEW]</code></td>
+                    <td>Clears the post-point-out FDB lock, returning the datablock to a LDB. The standard
+                      <code>[FLID]</code> Implied command will not unforce a FDB once an aircraft has been involved in a point
+                      out; only this command will.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>When a point out is pending, a yellow <code>P</code> is drawn on line 0 of the FDB on both the originator's and
+                the receiver's scopes; the datablock is forced to FDB. Clicking the <code>P</code> opens a pop-up listing the
+                other sector(s); on the receiver's scope, clicking any entry acknowledges every inbound point out for the
+                aircraft. Once acknowledged the originator sees a white <code>A</code> indicator on line 0 that persists until
+                clicked away. The FDB stays forced after the point-out lifecycle ends &mdash; <code>QP [FLID]</code> is the only
+                way to convert it back to a LDB.</p>
 
               <p>The following sections summarize current support for ERAM commands and capabilities in <i>vice</i>.</p>
+
+              <h2 id="eram-shortcuts">Keyboard Shortcuts</h2>
+              <p>The following function-key shortcuts clear any in-progress input in the MCA and insert the corresponding command prefix, ready for an argument to be entered.</p>
+              <table class="table table-striped">
+                <thead>
+                  <tr><th>Shortcut</th><th>Command</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>F1</code></td><td><code>QF</code></td></tr>
+                  <tr><td><code>Shift+F1</code></td><td><code>DM</code></td></tr>
+                  <tr><td><code>F2</code></td><td><code>QP</code></td></tr>
+                  <tr><td><code>Shift+F2</code></td><td><code>QD</code></td></tr>
+                  <tr><td><code>F3</code></td><td><code>QT</code></td></tr>
+                  <tr><td><code>F4</code></td><td><code>QX</code></td></tr>
+                  <tr><td><code>F5</code></td><td><code>QZ</code></td></tr>
+                  <tr><td><code>F6</code></td><td><code>QU</code></td></tr>
+                  <tr><td><code>F7</code></td><td><code>QL</code></td></tr>
+                  <tr><td><code>Shift+F7</code></td><td><code>WR</code></td></tr>
+                  <tr><td><code>F8</code></td><td><code>QQ</code></td></tr>
+                  <tr><td><code>Shift+F8</code></td><td><code>QR</code></td></tr>
+                  <tr><td><code>F9</code></td><td><code>QB</code></td></tr>
+                </tbody>
+              </table>
 
               <h2>Toolbars</h2>
 
@@ -7510,6 +7608,19 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                       heading, <code>/*</code> delete speed, <code>*</code> delete all, bare toggle</li>
                   </ul>
                 </li>
+                <li><strong>Point outs</strong> (same-ARTCC only; cross-ARTCC and STARS targets are rejected)
+                  <ul>
+                    <li><code>QP [SECTOR] [FLID]</code> — initiate point out to a sector in the same ARTCC</li>
+                    <li><code>QP A [FLID]</code> — acknowledge every inbound point out for the aircraft</li>
+                    <li><code>QP [FLID]</code> — clear the post-point-out FDB lock (FDB &rarr; LDB)</li>
+                  </ul>
+                </li>
+                <li><strong>Quick look</strong>
+                  <ul>
+                    <li><code>QL [SECTOR_LIST]</code> — toggle quick look on the listed sector(s)</li>
+                    <li><code>QL</code> — disable all quick look</li>
+                  </ul>
+                </li>
                 <li><strong>Altitudes</strong>
                   <ul>
                     <li><code>QQ</code> — interim altitude (assign, with optional P/L type, and clear)</li>
@@ -7526,7 +7637,8 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                   <ul>
                     <li><code>LA</code> — between two locations or FLID-to-location, with optional <code>/SPEED</code> and <code>T</code> true-bearing
                       variants</li>
-                    <li><code>LB</code> — from fix to location or FLID, with optional <code>/SPEED</code></li>
+                    <li><code>LB</code> — from fix to location, FLID, or clicked track, with optional <code>/SPEED</code></li>
+                    <li><code>LC</code> — speed to reach a fix at a given UTC time (<code>LC [FIX]/HHMM [FLID]</code> or clicked track)</li>
                   </ul>
                 </li>
                 <li><strong>CRR groups</strong>
@@ -7577,8 +7689,6 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 <li><strong><code>AM</code> (amend flight plan)</strong> — altitude amendments and the underlying field-specifier plumbing work, but
                   the documented dot-notation route syntax (e.g. <code>AM AAL123 RTE SSOXS.BUZRD.SEY</code>) and amendment of aircraft type, discrete
                   beacon, filed cruise speed, and remarks via <code>AM</code> are not handled.</li>
-                <li><strong><code>QP</code></strong> — only the J-ring overloads (<code>QP J</code>, <code>QP T</code>) are implemented; the
-                  inter-facility point-out forms (<code>QP [SECTOR] [FLID]</code>, <code>QP A</code>, etc.) are not.</li>
                 <li><strong>Route conformance</strong> — display via <code>QU</code> exists, but there is no automatic deviation/conformance
                   alerting.</li>
               </ul>
@@ -7588,7 +7698,7 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
                 <li><strong>Track control</strong>: <code>QH</code> freeze/hold, <code>QB</code> beacon assignment, <code>QR</code> controller-entered
                   reported altitude (CERA), <code>QD</code> altimeter / altitude-limit toggle, <code>QN</code> implied-command prefix</li>
                 <li><strong>Flight plan</strong>: <code>VP</code> VFR FP creation, <code>SR</code> flight-plan editor, <code>DM</code> activate FP,
-                  <code>LC</code> speed-to-fix-at-time, <code>RF</code> force facility transfer</li>
+                  <code>RF</code> force facility transfer</li>
                 <li><strong>Handoff</strong>: <code>RJ</code> reject, <code>AC</code> accept-with-acknowledge, <code>RD</code> handoff readout,
                   <code>/OK</code> force-handoff/"steal"</li>
                 <li><strong>Coordination / messaging</strong>: <code>MS</code>, <code>PO</code>, <code>CO</code>, <code>FP</code>, <code>RR</code>

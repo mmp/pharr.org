@@ -396,20 +396,24 @@
               <h2 class="section-heading">Running a Server Locally</h2>
                 <p>If you're working on multi-controller support for a
                   scenario, you may want to run a <i>vice</i> server locally to
-                  debug it. A few command-line options are useful:</p>
+                  debug it. The server is a separate executable,
+                  <code>viceserver</code> (<code>viceserver.exe</code> on
+                  Windows), which is installed alongside <i>vice</i> itself.
+                  A few command-line options are useful:</p>
                 <ul>
-                  <li><code>-runserver</code> launches a <i>vice</i> server on
-                    your local system</li>
-                  <li><code>-server</code> specifies the IP address and
-                    (optionally), the port of a <i>vice</i>
-                    server to connect to. Specifying <code>localhost</code>
-                    will connect to a local server launched
-                    via <code>-runserver</code>.
+                  <li><code>viceserver</code> (with no arguments) launches a
+                    <i>vice</i> server on your local system.</li>
+                  <li><code>-server</code> (passed to the <i>vice</i>
+                    client) specifies the IP address and (optionally), the
+                    port of a <i>vice</i> server to connect to. Specifying
+                    <code>localhost</code> will connect to a local server
+                    launched via <code>viceserver</code>.
                   </li>
                   <li><code>-port</code> allows specifying a custom port number
-                    for the server to listen to.  If this is used, then the
-                    address supplied to <code>-server</code> should be of the
-                    form <i>hostname:port</i>.</li>
+                    for the server to listen on (passed to both
+                    <code>viceserver</code> and to the <i>vice</i> client's
+                    <code>-server</code> address, which should then be of the
+                    form <i>hostname:port</i>).</li>
                 </ul>
                 <h4>Windows Example: Running a Local Multi-Controller Server</h4>
                 <p>Here's a step-by-step guide for testing multi-controller scenarios on Windows:</p>
@@ -418,7 +422,7 @@
                   <li><strong>Navigate to the vice directory:</strong> Enter <code>cd "c:\Program Files (x86)\Vice"</code><br>
                     <em>Note: The quotes are essential if the path contains spaces.</em>
                   </li>
-                  <li><strong>Start the multi-controller server:</strong> Enter enter <code>vice.exe -runserver</code><br/>
+                  <li><strong>Start the multi-controller server:</strong> Enter <code>viceserver.exe</code><br/>
                     If there are errors in your scenario configuration, they will be displayed here. Otherwise, the server launches and will be
                     running in the background.
                   </li>
@@ -433,10 +437,8 @@
                 <p><strong>Restarting after scenario changes:</strong> If you modify your scenario files, you must restart the server to load the changes:</p>
                 <ol>
                   <li>Close all <i>vice</i> client windows</li>
-                  <li>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd> to open the Task Manager</li>
-                  <li>Click the "Details" tab and look for "vice.exe" in the list to find the server</li>
-                  <li>Select it and click "End task"</li>
-                  <li>Return to step 2 above to restart the server with your updated scenario</li>
+                  <li>In the Command Prompt window running <code>viceserver.exe</code>, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop the server</li>
+                  <li>Return to step 3 above to restart the server with your updated scenario</li>
                 </ol>
             </section><!--//section-->
 
@@ -1070,6 +1072,15 @@
                                   Used to define controller-specific airspace boundaries for the area.</td>
                               </tr>
                               <tr>
+                                <td>"airspace_awareness"</td>
+                                <td>Array of objects</td>
+                                <td>Per-area airspace awareness rules that take priority over the facility-level
+                                  <a href="#fe-airspace-awareness">"airspace_awareness"</a> for controllers in this area.
+                                  Same format as the top-level airspace awareness array.
+                                  Area entries are checked first; facility-level entries are used as fallback
+                                  for fixes not matched by area entries.</td>
+                              </tr>
+                              <tr>
                                 <td>"altimeters"</td>
                                 <td>Array of strings</td>
                                 <td>If specified, lists the airports whose altimeters are displayed in the SSA list
@@ -1107,13 +1118,6 @@
                                 <td>Specifies which of the video maps should be initially displayed.</td>
                               </tr>
                               <tr>
-                                <td>"video_map_file"</td>
-                                <td>String</td>
-                                <td>Overrides the facility-level <code>"video_map_file"</code> for controllers in this area.
-                                  When specified, video maps for this area are loaded from the given file
-                                  instead of the facility-level video map library.</td>
-                              </tr>
-                              <tr>
                                 <td>"flight_following_airspace"</td>
                                 <td>Array of objects</td>
                                 <td>Airspace volumes for flight following in this area.</td>
@@ -1137,13 +1141,11 @@
                                   Same format as the top-level scratchpads map.</td>
                               </tr>
                               <tr>
-                                <td>"airspace_awareness"</td>
-                                <td>Array of objects</td>
-                                <td>Per-area airspace awareness rules that take priority over the facility-level
-                                  <a href="#fe-airspace-awareness">"airspace_awareness"</a> for controllers in this area.
-                                  Same format as the top-level airspace awareness array.
-                                  Area entries are checked first; facility-level entries are used as fallback
-                                  for fixes not matched by area entries.</td>
+                                <td>"video_map_file"</td>
+                                <td>String</td>
+                                <td>Overrides the facility-level <code>"video_map_file"</code> for controllers in this area.
+                                  When specified, video maps for this area are loaded from the given file
+                                  instead of the facility-level video map library.</td>
                               </tr>
                               <tr>
                                 <td>"video_maps"</td>
@@ -3627,8 +3629,9 @@
                   </tr>
                   <tr>
                     <td>"cruise_altitude"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) The aircraft's final cruise altitude. (This is only used in the aircraft's flight strip.) If
+                    <td>Number or array of numbers</td>
+                    <td>(<i>Optional</i>) The aircraft's final cruise altitude. (This is only used in the aircraft's flight strip.)
+                      If multiple altitudes are specified, one is chosen at random. If
                       unspecified, <i>vice</i> tries to choose a reasonable
                       cruise altitude based on the distance and direction of flight.</td>
                   </tr>
@@ -3853,8 +3856,9 @@
                   </tr>
                   <tr>
                     <td>"cruise_altitude"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) The aircraft's final altitude in its flight plan. If unspecified, a reasonable
+                    <td>Number or array of numbers</td>
+                    <td>(<i>Optional</i>) The aircraft's final altitude in its flight plan.
+                      If multiple altitudes are specified, one is chosen at random. If unspecified, a reasonable
                       guess will be made based on direction of flight and the aircraft's departure and arrival airports.</td>
                   </tr>
                   <tr>
@@ -4381,6 +4385,11 @@
                     <td>"vfr_rate_scale"</td>
                     <td>Number</td>
                     <td>Scale factor to adjust the rate of distractor VFR launches in the scenario. Set to 0 for none.</td>
+                  </tr>
+                  <tr>
+                    <td>"flight_following_request_rate"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) Default rate at which VFR aircraft in a controller's flight-following airspace request flight following, in requests per hour. Applied when the scenario is loaded; the value can be adjusted at any time via the launch-config UI. If unspecified, defaults to 10.</td>
                   </tr>
                   <tr>
                     <td>"wind"</td>
