@@ -487,8 +487,10 @@
                 <li> <code>/lt</code><i>heading</i>: turn left to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
                 <li> <code>/rt</code><i>heading</i>: turn right to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
                 <li> Heading specifiers and action specifiers such as <code>/ho</code>, <code>/po</code>, <code>/tc</code>, scratchpad changes, <code>/c</code>, and <code>/d</code> may be chained in order using <code>@</code> conditions.</li>
-                <li> <code>@a</code><i>altitude</i>: after an action group, fly its heading until reaching the specified altitude in feet, then start the next action group.
-                  For example, <code>_EWR4_4La/h039@a500/r055</code> flies heading 039 after <code>_EWR4_4La</code> until 500 feet, then turns right to heading 055.</li>
+                <li> <code>@a</code><i>altitude</i>: after an action group, fly its heading until reaching the specified altitude in feet MSL, then start the next action group.
+                  For example, <code>_EWR4_4La/h039@a500/r055</code> flies heading 039 after <code>_EWR4_4La</code> until 500 feet, then turns right to heading 055.
+                  Note that this is in feet, unlike <code>/c</code> and <code>/d</code>, which are in hundreds of feet; an altitude at or
+                  below the departure airport's field elevation is an error, since the action group would end immediately.</li>
                 <li> <code>@d</code><i>distance</i><i>fix</i>: after an action group, fly its heading until reaching the given DME distance from the named fix or navaid.
                   For example, <code>_EWR4_4La/h039@a500/r055@d4.0IEZA/l290/ho5W</code> flies heading 039 until 500 feet, turns right to heading 055 until D4.0 from IEZA, then turns left to heading 290 and hands off to 5W.</li>
                 <li> <code>/ld</code>: left direct to the next fix (force a left turn to reach the next waypoint)</li>
@@ -1308,6 +1310,22 @@
                       <td>Assigns a letter to an airport to display in an ERAM datablock.</td>
                     </tr>
                     <tr>
+                      <td>"always_maps"</td>
+                      <td>Array of objects</td>
+                      <td><p>Video maps that are displayed no matter which geomap the controller has
+                          loaded. They are not offered in the VIDEOMAP filter menu and cannot be turned
+                          off; loading another geomap with <code>MR</code> leaves them displayed.</p>
+                        <p>A map's label is unique only within its geomap, so each entry names both:
+                          <code>{ "group": "AREAA", "map": "SEC BND" }</code>, where "group" is a geomap
+                          name and "map" is the map's label with its two lines joined by a space. Run
+                          <code>vice -listmaps &lt;path to *.mappack&gt;</code> to see both for a
+                          facility. The brightness of these maps is controlled by their BCGs in the MAP
+                          BRIGHT menu, which lists any that the loaded geomap doesn't already have.</p>
+                        <p>A scenario's <a href="#fe-scenarios">"always_maps"</a>, if it has any,
+                          replaces this list rather than adding to it.</p>
+                      </td>
+                    </tr>
+                    <tr>
                       <td>"arts_coordination"</td>
                       <td>Object</td>
                       <td><p>Rules that decide a flight's <i>coordination fix</i>: the fix at which it
@@ -1317,10 +1335,16 @@
                         <p>Each key is the computer id of one of this center's TRACONs&mdash;its
                           "stars_id" in this facility's <a href="#fe-facility-config">"handoff_ids"</a>,
                           for example <code>"AAA"</code> for A80&mdash;so one center config can serve
-                          several TRACONs. Route rules are tried first and the zone rules act as the
+                          several TRACONs. A TRACON the center has no handoff id for is keyed by its
+                          own facility id, and for scenarios where the center itself is the primary
+                          facility, its coordination is adapted under the center's own id (e.g.
+                          <code>"ZNY"</code>). Route rules are tried first and the zone rules act as the
                           catch-all, so a zone area typically yields a coarse partition that the
                           TRACON's fix-pair reassignment then narrows to a real gate or meter fix.
-                          Each value has the following members:</p>
+                          An overflight crosses the boundary twice and derives a coordination fix for
+                          both crossings: an entry-side pass and an exit-side pass, each considering
+                          only the coordination fixes adapted for its side (see <code>"side"</code>
+                          below). Each value has the following members:</p>
 
                       </td>
                     </tr>
@@ -1334,7 +1358,7 @@
                               <tr>
                                 <td>"route_based"</td>
                                 <td>Array of objects</td>
-                                <td>Rules matched in order against the flight's filed route; the first
+                                <td>Rules matched in order against the flight's flown route; the first
                                   rule that matches and yields a fix wins. Each rule has the following
                                   members:</td>
                               </tr>
@@ -1348,15 +1372,29 @@
                                         <tr>
                                           <td>"type"</td>
                                           <td>String</td>
-                                          <td>What the rule matches: "sid", "star", "airway", or
-                                            "string".</td>
+                                          <td>What the rule matches: "sid", "star", "airway",
+                                            "string", or "waypoints".</td>
                                         </tr>
                                         <tr>
                                           <td>"id"</td>
                                           <td>String</td>
-                                          <td>The procedure or airway id, or for "string" the route
-                                            text to look for&mdash;a single fix or several fixes that
-                                            must appear as a contiguous run in the filed route.</td>
+                                          <td>For "sid"/"star", the procedure the flight must
+                                            actually be flying: "TIDES1" for an exact match, a
+                                            trailing <code>#</code> to match any version number
+                                            ("TIDES#"), or "PROC.FIX" (e.g. "TIDES#.GOLTY") to
+                                            additionally require FIX among the fixes the flight
+                                            flies over&mdash;so one rule covers every transition
+                                            that shares the fix. For "airway", the airway id. For
+                                            "string" and "waypoints", a space-separated fix sequence
+                                            matched against the fixes the flight actually flies
+                                            over: its named waypoints, ignoring synthesized
+                                            waypoints and raw lat-long positions and with the
+                                            trailing destination airport dropped. A "string"
+                                            sequence may appear anywhere along the route as a
+                                            contiguous run; a "waypoints" sequence must match
+                                            starting at the flight's first fix, so approach or
+                                            runway fixes appended past the adapted sequence don't
+                                            disturb the match.</td>
                                         </tr>
                                         <tr>
                                           <td>"direction"</td>
@@ -1364,9 +1402,9 @@
                                           <td>(<i>Optional</i>) "up", "down", or "both". This only
                                             affects "airway" rules: "down" matches flights flying the
                                             airway in the order its fixes are defined, "up" the
-                                            opposite, and "both" (the default) either way. For "sid",
-                                            "star", and "string" rules, this field is accepted but does
-                                            not affect matching.</td>
+                                            opposite, and "both" (the default) either way. For other
+                                            rule types, this field is accepted but does not affect
+                                            matching.</td>
                                         </tr>
                                         <tr>
                                           <td>"altitude_kind"</td>
@@ -1398,6 +1436,22 @@
                                                       match.</td>
                                                   </tr>
                                                   <tr>
+                                                    <td>"side"</td>
+                                                    <td>String</td>
+                                                    <td>(<i>Optional</i>) "entry" or "exit": which end
+                                                      of the fix pair this fix is adapted for. Absent
+                                                      means the flight's natural side&mdash;entry for
+                                                      arrivals and overflights, exit for departures.
+                                                      Arrivals and departures derive only their
+                                                      natural side (the local airport keeps the other
+                                                      end); overflights run an entry pass and an exit
+                                                      pass, each considering only the fixes on its
+                                                      side. <code>"default_fix"</code> applies only to
+                                                      the natural side, so a sided fix with no other
+                                                      criteria serves as the other side's
+                                                      default.</td>
+                                                  </tr>
+                                                  <tr>
                                                     <td>"altitude"</td>
                                                     <td>Array of two numbers</td>
                                                     <td>(<i>Optional</i>) An inclusive altitude range
@@ -1426,6 +1480,12 @@
                                                       convention.</td>
                                                   </tr>
                                                   <tr>
+                                                    <td>"dep_airport"</td>
+                                                    <td>Array of strings</td>
+                                                    <td>(<i>Optional</i>) Departure airports, with
+                                                      the same <code>!</code> convention.</td>
+                                                  </tr>
+                                                  <tr>
                                                     <td>"dest_airport"</td>
                                                     <td>Array of strings</td>
                                                     <td>(<i>Optional</i>) Destination airports, with
@@ -1439,7 +1499,8 @@
                                           <td>"default_fix"</td>
                                           <td>String</td>
                                           <td>The coordination fix used when no entry in
-                                            <code>"fixes"</code> matches.</td>
+                                            <code>"fixes"</code> matches. Applies only to the
+                                            flight's natural side (see <code>"side"</code>).</td>
                                         </tr>
                                       </tbody>
                                     </table>
@@ -1450,8 +1511,11 @@
                                 <td>Array of objects</td>
                                 <td>The fallback used when no route rule matches: the area whose
                                   center is nearest the flight's boundary point applies, and the
-                                  flight's bearing from that center selects a fix. Each area has the
-                                  following members:</td>
+                                  flight's bearing from that center selects a fix. The boundary
+                                  point is the flight's first route fix for the entry side and its
+                                  last for the exit side, so an overflight's exit pass measures
+                                  both the nearest area and the bearing from the end of its route.
+                                  Each area has the following members:</td>
                               </tr>
                               <tr><td colspan="3">
                                   <details class="json-fields"><summary>"zone_based" members</summary>
@@ -1509,7 +1573,8 @@
                                                     <td>"default_fix"</td>
                                                     <td>String</td>
                                                     <td>The coordination fix used when no entry in
-                                                      <code>"fixes"</code> matches.</td>
+                                                      <code>"fixes"</code> matches. Applies only to
+                                                      the flight's natural side.</td>
                                                   </tr>
                                                 </tbody>
                                               </table>
@@ -1572,9 +1637,10 @@
                               <tr>
                                 <td>"procedure"</td>
                                 <td>String</td>
-                                <td>(<i>Optional</i>) A procedure that must appear in the filed route;
-                                  a trailing <code>#</code> matches any version number (e.g., "ROBUC#"
-                                  matches ROBUC3).</td>
+                                <td>(<i>Optional</i>) The procedure the flight must actually be
+                                  flying&mdash;its STAR for "arrival" restrictions, its SID for
+                                  "departure"; a trailing <code>#</code> matches any version number
+                                  (e.g., "ROBUC#" matches ROBUC3).</td>
                               </tr>
                               <tr>
                                 <td>"arrival_airports"</td>
@@ -1637,7 +1703,9 @@
                       <td>Airports that can be used as fix-pair endpoints, for
                         <a href="#fe-pseudo-eram">fix-pair</a> rules that name an airport rather than a
                         significant point. Each key is the id used in those rules; these display like
-                        significant points, and each value has the following members:</td>
+                        significant points. For an airport in vice's aviation database, an empty object
+                        suffices (e.g. <code>"DET": {}</code>)&mdash;the name and location are then
+                        taken from the database. Each value has the following members:</td>
                     </tr>
                     <tr><td colspan="3">
                         <details class="json-fields"><summary>"airports" members</summary>
@@ -1649,13 +1717,17 @@
                               <tr>
                                 <td>"name"</td>
                                 <td>String</td>
-                                <td>The airport's name, shown as the point's description on the
-                                  scope.</td>
+                                <td>(<i>Optional</i>) The airport's name, shown as the point's
+                                  description on the scope; defaults to the name in the aviation
+                                  database.</td>
                               </tr>
                               <tr>
                                 <td>"location"</td>
                                 <td>String</td>
-                                <td>The airport's <a href="#fe-locations">position</a>.</td>
+                                <td>(<i>Optional</i>) The airport's
+                                  <a href="#fe-locations">position</a>; defaults to the location in
+                                  the aviation database. Required for airports not in the
+                                  database.</td>
                               </tr>
                               <tr>
                                 <td>"abbreviation"</td>
@@ -2593,6 +2665,17 @@
                                             runways at the primary airport.</td>
                                         </tr>
                                         <tr>
+                                          <td>"departure_runway"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) The flight's own departure runway,
+                                            matched exactly against the runway id as given in the
+                                            scenario (which may carry a suffix, e.g. "15R.Props");
+                                            arrivals and overflights never match. Unlike
+                                            "active_runway", this distinguishes simultaneous
+                                            departures off different runways when both are active.
+                                            This is a vice extension, not a DMS criterion.</td>
+                                        </tr>
+                                        <tr>
                                           <td>"derived_fix_pair"</td>
                                           <td>Array of two strings</td>
                                           <td>The derived [entry, exit] pair; <code>*</code> keeps the
@@ -2627,7 +2710,15 @@
                                           <td>Map of strings to strings</td>
                                           <td>Maps each configuration plan id to the position that owns
                                             matching flights when that plan is active; <code>*</code>
-                                            may be used as a catch-all plan id.</td>
+                                            may be used as a catch-all plan id. A key may also list
+                                            several plans, comma-separated&mdash;<code>"tcp": {
+                                            "FOO,BAR": "1A", "BAZ": "1B" }</code>&mdash;as shorthand
+                                            for repeating the same assignment; each plan may appear in
+                                            only one key. The adaptation may name
+                                            positions beyond those a given scenario loads: if the
+                                            winning row assigns a position the scenario doesn't have,
+                                            no fix-pair assignment is made and the flight keeps its
+                                            default ownership.</td>
                                         </tr>
                                         <tr>
                                           <td>"rnav"</td>
@@ -3031,8 +3122,7 @@
                                 <td>"short_name"</td>
                                 <td>String</td>
                                 <td>A three-letter abbreviation for the fix that is used when it is shown as the scratchpad in datablocks.
-                                  If not specified, then if the fix's name has four letters and starts with a "K" (i.e., it's an airport),
-                                  the last three letters are used. Otherwise the first three letters of the fix's name are used.
+                                  If not specified, the first three characters of the fix's name are used.
                                   No two fixes may have the same "short_name".
                                   (May only be specified for fixes with more than three characters in their name.)</td>
                               </tr>
@@ -3240,11 +3330,13 @@
                   falls back to the scenario's inbound flow and departure assignments as before.</p>
                 <p>When an aircraft is created, the following happens in order:</p>
                 <ol>
-                  <li>A trajectory is built from the filed route and a vertical profile, capped by any
-                    matching "restrictions".</li>
+                  <li>A trajectory is built from the flight's route waypoints and a vertical profile,
+                    capped by any matching "restrictions".</li>
                   <li>The coordination fix is chosen from "arts_coordination": route-based rules first,
-                    then the zone-based areas as a catch-all. It becomes the entry fix for an arrival or
-                    overflight and the exit fix for a departure.</li>
+                    then the zone-based areas as a catch-all. It becomes the entry fix for an arrival
+                    and the exit fix for a departure. An overflight crosses the boundary twice, so
+                    both ends are derived: an entry-side pass and an exit-side pass, each using the
+                    coordination fixes adapted for its side.</li>
                   <li>"fix_pair_reassignment" may derive an alternate pair, typically turning a coarse
                     directional partition into a real gate or meter fix; the flight plan keeps its
                     actual fixes and carries the derived ones alongside.</li>
@@ -5057,6 +5149,15 @@
                       The object key is a controller id and the value is an array of strings, each of which
                       corresponds to an airspace volume defined in the <a href="#fe-airspace">"airspace"</a>
                       section of the scenario group.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>"always_maps"</td>
+                    <td>Array of objects</td>
+                    <td><i>(ERAM only, Optional)</i> Video maps that are displayed no matter which geomap
+                      the controller has loaded, given as <code>{ "group": "AREAA", "map": "SEC BND" }</code>
+                      objects. If the scenario specifies any, they replace the facility's
+                      <a href="#fe-config-eram">"always_maps"</a>; see there for the details.
                     </td>
                   </tr>
                   <tr>
