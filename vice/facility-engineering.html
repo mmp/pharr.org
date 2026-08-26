@@ -168,35 +168,14 @@
     <div class="docs-wrapper">
       <div class="docs-sidebar" id="docs-sidebar">
         <nav class="docs-nav navbar" id="docs-nav">
-          <ul class="section-items list-unstyled nav flex-column pb-3">
-            <li class="nav-item section-title"><a class="nav-link scrollto" href="#section-basics"><span class="theme-icon-holder me-2"><i class="fas fa-book-open"></i></span>Basics</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-faq">FAQ</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-locations">Specifying Locations</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-local-server">Running a Server Locally</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-routes">Aircraft Routes</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-airlines-aircraft">Airlines and Aircraft</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-emergencies">Emergencies</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-speech">Speech</a></li>
-            <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-facility-config"><span class="theme-icon-holder me-2"><i class="fas fa-wrench"></i></span>Facility Configuration</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-common">Common</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-eram">ERAM</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-config-stars">STARS</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-video-maps">Video Maps</a></li>
-            <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-scenario-groups"><span class="theme-icon-holder me-2"><i class="fas fa-plane-departure"></i></span>Scenario Groups</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-airports">Airports</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-approaches">Approaches</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-departures">Departures</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-arrivals">Arrivals and Overflights</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-vfr">VFR Aircraft</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-airspace">Controller Airspace</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-scenarios">Scenarios</a></li>
-            <li class="nav-item"><a class="nav-link scrollto" href="#fe-briefings">Briefings</a></li>
-          </ul>
+          <!-- Generated at load time by assets/js/sidebar.js from the page's
+               articles and headings; do not hand-edit. -->
+          <ul class="section-items list-unstyled nav flex-column pb-3"></ul>
         </nav><!--//docs-nav-->
       </div><!--//docs-sidebar-->
       <div class="docs-content">
         <div class="container">
-          <article class="docs-article" id="section-facility-engineering">
+          <article class="docs-article" id="section-facility-engineering" data-nav-icon="fas fa-info-circle">
             <header class="docs-header">
               <h1 class="docs-heading">Facility Engineering</h1>
               <section class="docs-intro">
@@ -214,15 +193,12 @@
                   and the
                   <a href="https://github.com/mmp/vice/tree/master/resources/videomaps"><code>resources/videomaps/</code> directory</a> for
                   the video map definitions.
-                  Files in those directories with names ending with a "zst" suffix have been compressed using <a href="https://facebook.github.io/zstd/">zstandard</a>;
-                  in order to examine their contents, you'll want to install zstandard or another decompression program that supports that
-                  format.
                 </p>
               </section><!--//docs-intro-->
             </header>
           </article>
 
-          <article class="docs-article" id="section-basics">
+          <article class="docs-article" id="section-basics" data-nav-icon="fas fa-book-open">
             <header class="docs-header">
               <h1 class="docs-heading">Basics</h1>
             </header>
@@ -254,7 +230,7 @@
                 </p>
 
             <section class="docs-section" id="fe-faq">
-              <h2 class="section-heading">Facility Engineering FAQ</h2>
+              <h2 class="section-heading" data-nav-title="FAQ">Facility Engineering FAQ</h2>
               <table class="table">
                 <thead>
                   <tr>
@@ -443,7 +419,7 @@
             </section><!--//section-->
 
             <section class="docs-section" id="fe-routes">
-              <h2 class="section-heading">Routes</h2>
+              <h2 class="section-heading" data-nav-title="Aircraft Routes">Routes</h2>
               <p>When an aircraft's route is given, <i>vice</i> allows airways to be used to describe the route,
                 which simplifies the route specification when an aircraft is in fact flying along an airway.
                 Airways are given as part of the route; for example "WHITE V1 DPK" has the aircraft join V1
@@ -485,8 +461,10 @@
                 <li> <code>/lt</code><i>heading</i>: turn left to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
                 <li> <code>/rt</code><i>heading</i>: turn right to the specified track heading at the fix (wind-corrected, like <code>/t</code>)</li>
                 <li> Heading specifiers and action specifiers such as <code>/ho</code>, <code>/po</code>, <code>/tc</code>, scratchpad changes, <code>/c</code>, and <code>/d</code> may be chained in order using <code>@</code> conditions.</li>
-                <li> <code>@a</code><i>altitude</i>: after an action group, fly its heading until reaching the specified altitude in feet, then start the next action group.
-                  For example, <code>_EWR4_4La/h039@a500/r055</code> flies heading 039 after <code>_EWR4_4La</code> until 500 feet, then turns right to heading 055.</li>
+                <li> <code>@a</code><i>altitude</i>: after an action group, fly its heading until reaching the specified altitude in feet MSL, then start the next action group.
+                  For example, <code>_EWR4_4La/h039@a500/r055</code> flies heading 039 after <code>_EWR4_4La</code> until 500 feet, then turns right to heading 055.
+                  Note that this is in feet, unlike <code>/c</code> and <code>/d</code>, which are in hundreds of feet; an altitude at or
+                  below the departure airport's field elevation is an error, since the action group would end immediately.</li>
                 <li> <code>@d</code><i>distance</i><i>fix</i>: after an action group, fly its heading until reaching the given DME distance from the named fix or navaid.
                   For example, <code>_EWR4_4La/h039@a500/r055@d4.0IEZA/l290/ho5W</code> flies heading 039 until 500 feet, turns right to heading 055 until D4.0 from IEZA, then turns left to heading 290 and hands off to 5W.</li>
                 <li> <code>/ld</code>: left direct to the next fix (force a left turn to reach the next waypoint)</li>
@@ -829,17 +807,15 @@
                 for more natural-sounding speech. Files with single string values have one canonical pronunciation.</p>
             </section><!--//section-->
           </article>
-          <article class="docs-article" id="section-facility-config">
+          <article class="docs-article" id="section-facility-config" data-nav-icon="fas fa-wrench">
             <header class="docs-header">
               <h1 class="docs-heading">Facility Configuration</h1>
             </header>
-            <section class="docs-section" id="fe-facility-config">
-              <h2 class="section-heading">Facility Configuration</h2>
               <p>Facility-wide settings are defined in separate JSON files, stored in
                 the <a href="https://github.com/mmp/vice/tree/master/resources/configurations"><code>resources/configurations/</code></a>
                 directory. They're organized by ARTCC and facility name (e.g., <code>resources/configurations/ZNY/N90.json</code>).
                 When a scenario is loaded, <i>vice</i> automatically loads the corresponding facility configuration
-                based on the scenario's "tracon" field.
+                based on the scenario's "tracon" field for a TRACON scenario or its "artcc" field for an enroute (ERAM) scenario.
               </p>
               <p>Each facility configuration file may contain the following top-level elements:</p>
               <table class="table">
@@ -918,51 +894,6 @@
                       </details>
                   </td></tr>
                   <tr>
-                    <td>"fix_pairs"</td>
-                    <td>Array of objects</td>
-                    <td><p>Defines fix pair rules for fine-grained aircraft routing assignments.
-                        Each object specifies an entry/exit fix combination with optional constraints.</p>
-
-                    </td>
-                  </tr>
-                  <tr><td colspan="3">
-                      <details class="json-fields"><summary>"fix_pairs" members</summary>
-                        <table class="table">
-                          <thead>
-                            <tr><th>Element</th><th>Type</th><th>Description</th></tr>
-                          </thead>
-                          <tbody>
-
-                            <tr>
-                              <td>"altitude_range"</td>
-                              <td>Array of two numbers</td>
-                              <td>(<i>Optional</i>) Altitude range [floor, ceiling] in feet. If omitted or [0,0], no altitude constraint.</td>
-                            </tr>
-                            <tr>
-                              <td>"entry_fix"</td>
-                              <td>String</td>
-                              <td>The entry fix name. Empty string matches any entry fix.</td>
-                            </tr>
-                            <tr>
-                              <td>"exit_fix"</td>
-                              <td>String</td>
-                              <td>The exit fix name. Empty string matches any exit fix.</td>
-                            </tr>
-                            <tr>
-                              <td>"flight_type"</td>
-                              <td>String</td>
-                              <td>(<i>Optional</i>) "A" for arrivals, "P" for departures, "E" for overflights. If omitted, matches any type.</td>
-                            </tr>
-                            <tr>
-                              <td>"priority"</td>
-                              <td>Number</td>
-                              <td>The match priority; lower numbers are higher priority. Must be unique per configuration.</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </details>
-                  </td></tr>
-                  <tr>
                     <td>"handoff_ids"</td>
                     <td>Array</td>
                     <td><p>An array of objects identifying neighboring facilities and mapping them
@@ -1033,7 +964,7 @@
                 </tbody>
               </table>
               <section class="docs-section" id="fe-config-common">
-                <h3 class="section-heading">Common</h3>
+                <h2 class="section-heading">Common</h2>
                 <p>The following settings in the "facility_adaptations" object of the
                   <a href="#fe-facility-config">facility configuration file</a> apply to all scope types:
                 </p>
@@ -1066,19 +997,12 @@
                             <tbody>
 
                               <tr>
-                                <td>"airspace"</td>
-                                <td>Object</td>
-                                <td>Maps controller identifiers to arrays of airspace volumes.
-                                  Used to define controller-specific airspace boundaries for the area.</td>
-                              </tr>
-                              <tr>
                                 <td>"airspace_awareness"</td>
                                 <td>Array of objects</td>
-                                <td>Per-area airspace awareness rules that take priority over the facility-level
-                                  <a href="#fe-airspace-awareness">"airspace_awareness"</a> for controllers in this area.
-                                  Same format as the top-level airspace awareness array.
-                                  Area entries are checked first; facility-level entries are used as fallback
-                                  for fixes not matched by area entries.</td>
+                                <td>Airspace awareness rules for controllers in this area, replacing the facility-level
+                                  <a href="#fe-airspace-awareness">"airspace_awareness"</a> entirely: those are used only
+                                  for areas that do not specify their own.
+                                  Same format as the top-level airspace awareness array.</td>
                               </tr>
                               <tr>
                                 <td>"altimeters"</td>
@@ -1087,6 +1011,13 @@
                                   for controllers in this area. Overridden by per-controller
                                   <code>"altimeters"</code> and overrides the facility-level
                                   <code>"facility_adaptations"."lists"."ssa"."altimeters"</code> setting.</td>
+                              </tr>
+                              <tr>
+                                <td>"system_altimeter"</td>
+                                <td>String</td>
+                                <td>The station whose setting the SSA's ALTSTG field shows for controllers in this
+                                  area, overriding the facility-level
+                                  <code>"facility_adaptations"."lists"."ssa"."system_altimeter"</code>.</td>
                               </tr>
                               <tr>
                                 <td>"beacon_code_blocks"</td>
@@ -1102,12 +1033,6 @@
                                   the top-level "center" in the facility configuration.</td>
                               </tr>
                               <tr>
-                                <td>"coordination_lists"</td>
-                                <td>Array of objects</td>
-                                <td>Coordination list objects for this area,
-                                  following the same format as the top-level <a href="#fe-stars-lists">"coordination"</a> lists.</td>
-                              </tr>
-                              <tr>
                                 <td>"default_airport"</td>
                                 <td>String</td>
                                 <td>The CRDA default airport for this area.</td>
@@ -1116,11 +1041,6 @@
                                 <td>"default_maps"</td>
                                 <td>Array of strings</td>
                                 <td>Specifies which of the video maps should be initially displayed.</td>
-                              </tr>
-                              <tr>
-                                <td>"flight_following_airspace"</td>
-                                <td>Array of objects</td>
-                                <td>Airspace volumes for flight following in this area.</td>
                               </tr>
                               <tr>
                                 <td>"range"</td>
@@ -1136,9 +1056,12 @@
                               <tr>
                                 <td>"scratchpads"</td>
                                 <td>Map of strings to strings</td>
-                                <td>Per-area scratchpad assignments, overriding the facility-level
-                                  <a href="#fe-scratchpads">"scratchpads"</a> for controllers in this area.
-                                  Same format as the top-level scratchpads map.</td>
+                                <td>Scratchpad assignments for departures worked by this area, replacing the facility-level
+                                  <a href="#fe-scratchpads">"scratchpads"</a> entirely: those are used only for areas that
+                                  do not specify their own. It must therefore cover every exit fix the area's departures
+                                  use; a departure whose exit is not in the map gets no scratchpad.
+                                  Same format as the top-level scratchpads map. The area is the one that the
+                                  departure controller for the flight belongs to.</td>
                               </tr>
                               <tr>
                                 <td>"video_map_file"</td>
@@ -1199,7 +1122,10 @@
                                   into 1A, and 1D is consolidated into 1C (and transitively into 1A).
                                   All positions that are covered by humans must be present exactly once in the consolidation hierarchy.
                                   All positions must eventually consolidate into a single <i>root</i> position; this
-                                  is the primary controller for the scenario.</td>
+                                  is the primary controller for the scenario.
+                                  An individual scenario may override this hierarchy while still using this
+                                  configuration's assignments; see
+                                  <a href="#fe-scenarios">"default_consolidation"</a> in "scenarios".</td>
                               </tr>
                               <tr>
                                 <td>"departure_assignments"</td>
@@ -1211,13 +1137,6 @@
                                   SID ("KJFK/SKORR5"). It is not allowed to specify runway and SID departure selections
                                   at an airport, however the airport name alone may be given as a catch-all
                                   for any unspecified runways/SIDs if that method is used.</td>
-                              </tr>
-                              <tr>
-                                <td>"fix_pair_assignments"</td>
-                                <td>Array of objects</td>
-                                <td>(<i>Optional</i>) Maps fix pair rules to controllers.
-                                  Each object has "tcp" (the controller to assign) and "priority" (matching priority; lower is higher).
-                                  These reference the fix pair definitions from the top-level "fix_pairs" in the facility config.</td>
                               </tr>
                               <tr>
                                 <td>"go_around_assignments"</td>
@@ -1355,8 +1274,8 @@
                 </table>
               </section><!--//section-->
               <section class="docs-section" id="fe-config-eram">
-                <h3 class="section-heading">ERAM</h3>
-                <p>The following setting in the "facility_adaptations" object is specific to the ERAM radar scope:</p>
+                <h2 class="section-heading">ERAM</h2>
+                <p>The following settings in the "facility_adaptations" object are specific to the ERAM radar scope:</p><div class="json-controls"><button class="expand-all">Expand All</button> <button class="collapse-all">Collapse All</button></div>
                 <table class="table">
                   <thead>
                     <tr>
@@ -1371,11 +1290,330 @@
                       <td>Map of strings to strings</td>
                       <td>Assigns a letter to an airport to display in an ERAM datablock.</td>
                     </tr>
+                    <tr>
+                      <td>"arts_coordination"</td>
+                      <td>Object</td>
+                      <td><p>Rules that decide a flight's <i>coordination fix</i>: the fix at which it
+                          crosses the boundary between this center and one of its TRACONs. See
+                          <a href="#fe-pseudo-eram">Coordination Fixes and Fix Pairs</a> for how this
+                          fits together with the TRACON-side adaptation.</p>
+                        <p>Each key is the computer id of one of this center's TRACONs&mdash;its
+                          "stars_id" in this facility's <a href="#fe-facility-config">"handoff_ids"</a>,
+                          for example <code>"AAA"</code> for A80&mdash;so one center config can serve
+                          several TRACONs. A TRACON the center has no handoff id for is keyed by its
+                          own facility id, and for scenarios where the center itself is the primary
+                          facility, its coordination is adapted under the center's own id (e.g.
+                          <code>"ZNY"</code>). Route rules are tried first and the zone rules act as the
+                          catch-all, so a zone area typically yields a coarse partition that the
+                          TRACON's fix-pair reassignment then narrows to a real gate or meter fix.
+                          Each value has the following members:</p>
+
+                      </td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields"><summary>"arts_coordination" members</summary>
+                          <table class="table">
+                            <thead>
+                              <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>"route_based"</td>
+                                <td>Array of objects</td>
+                                <td>Rules matched in order against the flight's filed route; the first
+                                  rule that matches and yields a fix wins. Each rule has the following
+                                  members:</td>
+                              </tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"route_based" members</summary>
+                                    <table class="table">
+                                      <thead>
+                                        <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"type"</td>
+                                          <td>String</td>
+                                          <td>What the rule matches: "sid", "star", "airway",
+                                            "string", or "waypoints".</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"id"</td>
+                                          <td>String</td>
+                                          <td>The procedure or airway id, or for "string" the route
+                                            text to look for&mdash;a single fix or several fixes that
+                                            must appear as a contiguous run in the filed route. For
+                                            "waypoints", a space-separated fix sequence matched
+                                            against the fixes the flight actually flies over rather
+                                            than its filed route string: the flight's named waypoints,
+                                            ignoring synthesized waypoints and raw lat-long positions
+                                            and with the trailing destination airport dropped. The
+                                            sequence must match starting at the flight's first fix,
+                                            so approach or runway fixes appended past the adapted
+                                            sequence don't disturb the match.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"direction"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) "up", "down", or "both". This only
+                                            affects "airway" rules: "down" matches flights flying the
+                                            airway in the order its fixes are defined, "up" the
+                                            opposite, and "both" (the default) either way. For other
+                                            rule types, this field is accepted but does not affect
+                                            matching.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"altitude_kind"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) Which altitude the fix criteria's
+                                            <code>"altitude"</code> ranges compare: "Trajectory" for
+                                            the modeled altitude at the candidate fix, otherwise the
+                                            flight's assigned (or, for departures, requested)
+                                            altitude.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"fixes"</td>
+                                          <td>Array of objects</td>
+                                          <td>Candidate coordination fixes, tried in order; the first
+                                            whose criteria all match is used. Each has the following
+                                            members:</td>
+                                        </tr>
+                                        <tr><td colspan="3">
+                                            <details class="json-fields"><summary>"fixes" members</summary>
+                                              <table class="table">
+                                                <thead>
+                                                  <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                  <tr>
+                                                    <td>"fix"</td>
+                                                    <td>String</td>
+                                                    <td>The coordination fix to use when the criteria
+                                                      match.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"altitude"</td>
+                                                    <td>Array of two numbers</td>
+                                                    <td>(<i>Optional</i>) An inclusive altitude range
+                                                      in hundreds of feet; see
+                                                      <code>"altitude_kind"</code> for which altitude
+                                                      is compared.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"engine"</td>
+                                                    <td>Array of strings</td>
+                                                    <td>(<i>Optional</i>) Engine classes: "jet",
+                                                      "turboprop", or "prop". A leading <code>!</code>
+                                                      excludes a class.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"nav"</td>
+                                                    <td>Array of strings</td>
+                                                    <td>(<i>Optional</i>) "rnav" or "conventional",
+                                                      with the same <code>!</code> convention.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"type"</td>
+                                                    <td>Array of strings</td>
+                                                    <td>(<i>Optional</i>) Aircraft types (e.g.,
+                                                      "B738"), with the same <code>!</code>
+                                                      convention.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"dest_airport"</td>
+                                                    <td>Array of strings</td>
+                                                    <td>(<i>Optional</i>) Destination airports, with
+                                                      the same <code>!</code> convention.</td>
+                                                  </tr>
+                                                </tbody>
+                                              </table>
+                                            </details>
+                                        </td></tr>
+                                        <tr>
+                                          <td>"default_fix"</td>
+                                          <td>String</td>
+                                          <td>The coordination fix used when no entry in
+                                            <code>"fixes"</code> matches.</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                              <tr>
+                                <td>"zone_based"</td>
+                                <td>Array of objects</td>
+                                <td>The fallback used when no route rule matches: the area whose
+                                  center is nearest the flight's boundary point applies, and the
+                                  flight's bearing from that center selects a fix. Each area has the
+                                  following members:</td>
+                              </tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"zone_based" members</summary>
+                                    <table class="table">
+                                      <thead>
+                                        <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"area_id"</td>
+                                          <td>String</td>
+                                          <td>A name for the area, used in error messages.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"center"</td>
+                                          <td>String</td>
+                                          <td>The <a href="#fe-locations">position</a> bearings are
+                                            measured from.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"altitude_kind"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) As for route rules.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"arrival", "departure", "overflight"</td>
+                                          <td>Arrays of objects</td>
+                                          <td>Zone entries for each flight type, tried in order; the
+                                            first whose bearing sector contains the flight's bearing
+                                            and that yields a fix wins. Each has the following
+                                            members:</td>
+                                        </tr>
+                                        <tr><td colspan="3">
+                                            <details class="json-fields"><summary>"arrival"/"departure"/"overflight" members</summary>
+                                              <table class="table">
+                                                <thead>
+                                                  <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                  <tr>
+                                                    <td>"bearings"</td>
+                                                    <td>String</td>
+                                                    <td>(<i>Optional</i>) A "start,end" sector in
+                                                      degrees, clockwise from start to end; empty or
+                                                      absent matches any bearing.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"fixes"</td>
+                                                    <td>Array of objects</td>
+                                                    <td>Candidate coordination fixes with the same
+                                                      members as route rules'
+                                                      <code>"fixes"</code>.</td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>"default_fix"</td>
+                                                    <td>String</td>
+                                                    <td>The coordination fix used when no entry in
+                                                      <code>"fixes"</code> matches.</td>
+                                                  </tr>
+                                                </tbody>
+                                              </table>
+                                            </details>
+                                        </td></tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                            </tbody>
+                          </table>
+                        </details>
+                    </td></tr>
+                    <tr>
+                      <td>"restrictions"</td>
+                      <td>Array of objects</td>
+                      <td><p>Altitude restrictions applied to a flight's modeled vertical profile before
+                          the coordination fix is chosen, so that (for example) an arrival held down by
+                          a letter of agreement is not treated as being at cruise. Each has the
+                          following members:</p>
+
+                      </td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields"><summary>"restrictions" members</summary>
+                          <table class="table">
+                            <thead>
+                              <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>"name"</td>
+                                <td>String</td>
+                                <td>A name for the restriction, used in error messages.</td>
+                              </tr>
+                              <tr>
+                                <td>"flight_type"</td>
+                                <td>String</td>
+                                <td>"arrival" or "departure".</td>
+                              </tr>
+                              <tr>
+                                <td>"altitude_restriction"</td>
+                                <td>String</td>
+                                <td>An altitude in feet with the usual FAA qualifiers: a trailing
+                                  <code>-</code> for at-or-below, <code>+</code> for at-or-above,
+                                  neither for a hard "at".</td>
+                              </tr>
+                              <tr>
+                                <td>"mode"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) Only "line" is supported: the restriction applies
+                                  at a gate line the flight crosses.</td>
+                              </tr>
+                              <tr>
+                                <td>"line"</td>
+                                <td>String</td>
+                                <td>The gate line as space-separated
+                                  <a href="#fe-locations">positions</a>.</td>
+                              </tr>
+                              <tr>
+                                <td>"procedure"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) A procedure that must appear in the filed route;
+                                  a trailing <code>#</code> matches any version number (e.g., "ROBUC#"
+                                  matches ROBUC3).</td>
+                              </tr>
+                              <tr>
+                                <td>"arrival_airports"</td>
+                                <td>Array of strings</td>
+                                <td>(<i>Optional</i>) Arrival airports the restriction is limited
+                                  to.</td>
+                              </tr>
+                              <tr>
+                                <td>"aircraft"</td>
+                                <td>Object</td>
+                                <td>(<i>Optional</i>) Aircraft the restriction is limited to, with the
+                                  following members:</td>
+                              </tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"aircraft" members</summary>
+                                    <table class="table">
+                                      <thead>
+                                        <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"engine"</td>
+                                          <td>Array of strings</td>
+                                          <td>(<i>Optional</i>) Engine classes: "jet", "turboprop", or
+                                            "prop"; a leading <code>!</code> excludes a class.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"type"</td>
+                                          <td>Array of strings</td>
+                                          <td>(<i>Optional</i>) Aircraft types, with the same
+                                            <code>!</code> convention.</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                            </tbody>
+                          </table>
+                        </details>
+                    </td></tr>
                   </tbody>
                 </table>
               </section><!--//section-->
               <section class="docs-section" id="fe-config-stars">
-                <h3 class="section-heading">STARS</h3>
+                <h2 class="section-heading">STARS</h2>
                 <p>The following settings in the "facility_adaptations" object are specific to the STARS radar scope:</p><div class="json-controls"><button class="expand-all">Expand All</button> <button class="collapse-all">Collapse All</button></div>
                 <table class="table">
                   <thead>
@@ -1387,6 +1625,48 @@
                   </thead>
                   <tbody>
 
+                    <tr>
+                      <td>"airports"</td>
+                      <td>Object</td>
+                      <td>Airports that can be used as fix-pair endpoints, for
+                        <a href="#fe-pseudo-eram">fix-pair</a> rules that name an airport rather than a
+                        significant point. Each key is the id used in those rules; these display like
+                        significant points. For an airport in vice's aviation database, an empty object
+                        suffices (e.g. <code>"DET": {}</code>)&mdash;the name and location are then
+                        taken from the database. Each value has the following members:</td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields"><summary>"airports" members</summary>
+                          <table class="table">
+                            <thead>
+                              <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>"name"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) The airport's name, shown as the point's
+                                  description on the scope; defaults to the name in the aviation
+                                  database.</td>
+                              </tr>
+                              <tr>
+                                <td>"location"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) The airport's
+                                  <a href="#fe-locations">position</a>; defaults to the location in
+                                  the aviation database. Required for airports not in the
+                                  database.</td>
+                              </tr>
+                              <tr>
+                                <td>"abbreviation"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) A single character shown in datablock exit-gate
+                                  fields when this airport is a flight's exit fix.</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </details>
+                    </td></tr>
                     <tr>
                       <td>"airspace_awareness"</td>
                       <td>Array of objects</td>
@@ -1422,6 +1702,93 @@
                                 <td>"receiving_controller"</td>
                                 <td>String</td>
                                 <td>The sector ID of the controller that will receive aircraft matching this rule.</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </details>
+                    </td></tr>
+                    <tr>
+                      <td>"automatic_handoff_classes"</td>
+                      <td>Map of strings to arrays of strings</td>
+                      <td>Named aircraft classes referenced by handoff filters'
+                        <code>"actype_class"</code>: each key is a class name (1-8 alphanumeric characters) the value lists the aircraft types in the class.
+</td>
+                    </tr>
+                    <tr>
+                      <td>"automatic_scratchpad_assignment"</td>
+                      <td>Array of objects</td>
+                      <td><p>Sets a flight's scratchpads when its flight plan is created, based on its
+                          entry and exit fixes, altitude, and flight type. Only scratchpads that are
+                          still empty are filled, so an explicitly-entered scratchpad is never
+                          overwritten; note that the facility's
+                          <a href="#fe-config-stars">"scratchpads"</a> map is applied first, so an
+                          entry there for a gate will take precedence over these rows.</p>
+                        <p>Rows are sorted most-specific-first and the first row whose criteria all
+                          match wins. Each row has the following members:</p>
+
+                      </td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields"><summary>"automatic_scratchpad_assignment" members</summary>
+                          <table class="table">
+                            <thead>
+                              <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>"config_plan"</td>
+                                <td>String</td>
+                                <td>The configuration plan that must be active, or <code>*</code> for
+                                  any.</td>
+                              </tr>
+                              <tr>
+                                <td>"entry_fix"</td>
+                                <td>String</td>
+                                <td>The flight's entry fix. <code>*</code> matches any fix including
+                                  none; an empty string matches only a flight with no entry fix. The
+                                  criterion is checked against the flight's derived fix (when fix-pair
+                                  reassignment substituted one) and then its actual fix.</td>
+                              </tr>
+                              <tr>
+                                <td>"exit_fix"</td>
+                                <td>String</td>
+                                <td>The flight's exit fix, with the same conventions as
+                                  <code>"entry_fix"</code>.</td>
+                              </tr>
+                              <tr>
+                                <td>"flight_type"</td>
+                                <td>String</td>
+                                <td>Exactly one of "A" (arrival), "P" (departure), or "E"
+                                  (overflight).</td>
+                              </tr>
+                              <tr>
+                                <td>"altitude"</td>
+                                <td>String</td>
+                                <td>An altitude in hundreds of feet ("000" to "999"), "VFR" to match
+                                  VFR flights, or <code>*</code> for any.</td>
+                              </tr>
+                              <tr>
+                                <td>"altitude_type"</td>
+                                <td>String</td>
+                                <td>How a numeric <code>"altitude"</code> is checked (required then,
+                                  and not allowed otherwise): "R" for a requested altitude exactly
+                                  equal, or "RA" for the requested (departure) or assigned
+                                  (arrival/overflight) altitude at or below it.</td>
+                              </tr>
+                              <tr>
+                                <td>"group_id"</td>
+                                <td>String</td>
+                                <td>(<i>Optional</i>) A letter A-Z grouping rows as in the real
+                                  system's scratchpad-group adaptation; not allowed with
+                                  <code>"altitude_type"</code> "R".</td>
+                              </tr>
+                              <tr>
+                                <td>"scratchpad1", "scratchpad2"</td>
+                                <td>String</td>
+                                <td>The value(s) to assign; at least one must be given. 1-3
+                                  characters&mdash;alphanumerics and <code>+ / . * ^</code>, where a
+                                  caret produces the delta symbol; special track-condition strings like
+                                  NAT or CST and bare three-digit values are rejected.</td>
                               </tr>
                             </tbody>
                           </table>
@@ -1502,13 +1869,13 @@
                               </td></tr>
                           </tbody></table>
 
-                          <h4>Clock Phase Timesharing</h4>
+                          <h3>Clock Phase Timesharing</h3>
                           <p>Several datablock fields cycle their content according to the clock phase sequence.
                             The default sequence <code>[1,2,1,3]</code> with intervals <code>[2,1,2,1]</code> produces
                             a 6-second cycle: phase 1 for 2s, phase 2 for 1s, phase 1 again for 2s, phase 3 for 1s.
                             Limited datablocks have no timesharing; all fields are static.</p>
 
-                          <h5>Full Datablock (FDB)</h5>
+                          <h4>Full Datablock (FDB)</h4>
                           <table class="table">
                             <thead><tr><th>Field</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th><th>Phase 4</th></tr></thead>
                             <tbody>
@@ -1542,7 +1909,7 @@
                             </tbody>
                           </table>
 
-                          <h5>Partial Datablock (PDB)</h5>
+                          <h4>Partial Datablock (PDB)</h4>
                           <table class="table">
                             <thead><tr><th>Field</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th><th>Phase 4</th></tr></thead>
                             <tbody>
@@ -1558,7 +1925,7 @@
                             </tbody>
                           </table>
 
-                          <h4>Datablock Configuration Fields</h4>
+                          <h3>Datablock Configuration Fields</h3>
                           <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
                               <tr>
                                 <td>"allow_long_scratchpad"</td>
@@ -1780,6 +2147,16 @@
                                   selected changes can be reverted. See the
                                   <a href="#fe-stars-fdam">FDAM section</a> below for the full list
                                   of fields.</td>
+                              </tr>
+                              <tr>
+                                <td>"handoff"</td>
+                                <td>Automatic handoff regions. When a locally-owned associated track
+                                  enters one of these volumes and matches its conditions, the adapted
+                                  handoff action is performed automatically: a handoff is initiated to
+                                  another position, control is transferred outright, or the track is
+                                  marked ineligible for automatic handoff. See the
+                                  <a href="#fe-stars-handoff">Automatic Handoffs section</a> below for
+                                  the full list of fields.</td>
                               </tr>
                               <tr>
                                 <td>"inhibit_ca"</td>
@@ -2031,6 +2408,260 @@
                                 </tr>
                             </tbody></table>
                           </details>
+                          <details class="json-fields" id="fe-stars-handoff"><summary>"handoff" members</summary>
+                            <p>Each entry in "handoff" is one row of the Automatic Handoffs table: a filter
+                              volume, a set of conditions, and the handoff action to perform. When a
+                              locally-owned associated track first enters the volume and matches every
+                              condition, that row's action runs.</p>
+                            <p>Rows are checked <b>in order and the first match wins</b>; later rows are not
+                              considered. Because of this, put narrow rules first and broad ones (especially
+                              those using "slave_tcps") last.</p>
+                            <p>Every condition below is optional and an omitted condition matches any flight,
+                              so a row with no conditions applies to every eligible track in the volume.
+                              The volume itself is described with the same fields as the other filters
+                              ("type", "vertices" or "center"/"radius", "floor", "ceiling").</p>
+                            <p>A track is only eligible while it is owned by a local position and is not
+                              already in handoff status. A track may also be individually
+                              marked ineligible, either by the "D" action below or by the controller using STARS commands.</p>
+                            <table class="table"><thead><tr><th>Element</th><th>Type</th><th>Description</th></tr></thead><tbody>
+                                <tr>
+                                  <td>"handoff_action"</td>
+                                  <td>String</td>
+                                  <td>What to do when a flight matches: "I" initiates a handoff to "ho_receiver",
+                                    exactly as if a controller had initiated it; "T" transfers control to
+                                    "ho_receiver" immediately with no handoff to accept; "D" marks the track
+                                    ineligible for automatic handoff, which is useful to carve an exception
+                                    out of a larger automatic-handoff area. Defaults to "I".</td>
+                                </tr>
+                                <tr>
+                                  <td>"ho_receiver"</td>
+                                  <td>String</td>
+                                  <td>The local position that receives the handoff or transfer. Required for
+                                    "I" and "T", and must be omitted for "D". Handing off to another facility
+                                    is not supported.</td>
+                                </tr>
+                                <tr>
+                                  <td>"actype_class"</td>
+                                  <td>String</td>
+                                  <td>Aircraft type class: "JET", "PROP", or "TURBO", or an exact aircraft
+                                    type such as "B738".</td>
+                                </tr>
+                                <tr>
+                                  <td>"config_plan"</td>
+                                  <td>String</td>
+                                  <td>The configuration plan that must be active for the row to apply.</td>
+                                </tr>
+                                <tr>
+                                  <td>"slave_tcps"</td>
+                                  <td>Boolean</td>
+                                  <td>If true, a position named in "owning_tcp" (below) also matches when it
+                                    is consolidated to the track's owner, rather than only when it is the
+                                    owner itself. Requires "owning_tcp".</td>
+                                </tr>
+                                <tr>
+                                  <td>"terminal_sector"</td>
+                                  <td>String</td>
+                                  <td>A single letter A-Z other than "T", naming the terminal sector at which
+                                    "config_plan" must be active; may only be given together with
+                                    "config_plan". <i>Currently validated but not enforced</i>, as vice does
+                                    not model per-terminal-sector configuration plans.</td>
+                                </tr>
+                                <tr>
+                                  <td colspan="3">The remaining conditions are the qualifiers shared with the
+                                    quicklook and FDAM filters: "owning_tcp" (a comma-separated list of the
+                                    positions that may own the track before the handoff), "flight_type",
+                                    "flight_rules", "entry_fix", "exit_fix", "scratchpad" (where "^" matches a
+                                    delta), "secondary_scratchpad", "requested_altitude" (a range in hundreds
+                                    of feet, e.g. "0-180"), "ssr_codes", and "cwt_category". Note that "tcps"
+                                    is not accepted here; use "owning_tcp" instead.</td>
+                                </tr>
+                            </tbody></table>
+                            <p>Some parts of the real system are not modeled: a row cannot be conditioned on
+                              the flight's heading, and the "A" (automatic accept) action and handoffs to an
+                              external facility are not supported. Since every automatic handoff is therefore
+                              intrafacility, inhibiting <i>inter</i>facility automatic handoffs for a position
+                              has no effect.</p>
+                            <p>For example, to transfer every locally-owned track in a box to position 1T,
+                              while leaving props alone:</p>
+                            <pre>"handoff": [
+    {
+        "id": "PROPS_EXEMPT",
+        "description": "Props keep their current owner",
+        "type": "polygon",
+        "ceiling": 60000,
+        "vertices": "...",
+        "actype_class": "PROP",
+        "handoff_action": "D"
+    },
+    {
+        "id": "BOX_TO_1T",
+        "description": "Everything else transfers to 1T",
+        "type": "polygon",
+        "ceiling": 60000,
+        "vertices": "...",
+        "handoff_action": "T",
+        "ho_receiver": "1T"
+    }
+]</pre>
+                          </details>
+                        </details>
+                    </td></tr>
+                    <tr>
+                      <td>"fix_pair_configuration"</td>
+                      <td>Object</td>
+                      <td><p>Decides which position initially owns a flight, from the pair of fixes at
+                          which it enters and leaves the TRACON. See
+                          <a href="#fe-pseudo-eram">Coordination Fixes and Fix Pairs</a> for the whole
+                          picture. It has the following members:</p>
+
+                      </td>
+                    </tr>
+                    <tr><td colspan="3">
+                        <details class="json-fields"><summary>"fix_pair_configuration" members</summary>
+                          <table class="table">
+                            <thead>
+                              <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>"plans"</td>
+                                <td>Map of strings to strings</td>
+                                <td>Maps a configuration plan id&mdash;the same ids used by
+                                  <a href="#fe-config-common">"configurations"</a>&mdash;to a
+                                  description. Which plan is active selects which entry of each
+                                  assignment row's <code>"tcp"</code> map is used.</td>
+                              </tr>
+                              <tr>
+                                <td>"fix_pair_reassignment"</td>
+                                <td>Array of objects</td>
+                                <td>Rules that derive an alternate fix pair before the assignment
+                                  lookup&mdash;how a coarse partition from the center's zone rules
+                                  becomes a real gate or meter fix. Rules are tried in order and the
+                                  first whose criteria all match wins. The flight plan keeps its actual
+                                  fixes; the derived pair is carried alongside and used for the owner
+                                  lookup, automatic scratchpad assignment, and handoff-filter
+                                  qualification, and its abbreviation is preferred in the datablock.
+                                  Each rule has the following members:</td>
+                              </tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"fix_pair_reassignment" members</summary>
+                                    <table class="table">
+                                      <thead>
+                                        <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"fp_fix_pair"</td>
+                                          <td>Array of two strings</td>
+                                          <td>The [entry, exit] pair to match; <code>*</code> matches
+                                            any fix.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"alt_bands"</td>
+                                          <td>Array of two numbers or string</td>
+                                          <td>(<i>Optional</i>) An inclusive altitude band in hundreds
+                                            of feet, or "VFR" or "OTP" to match those flights. The
+                                            requested altitude is checked for departures, the assigned
+                                            altitude otherwise.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"ac_type"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) A class from
+                                            <a href="#fe-config-stars">"tcp_assignment_classes"</a>
+                                            the aircraft type must belong to.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"acid"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) A callsign pattern where
+                                            <code>d</code> matches a digit, <code>a</code> a letter,
+                                            and <code>*</code> any character, with trailing
+                                            <code>*</code>s also matching nothing (so "Nd*****"
+                                            matches any N-number).</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"type_of_flight"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) "A" (arrival), "P" (departure), or "E"
+                                            (overflight); <code>*</code> or absent matches any.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"active_runway"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) A runway that must be active in the
+                                            scenario, given as "AIRPORT/RUNWAY" (e.g. "KJFK/22L"). The
+                                            airport must be one of the scenario group's "airports".</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"departure_runway"</td>
+                                          <td>String</td>
+                                          <td>(<i>Optional</i>) The flight's own departure runway,
+                                            matched exactly against the runway id as given in the
+                                            scenario (which may carry a suffix, e.g. "15R.Props");
+                                            arrivals and overflights never match. Unlike
+                                            "active_runway", this distinguishes simultaneous
+                                            departures off different runways when both are active.
+                                            This is a vice extension, not a DMS criterion.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"derived_fix_pair"</td>
+                                          <td>Array of two strings</td>
+                                          <td>The derived [entry, exit] pair; <code>*</code> keeps the
+                                            flight's original fix for that end.</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                              <tr>
+                                <td>"fix_pair_assignments"</td>
+                                <td>Object</td>
+                                <td>Separate "arrival", "departure", and "overflight" arrays of
+                                  assignment rows, each processed top to bottom with the first matching
+                                  row winning. Each row has the following members:</td>
+                              </tr>
+                              <tr><td colspan="3">
+                                  <details class="json-fields"><summary>"fix_pair_assignments" members</summary>
+                                    <table class="table">
+                                      <thead>
+                                        <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>"fix_pair"</td>
+                                          <td>Array of two strings</td>
+                                          <td>The [entry, exit] pair to match; <code>*</code> matches
+                                            any fix.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"tcp"</td>
+                                          <td>Map of strings to strings</td>
+                                          <td>Maps each configuration plan id to the position that owns
+                                            matching flights when that plan is active; <code>*</code>
+                                            may be used as a catch-all plan id. A key may also list
+                                            several plans, comma-separated&mdash;<code>"tcp": {
+                                            "FOO,BAR": "1A", "BAZ": "1B" }</code>&mdash;as shorthand
+                                            for repeating the same assignment; each plan may appear in
+                                            only one key. The adaptation may name
+                                            positions beyond those a given scenario loads: if the
+                                            winning row assigns a position the scenario doesn't have,
+                                            no fix-pair assignment is made and the flight keeps its
+                                            default ownership.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"rnav"</td>
+                                          <td>Boolean</td>
+                                          <td>(<i>Optional</i>) Marks the fix pair as an RNAV route:
+                                            matching flights display the RNAV symbol in their data
+                                            blocks.</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </details>
+                              </td></tr>
+                            </tbody>
+                          </table>
                         </details>
                     </td></tr>
                     <tr>
@@ -2096,8 +2727,10 @@
                                         <tr>
                                           <td>"airports"</td>
                                           <td>Array of strings</td>
-                                          <td>The airports managed by the list. Any airport with "hold_for_release"
-                                            set to "true" must be in exactly one coordination list.</td>
+                                          <td>The airports managed by the list. Listing an airport here makes it
+                                            hold for release, whether or not it sets "hold_for_release" itself.
+                                            An airport may appear in more than one coordination list only when entries
+                                            are split by assigned departure TCP using "owner_tcp" (below).</td>
                                         </tr>
                                         <tr>
                                           <td>"format"</td>
@@ -2116,6 +2749,22 @@
                                           <td>"name"</td>
                                           <td>String</td>
                                           <td>The list name, shown at the top of the list when it is visible in the STARS window.</td>
+                                        </tr>
+                                        <tr>
+                                          <td>"owner_tcp"</td>
+                                          <td>String</td>
+                                          <td><p>(<i>Optional</i>) Restricts the list to departures whose assigned departure
+                                              controller TCP matches the given TCP, which must be present in
+                                              <a href="#fe-facility-config">"control_positions"</a>. This does not assign or
+                                              change the departure controller; it only determines which coordination list
+                                              displays the departure.</p>
+                                            <p>Each airport may have at most one list per assigned departure TCP, plus at most one
+                                              list without "owner_tcp". When no owner-scoped list applies to an airport, a
+                                              list without "owner_tcp" shows all departures from that airport. When
+                                              owner-scoped lists also apply, the list without "owner_tcp" shows only the
+                                              <i>remainder</i> &mdash; departures whose assigned departure TCP has no list of
+                                              its own &mdash; so a departure always appears in exactly one list.</p>
+                                          </td>
                                         </tr>
                                         <tr>
                                           <td>"yellow_entries"</td>
@@ -2139,10 +2788,17 @@
                                           <td>"altimeters"</td>
                                           <td>Array of strings</td>
                                           <td>If specified, lists the airports whose altimeters are displayed in the SSA list; no more than 6 airports can be given.
-                                            The first altimeter value is also shown at the top of the list.
                                             If "altimeters" is not specified and if there are more than 6 airports in a scenario, only altimeters for the
-                                            first 6 in alphabetical order will be shown and the first one will be shown at the top of the list.
+                                            first 6 will be shown, ordered by "system_altimeter" first, then tower list index, then alphabetically.
                                           </td>
+                                        </tr>
+                                        <tr>
+                                          <td>"system_altimeter"</td>
+                                          <td>String</td>
+                                          <td>The station whose setting the SSA's ALTSTG field shows, and the airport that
+                                            heads the altimeter list when "altimeters" is not given. It must be one of the
+                                            scenario group's "airports". An area may override it with its own
+                                            <code>"areas"."&lt;area&gt;"."system_altimeter"</code>.</td>
                                         </tr>
                                         <tr>
                                           <td>"flash_on_atis_update"</td>
@@ -2323,7 +2979,7 @@
                               <tr>
                                 <td>"color"</td>
                                 <td>Number</td>
-                                <td>(<i>Optional</i>) The color index for the restriction area display.</td>
+                                <td>(<i>Optional</i>) The color index, 1 to 8, for the restriction area display.</td>
                               </tr>
                               <tr>
                                 <td>"hide_id"</td>
@@ -2338,7 +2994,8 @@
                               <tr>
                                 <td>"text"</td>
                                 <td>Array of two strings</td>
-                                <td>(<i>Optional</i>) Each string defines a line of text displayed with the restriction area.</td>
+                                <td>(<i>Optional</i>) Each string defines a line of text displayed with the restriction area,
+                                  at most 32 characters long.</td>
                               </tr>
                               <tr>
                                 <td>"text_position"</td>
@@ -2365,7 +3022,10 @@
                     <tr>
                       <td>"scratchpads"</td>
                       <td>Map of strings to strings</td>
-                      <td>Each member specifies a scratchpad entry that is assigned when a departing aircraft has a given exit fix.  Example: <code>"MERIT": "MER"</code></td>
+                      <td>Each member specifies a scratchpad entry that is assigned when a departing aircraft has a given exit fix.
+                        Example: <code>"MERIT": "MER"</code>. A key may include the exit's dot-separated suffix
+                        (e.g. <code>"MERIT.N"</code>), which takes precedence over an entry for the fix name alone; this is how
+                        two SIDs that share an exit fix are given different scratchpads.</td>
                     </tr>
                     <tr>
                       <td>"significant_points"</td>
@@ -2402,8 +3062,7 @@
                                 <td>"short_name"</td>
                                 <td>String</td>
                                 <td>A three-letter abbreviation for the fix that is used when it is shown as the scratchpad in datablocks.
-                                  If not specified, then if the fix's name has four letters and starts with a "K" (i.e., it's an airport),
-                                  the last three letters are used. Otherwise the first three letters of the fix's name are used.
+                                  If not specified, the first three characters of the fix's name are used.
                                   No two fixes may have the same "short_name".
                                   (May only be specified for fixes with more than three characters in their name.)</td>
                               </tr>
@@ -2463,6 +3122,13 @@
                         </details>
                     </td></tr>
                     <tr>
+                      <td>"tcp_assignment_classes"</td>
+                      <td>Map of strings to arrays of strings</td>
+                      <td>Named aircraft classes referenced by
+                        <a href="#fe-config-stars">"fix_pair_configuration"</a> reassignment rules'
+                        <code>"ac_type"</code>: each key is a class name (1-8 alphanumeric characters) and the value lists the aircraft types in the class.</td>
+                    </tr>
+                    <tr>
                       <td>"thick_20nm_range_ring"</td>
                       <td>Boolean</td>
                       <td>If "true", the range ring at 20 nm radius is drawn with a 2 pixel thick line.</td>
@@ -2500,6 +3166,14 @@
                       <td>"use_legacy_font"</td>
                       <td>Boolean</td>
                       <td>If "true", causes the legacy STARS font to be used in the STARS display.</td>
+                    </tr>
+                    <tr>
+                      <td>"weather_station"</td>
+                      <td>String</td>
+                      <td>(<i>Optional</i>) The METAR station whose weather stands in when <i>vice</i> is
+                        unable to reach the <i>vice</i> server to download the atmospheric wind model and
+                        weather radar. Defaults to
+                        <a href="#fe-config-stars">"lists"."ssa"."system_altimeter"</a>.</td>
                     </tr>
                     <tr>
                       <td>"stars_macros"</td>
@@ -2577,8 +3251,55 @@
                   </tbody>
                 </table>
               </section><!--//section-->
+              <section class="docs-section" id="fe-pseudo-eram">
+                <h2 class="section-heading">Coordination Fixes and Fix Pairs</h2>
+                <p>In the real NAS a TRACON's STARS does not work out a flight's entry and exit fixes
+                  itself. The enroute host computer does: it builds the flight's trajectory, decides
+                  where the flight will cross the terminal boundary, picks the <i>coordination fix</i>,
+                  and passes STARS a flight plan that already carries those fixes. STARS then uses them
+                  to decide which position owns the flight, what its scratchpad should be, and which
+                  lists it belongs to.</p>
+                <p><i>vice</i> has no enroute host, so it emulates this at the moment an aircraft is
+                  created. The adaptation is split across two configuration files to match where the
+                  data really lives:</p>
+                <ul>
+                  <li>On the <b>center</b> config:
+                    <a href="#fe-config-eram">"arts_coordination"</a> and
+                    <a href="#fe-config-eram">"restrictions"</a>. The coordination rules are keyed by
+                    each TRACON's computer id, so one center serves all of its TRACONs.</li>
+                  <li>On the <b>TRACON</b> config:
+                    <a href="#fe-config-stars">"fix_pair_configuration"</a>,
+                    <a href="#fe-config-stars">"automatic_scratchpad_assignment"</a>, and the
+                    <a href="#fe-config-stars">"airports"</a> used as fix-pair endpoints.</li>
+                </ul>
+                <p>A TRACON scenario finds its center automatically and loads the coordination adapted
+                  for its computer id, so nothing needs to be repeated in the TRACON config. If the
+                  center has no entry for that computer id, none of this runs and initial ownership
+                  falls back to the scenario's inbound flow and departure assignments as before.</p>
+                <p>When an aircraft is created, the following happens in order:</p>
+                <ol>
+                  <li>A trajectory is built from the filed route and a vertical profile, capped by any
+                    matching "restrictions".</li>
+                  <li>The coordination fix is chosen from "arts_coordination": route-based rules first,
+                    then the zone-based areas as a catch-all. It becomes the entry fix for an arrival or
+                    overflight and the exit fix for a departure.</li>
+                  <li>"fix_pair_reassignment" may derive an alternate pair, typically turning a coarse
+                    directional partition into a real gate or meter fix; the flight plan keeps its
+                    actual fixes and carries the derived ones alongside.</li>
+                  <li>"fix_pair_assignments" maps the pair to the owning position for the active
+                    configuration plan.</li>
+                  <li>"automatic_scratchpad_assignment" fills in any scratchpad that is still empty.</li>
+                </ol>
+                <p>A flight that departs and lands within the same TRACON is handled separately: rather
+                  than being given a boundary fix it takes its destination airport as its exit fix, and
+                  is reclassified as an arrival while keeping the departure position as its initial
+                  owner.</p>
+                <p>Because this decides initial ownership, it takes precedence over the inbound flow and
+                  departure assignments in the scenario's
+                  <a href="#fe-config-common">configuration</a> wherever a fix pair matches.</p>
+              </section><!--//section-->
               <section class="docs-section" id="fe-video-maps">
-                <h3 class="section-heading">Video Maps</h3>
+                <h2 class="section-heading">Video Maps</h2>
                 <p>Video maps are specified separately from the rest of the configuration since they require fairly large files and are not generally edited by hand.
                   They are stored in a single <code>.mappack</code> file per facility (named <code>&lt;facility&gt;.mappack</code>).
                   Two utilities are available to generate maps for <i>vice</i> from other formats:
@@ -2597,7 +3318,7 @@
                     in whichever directory you put them. (They are signed and notarized, but you
                     may need to right-click → Open on first run.)</li>
                 </ul>
-                <h4 id="fe-video-maps-crc2vice">crc2vice</h4>
+                <h3 id="fe-video-maps-crc2vice">crc2vice</h3>
                 <p><code>crc2vice</code> extracts both STARS and ERAM video maps from an installed CRC ARTCC
                   and converts them to <i>vice</i>'s internal format.</p>
                 <p>Usage:</p>
@@ -2618,7 +3339,7 @@
                     in your <code>%AppData%\Local\Vice</code> directory, or pass the path to a file via the
                     <code>-videomap</code> command-line option to <i>vice</i>.</li>
                 </ul>
-                <h4 id="fe-video-maps-dat2vice">dat2vice</h4>
+                <h3 id="fe-video-maps-dat2vice">dat2vice</h3>
                 <p><code>dat2vice</code>  extracts video maps from the FAA DAT video map file format and converts them to <i>vice</i>'s internal format.</p>
                 <p><code>dat2vice</code> takes a <i>manifest</i> file that specifies the filenames of the DAT
                   files to convert as well as additional information about each one:</p>
@@ -2723,7 +3444,7 @@
               </section><!--//section-->
             </section><!--//section-->
           </article>
-          <article class="docs-article" id="section-scenario-groups">
+          <article class="docs-article" id="section-scenario-groups" data-nav-icon="fas fa-plane-departure">
             <header class="docs-header">
               <h1 class="docs-heading">Scenario Groups</h1>
             </header>
@@ -2818,12 +3539,6 @@
                     <td>The name for the scenario group.  This name cannot be the same as the name for any of the other scenario groups.</td>
                   </tr>
                   <tr>
-                    <td>"primary_airport"</td>
-                    <td>String</td>
-                    <td>The main airport for the scenario.
-                      This is used to determine which airport's altimeter and winds to include at the top of the SSA list in the STARS radar scope.</td>
-                  </tr>
-                  <tr>
                     <td>"reporting_points"</td>
                     <td>Array of strings</td>
                     <td>Each entry specifies a fix that aircraft may use at
@@ -2874,7 +3589,7 @@
               </table>
             </section><!--//section-->
             <section class="docs-section" id="fe-airports">
-              <h3 class="section-heading">Airports</h3>
+              <h2 class="section-heading">Airports</h2>
               <p>The airports in a scenario group are specified via the "airports" member of the scenario group.
                 Each airports is a separate member, named according to the airport's ICAO code (e.g., "KJFK").
                 The airport object then has the following member variables:
@@ -3245,9 +3960,9 @@
                   <tr>
                     <td>"departures"</td>
                     <td>Array of objects</td>
-                    <td>Each object in the array defines a departure to a destination, including one or more airlines that fly that departure,
+                    <td>(<i>Optional</i>) Each object in the array defines a departure to a destination, including one or more airlines that fly that departure,
                       the type of aircraft flown, and information about the aircraft's path.  See <a href="#fe-departures">below for details
-                        of the departure object</a>.</td>
+                        of the departure object</a>. If unspecified, real-world traffic is always used.</td>
                   </tr>
                   <tr>
                     <td>"exit_categories"</td>
@@ -3260,7 +3975,7 @@
                     <td>"hold_for_release"</td>
                     <td>Boolean</td>
                     <td>(<i>Optional</i>) If true, departures from the airport must be released by a controller.
-                      If the airport is listed in "coordination_lists" in <a href="#fe-config-stars">"facility_adaptations"</a>,
+                      If the airport is listed in "lists.coordination" in <a href="#fe-config-stars">"facility_adaptations"</a>,
                       then the release will be managed using STARS coordination lists; otherwise it will appear
                       in the <i>Launch Control</i> window.
                     </td>
@@ -3279,6 +3994,75 @@
                       airport name sorted alphabetically.</td>
                   </tr>
                   <tr>
+                    <td>"traffic_routes"</td>
+                    <td>Object</td>
+                    <td>(<i>Optional</i>) Gives routes to use for departures from and or arrivals to this
+                      airport. See
+                      <a href="#fe-route-matching">Route Matching</a> for details about how routes
+                      are matched to flights.</td>
+                  </tr>
+                  <tr><td colspan="3">
+                      <details class="json-fields"><summary>"traffic_routes" members</summary>
+                        <table class="table">
+                          <thead>
+                            <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                          </thead>
+                          <tbody>
+                              <tr>
+                                <td>"departures"</td>
+                                <td>Object</td>
+                                <td>Map from destination airport ICAO codes to route specifications.</td>
+                              </tr>
+                              <tr>
+                                <td>"arrivals"</td>
+                                <td>Object</td>
+                                <td>Map from origination airport ICAO codes to route specifications.</td>
+                              </tr>
+                          </tbody>
+                        </table>
+                        <p>Route specifications may be a single string or an array of route objects.
+                          If an array is given, each item is considered in turn, with the first matching one used.
+                        Each route object has the following members:</p>
+                        <table class="table">
+                          <thead>
+                            <tr><th>Element</th><th>Type</th><th>Description</th></tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>"aircraft"</td>
+                              <td>String or array of strings</td>
+                              <td>If the route is limited to a certain set of aircraft types, they may
+                                be specified as one or more of "prop", "turboprop", "jet", "nonheavy", or "heavy".
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>"route"</td>
+                              <td>String</td>
+                              <td>String giving the aircraft's route.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <p>Here is an example showing some of these features: 
+  <pre>
+"KEWR": {
+  ...
+  "traffic_routes": {
+    "departures": {
+      "KFLL": [
+        { "route": "ELVAE NECCK WHITE Q409 CRPLR KOOKI Q161 CHIEZ Y291 MAJIK CUUDA3",
+          "aircraft": "jet" },
+        { "route": "DIALO V276 SIE V1 SAWED", "aircraft": [ "prop", "turboprop" ] }
+      ],
+      "KBOS": "MERIT ROBUC3"
+    },
+    "arrivals": {
+      "KORD": "PMM ELX J70 LVZ LENDY6"
+    }
+  }
+}</pre>
+                      </details>
+                  </tr>
+                  <tr>
                     <td>"vfr"</td>
                     <td>Object</td>
                     <td>Allows specifying VFR departures from the airport. See <a href="#fe-vfr">VFR Aircraft</a> for details about
@@ -3288,7 +4072,7 @@
               </table>
             </section><!--//section-->
             <section class="docs-section" id="fe-approaches">
-              <h3 class="section-heading">Approaches</h3>
+              <h2 class="section-heading">Approaches</h2>
               <p>The member names in the airport "approaches" object give the abbreviated name of each approach,
                 as used in <i>vice</i>'s <a href="#atc-commands">ATC commands</a>.</p>
               <p>Approaches may be specified using data automatically loaded from the
@@ -3370,7 +4154,7 @@
               </table>
             </section>
             <section class="docs-section" id="fe-departures">
-              <h3 class="section-heading">Departures</h3>
+              <h2 class="section-heading">Departures</h2>
               <p>There are two pieces for specifying departures: their initial route leaving the airport, which depends on the active departure runway,
                 and their subsequent route out of the TRACON, which does not. These two parts are specified separately.</p>
               <p>The "departure_routes" object in the airport definition gives the initial routing for departures,
@@ -3402,6 +4186,35 @@
                 their "exit" specifier. 
               </p>
               <p>
+                An exit may also be given an array of routes rather than a single one, where each route's
+                "aircraft" says which aircraft fly it. Departures take the first route in the array that
+                their aircraft type is allowed on:
+              </p>
+              <pre>
+"departure_routes": {
+  "4": {
+    "NEWEL,ELIOT,ZIMMZ,PARKE,LANNA,BIGGY,SBJ,WHITE": [
+      {
+        "cleared_altitude": 2000,
+        "sid": "LGA7",
+        "aircraft": ["prop", "turboprop"],
+        "waypoints": "KLGA-22/h360"
+      },
+      {
+        "cleared_altitude": 4000,
+        "sid": "LGA7",
+        "waypoints": "KLGA-22/h360"
+      }
+    ],
+    ...
+              </pre>
+              <p>
+                Because the routes are tried in order, a route with no "aircraft" takes everything the ones
+                before it don't; it's an error for a route to be unreachable because earlier ones already
+                cover all of the aircraft it allows. The routes need not cover every aircraft type, though:
+                a departure with no route to its exit isn't launched.
+              </p>
+              <p>
                 The departure route specification includes the following members:
               </p>
               <table class="table">
@@ -3414,6 +4227,13 @@
                 </thead>
                 <tbody>
 
+                  <tr>
+                    <td>"aircraft"</td>
+                    <td>String or array of strings</td>
+                    <td><i>(Optional)</i> The aircraft that fly the route, given as one or more of
+                      "prop", "turboprop", "jet", "heavy", and "nonheavy", where "jet" covers both heavy
+                      and nonheavy jets. If it isn't given, all aircraft fly the route.</td>
+                  </tr>
                   <tr>
                     <td>"assigned_altitude"</td>
                     <td>Number</td>
@@ -3452,7 +4272,7 @@
                     <td>"hold_for_release"</td>
                     <td>Boolean</td>
                     <td>(<i>Optional</i>) If true, departures on this route must be released by a controller.
-                      If the airport is listed in "coordination_lists" in <a href="#fe-config-stars">"facility_adaptations"</a>,
+                      If the airport is listed in "lists.coordination" in <a href="#fe-config-stars">"facility_adaptations"</a>,
                       then the release will be managed using STARS coordination lists; otherwise it will appear
                       in the <i>Launch Control</i> window.
                     </td>
@@ -3510,7 +4330,7 @@
                   <tr>
                     <td>"airlines"</td>
                     <td>Array of objects</td>
-                    <td>Each object specifies an airline and the types of aircraft it flies on the route. See <a href="#fe-airlines-aircraft">Airlines
+                    <td>(<i>Optional</i>) Each object specifies an airline and the types of aircraft it flies on the route. See <a href="#fe-airlines-aircraft">Airlines
                         and Aircraft</a> for the form of the airline objects.</td>
                   </tr>
                   <tr>
@@ -3521,8 +4341,8 @@
                   <tr>
                     <td>"destination"</td>
                     <td>String</td>
-                    <td>The ICAO airport code for the destination. This is only used in flight strips and for the aircraft's datablock on the
-                      radar scope; it does not affect its routing.</td>
+                    <td>The ICAO airport code for the destination. This is only used in flight strips and for the
+                      aircraft's datablock on the radar scope and does not affect routing.</td>
                   </tr>
                   <tr>
                     <td>"exit"</td>
@@ -3572,7 +4392,7 @@
               </table>
             </section>
             <section class="docs-section" id="fe-arrivals">
-              <h3 class="section-heading">Arrivals and Overflights</h3>
+              <h2 class="section-heading">Arrivals and Overflights</h2>
               <p>Arrivals and overflights are specified via the "inbound_flows" variable,
                 which allows specifying the ways that aircraft from adjacent facilities
                 enter the TRACON.  "inbound_flows" has two members, "arrivals" and
@@ -3587,7 +4407,7 @@
                 multiple STARs have the same initial route, they should be
                 together as well.
               </p>
-              <h4 id="fe-arrivals-section">Arrivals</h4>
+              <h3 id="fe-arrivals-section">Arrivals</h3>
               <p>Each object stored in the "arrivals" array corresponds to a STAR.
                 These objects have the following members:
               </p>
@@ -3601,11 +4421,66 @@
                 </thead>
                 <tbody>
                   <tr>
+                    <td>"aircraft"</td>
+                    <td>String or array of strings</td>
+                    <td>(<i>Optional</i>) Restricts which timetable and historical flights the arrival may carry, as
+                      one or more of "prop", "turboprop", "jet", "heavy", and "nonheavy"&mdash;the last two being heavy
+                      and non-heavy jets. If unspecified, all aircraft are admitted. See
+                      <a href="#fe-route-matching">Route Matching</a>.</td>
+                  </tr>
+                  <tr>
                     <td>"airlines"</td>
                     <td>Object</td>
-                    <td>Destination airports and airlines for the arrivals. These objects include both the members
+                    <td>(<i>Optional</i>) The airlines flying the arrival, used when <i>vice</i> generates the scenario's
+                      own traffic. Its members are the arrival airports and each gives an array of airlines together with the
+                      <i>departure</i> airport they come in from. These objects include both the members
                       "icao", "fleet", and "types" members of the airline object documented in <a href="#fe-airlines-aircraft">Airlines and Aircraft</a>
-                      as well as some additional fields. See the example below.</td>
+                      as well as some additional fields. See the example below. Every airport it names must be one of the
+                      arrival's "airports". This may be omitted in a scenario only meant to be flown using
+                      a timetable or historical data.</td>
+                  </tr>
+                  <tr><td colspan="3">
+                      <details class="json-fields"><summary>"airlines" example</summary>
+                        <p>Here is an (old) excerpt from the CAMRN4 arrival group at KJFK:</p>
+<pre>
+  "airports": ["KFRG", "KJFK"],
+  "airlines": {
+      "KFRG": [
+          {
+              "airport": "KDCA",
+              "icao": "EJA"
+          },
+          ...
+      ],
+      "KJFK": [
+          {
+              "airport": "MMMY",
+              "fleet": "long",
+              "icao": "AMX"
+          },
+          ...
+      ]
+  }
+</pre>
+              <p>CAMRN4 serves both KFRG and KJFK, though with different airlines
+                and different departure airports for the arrivals. The specified departure airports (here, KDCA and MMMY)
+                are only used so that flight strips and data blocks on the scope are realistic, but the specified airlines
+                are used to select the type of aircraft from their fleets.  As elsewhere, a value for "fleet" may be specified
+                to limit which types of aircraft may be chosen.
+              </p>
+                      </details>
+                  </td></tr>
+
+                  <tr>
+                    <td>"airports"</td>
+                    <td>Array of strings</td>
+                    <td>The <i>arrival</i> airports the arrival brings traffic to.
+                      Each of them must be an airport of the scenario group, and it is left to each scenario's "inbound_rates"
+                      to say which of them the arrival actually feeds.
+                      It may only be left out by an arrival that names a "star" the FAA CIFP charts for airports in the
+                      scenario group.
+                      (This information is necessary for <i>vice</i> to work out which arrival to use for historical
+                      flights.</td>
                   </tr>
                   <tr>
                     <td>"assigned_altitude"</td>
@@ -3679,8 +4554,10 @@
                   <tr>
                     <td>"route"</td>
                     <td>String</td>
-                    <td>(<i>Optional</i>) The aircraft's remaining route. (This is only used for displaying the
-                      aircraft's flight plan, e.g. in flight strips.)</td>
+                    <td>(<i>Optional</i>) The aircraft's remaining route. <b>This is only used for displaying the
+                        aircraft's flight plan, e.g. in flight strips; it does not affect navigation.</b>
+                      Without it the flight plan shows the "star",
+                      and an arrival that gives neither shows no route at all.</td>
                   </tr>
                   <tr>
                     <td>"scratchpad"</td>
@@ -3700,40 +4577,19 @@
                   <tr>
                     <td>"star"</td>
                     <td>(<i>Optional</i>) String</td>
-                    <td>Name of the STAR that the aircraft is flying.</td>
+                    <td>Name of the STAR corresponding to the arrival. If the FAA CIFP has it, the arrival's
+                      "waypoints" and "airports" are automatically set.</td>
+                  </tr>
+                  <tr>
+                    <td>"star_feeds"</td>
+                    <td>(<i>Optional</i>) Array of strings</td>
+                    <td>Names of the STARs whose real-world traffic the arrival takes. Use them for an
+                      arrival that starts downstream of the STARs its traffic flew&mdash;a final picking up
+                      aircraft another controller has already sequenced&mdash;where several STARs converge
+                      onto the same path. See <a href="#fe-route-matching">Route Matching</a>.</td>
                   </tr>
                 </tbody>
               </table>
-              <p>STARs are sometimes able to deliver aircraft to multiple airports. Therefore, the "airlines" member
-                is an object with airport names as members.  Each of the airports is associated with an array of objects
-                that specify departure airports, airlines, and (optionally) airline fleets.  Here is an excerpt from the
-                CAMRN4 arrival group at KJFK:
-              </p>
-              <pre>
-  "airlines": {
-      "KFRG": [
-          {
-              "airport": "KDCA",
-              "icao": "EJA"
-          },
-          ...
-      ],
-      "KJFK": [
-          {
-              "airport": "MMMY",
-              "fleet": "long",
-              "icao": "AMX"
-          },
-          ...
-      ]
-  }
-              </pre>
-              <p>We can see that CAMRN4 applies to both the KFRG and KJFK airports, though with different airlines
-                and different departure airports for the arrivals. The specified departure airports (here, KDCA and MMMY)
-                are only used so that flight strips and data blocks on the scope are realistic, but the specified airlines
-                are used to select the type of aircraft from their fleets.  As elsewhere, a value for "fleet" may be specified
-                to limit which types of aircraft may be chosen.
-              </p>
               <p>There are two ways to specify a STAR's waypoints: automatically using data loaded from the
                 <a href="https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cifp/">FAA CIFP</a> or
                 manually.  To use CIFP data, ensure that the STAR is available by running vice from the command-line
@@ -3773,6 +4629,9 @@
                   </tr>
                 </tbody>
               </table>
+              <p>The CIFP also says which airports each STAR serves: one that serves several of them is recorded once under
+                each, so <code>-routes</code> lists it for every one of them.  That is where an arrival that leaves out
+                "airports" takes them from, narrowed to the airports the scenario group has.</p>
               <p>Alternatively, the waypoints may be specified manually using one required and one optional member.
                 <table class="table">
                   <thead>
@@ -3823,7 +4682,7 @@
      }
   },
               </pre>
-              <h4 id="fe-overflights">Overflights</h4>
+              <h3 id="fe-overflights">Overflights</h3>
               <p>An overflight is an aircraft that enters the TRACON already airborne, and flies through it
                 without landing. Overflights are also specified in "inbound_flows" in the "overflights"
                 member, which is an array of overflight specifiers.  Each specifier may have the following
@@ -3951,8 +4810,82 @@
                 </tbody>
               </table>
             </section>
+
+            <section class="docs-section" id="fe-timetables">
+              <h2 class="section-heading">Timetables and Historical Traffic</h2>
+
+              <p>When a sim is created, one of three sources of IFR traffic may be selected,
+                though not all are available in all scenarios. They are:</p>
+              <ul>
+              <li><i>Scenario</i>: procedurally generated traffic based on traffic rates specified in
+                scenario files (Per-airport "departures" and per-arrival "airlines" specifiers.)</li>
+              <li><i>Timetable</i>: flights specified by a curated daily timetable for one of the
+                scenario's airports. (Per-airport CSV files.)</li>
+              <li><i>Historical</i>: the real-world flights at the facility on the selected date.
+                (This data is built-in to <i>vice</i>.)</li>
+              </ul>
+              <p>
+                Timetables are CSV files stored under
+                <code>resources/traffic/timetables/&lt;ICAO&gt;/</code>; each CSV file in an
+                airport's directory is automatically discovered and offered as a selectable
+                timetable for scenarios at that airport. The airport is inferred from the
+                directory name and the timetable's name from the file name.
+              </p>
+              <p>The entries in each line of a timetable CSV file are:
+                callsign, origin airport ICAO, destination airport ICAO, aircraft type,
+                departure/arrival time (in local time at the airport), and a true/false
+                value indicating whether it is a cargo carrier.</p>
+
+              <h3 class="section-heading" id="fe-route-matching">Route Matching</h3>
+
+              <p>The timetable and historical flight data that <i>vice</i> uses
+                record where each flight went but not how it got there: no
+                SIDs, STARs, airways, altitudes or waypoints. <i>vice</i> therefore works out a
+                realistic route for every published flight, the same way for both sources.
+                Routes come from three places, checked in the following priority order:</p>
+              <ul>
+                <li>A route the scenario itself gives for the exact city pair, in the
+                  airport's "traffic_routes" defined in the scenario.</li>
+                <li>A recently-filed route for the exact city pair from <i>vice</i>'s
+                  database of recent flights, stored in <code>resources/scraped-routes.json</code>.</li>
+                <li>real-world route for the exact city pair from the FAA's preferred
+                  route and coded departure route databases.</li>
+              </ul>
+              <p>Neither of the two route databases has good coverage of small airports,
+                so if a route is not found with an exact airport match, the route to/from a
+                nearby airport is used as a substitute. In the rare case that no suitable route
+                can be found, the aircraft's flight is not included in the sim.</p>
+
+              <p>For departures, the selected route should have one of the facility's exit
+                fixes. In turn, a suitable initial departure specified by "departure_routes"
+                is found for the aircraft based on the exit and the runways in use.</p>
+
+              <p>For arrivals, determining which arrival from "inbound_flows" for an aircraft to use
+                is a bit more complicated. The following rules are applied in this order:
+              </p>
+              <ul>
+                <li>If an aircraft's route ends in a STAR and the corresponding
+                STAR is active, then that STAR is used. (For convenience, <i>vice</i> ignores revision
+                numbers, so a route filing the CUUDA3 still matches a scenario with
+                the CUUDA4.)</li>
+                <li>If an aircraft's STAR is listed in an arrival's "star_feeds", that arrival
+                  is used. This is especially useful for "finals" scenarios where the aircraft
+                  spawn after having flown the STAR: each final feeder can be specified
+                  to carry the appropriate STAR or STARs' traffic.
+                <li>If an aircraft's route does not include a STAR (typical of GA and terminal-en-route
+                  traffic) uses an arrival whose spawn point lies closest the aircraft's origin,
+                  so long as its "aircraft" classes (if any) admit the aircraft type and its altitudes
+                  are within the aircraft's ceiling, so a Skyhawk is never handed an arrival
+                  that starts at FL240.</li>
+                <li>If there is no route at all for the aircraft (primarily obscure foreign airports),
+                  <i>vice</i> falls back to considering the great-circle route between the origin
+                  airport and the destination airport, selecting the arrival whose start point
+                  is closest to it.</li>
+              </ul>
+            </section><!--//section-->
+
             <section class="docs-section" id="fe-vfr">
-              <h3 class="section-heading">VFR Aircraft</h3>
+              <h2 class="section-heading">VFR Aircraft</h2>
               <p><i>vice</i> allows the specification of VFR "distractor" aircraft in scenarios;
                 this provides realistic extra clutter in the scope and sometimes aircraft that need to be
                 accounted for when vectoring IFR aircraft.
@@ -4097,7 +5030,7 @@
               </div><br>
             </section><!--//section-->
             <section class="docs-section" id="fe-airspace">
-              <h3 class="section-heading">Controller Airspace</h3>
+              <h2 class="section-heading">Controller Airspace</h2>
               <p>Airspace volumes representing areas that particular controllers are responsible for may optionally be specified
                 using the "airspace" object in the scenario group. If specified, <i>vice</i> will show an
                 alert when aircraft owned by a controller are outside of their airspace.
@@ -4197,7 +5130,7 @@
               </pre>
             </section><!--//section-->
             <section class="docs-section" id="fe-scenarios">
-              <h3 class="section-heading">Scenarios</h3>
+              <h2 class="section-heading">Scenarios</h2>
               <p>Scenarios pull together components from the definitions in scenario groups in order to present specific
                 control scenarios to the user.  The scenarios object's members are the names of the scenarios.
               </p>
@@ -4302,6 +5235,29 @@
                       and the default consolidation hierarchy for this scenario.
                       The selected configuration must have assignments for all of the scenario's active
                       arrivals and departures.
+                      A scenario may override just the consolidation hierarchy using
+                      "default_consolidation" below, while still taking its assignments from the
+                      referenced configuration.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>"default_consolidation"</td>
+                    <td>Object</td>
+                    <td><p><i>(Optional)</i> Overrides the consolidation hierarchy from the configuration
+                        referenced by <a href="#fe-scenarios">"configuration"</a>, for this scenario only.
+                        The format is identical to
+                        <a href="#fe-config-common">"default_consolidation"</a> in "configurations":
+                        each key is a parent TCP and its value is an array of TCPs consolidated into it.
+                        When this member is absent or empty, the referenced configuration's hierarchy is
+                        used unchanged.</p>
+                      <p>An overriding hierarchy is validated exactly like a configuration's: every
+                        position must appear in
+                        <a href="#fe-facility-config">"control_positions"</a>, no position may be a child
+                        of more than one parent, the hierarchy may not contain a cycle, and all positions
+                        must consolidate into a single root. As with the configuration's hierarchy,
+                        control positions that are given airspace by the scenario's
+                        <a href="#fe-scenarios">"airspace"</a> but are absent from the hierarchy are
+                        automatically added under the root.</p>
                     </td>
                   </tr>
                   <tr>
@@ -4440,7 +5396,7 @@
             </section><!--//section-->
 
             <section class="docs-section" id="fe-briefings">
-              <h3 class="section-heading">Briefings</h3>
+              <h2 class="section-heading">Briefings</h2>
               <p>A <i>scenario brief</i> is a Markdown document that describes a
                 facility's procedures, airspace, and conventions. Briefs are
                 shown to the controller in the scenario info window, below the
@@ -4467,7 +5423,7 @@
                 reloads it from disk, so iteration on a brief is fast: edit the Markdown,
                 switch back to <i>vice</i>, and reload.</p>
 
-              <h4>Supported Markdown</h4>
+              <h3>Supported Markdown</h3>
               <p>Here are some of the main differences from standard Markdown:
               <ul>
                 <li>Headings at levels 1 and 2 (<code>#</code> and <code>##</code>)
@@ -4501,7 +5457,7 @@
                   this is also discussed below.</li>
               </ul>
 
-              <h4>Configuration Selectors</h4>
+              <h3>Configuration Selectors</h3>
               <p>A fenced code block with the info string
                 <code>configurations</code> creates a radio button group that allows the
                 user to select among various configurations or scenario options.
@@ -4534,7 +5490,7 @@
                 The user's selection persists as they navigate through the
                 brief and as conditional content is shown and hidden.</p>
 
-              <h4>Conditional Blocks</h4>
+              <h3>Conditional Blocks</h3>
               <p>Portions of a brief can be shown or hidden based on runtime
                 context using <code>::: if</code> and <code>::: endif</code>
                 directives. When the condition does not match, every line between the opening
@@ -4579,7 +5535,7 @@
 [...]
 ::: endif tcp:1*,tcp:2*</code></pre>
 
-              <h4>Annotated Video Maps</h4>
+              <h3>Annotated Video Maps</h3>
               <p>A fenced code block with the info string <code>videomap</code>
                 embeds an inline rendering of one or more video maps,
                 optionally overlaid with lines, polygons, fixes, points,
@@ -4738,6 +5694,9 @@ label: Control for turns up to 60 right
     <script src="assets/js/highlight-custom.js"></script>
     <script src="assets/plugins/simplelightbox/simple-lightbox.min.js"></script>
     <script src="assets/plugins/gumshoe/gumshoe.polyfills.min.js"></script>
+    <!-- Builds the sidebar from the page structure; must precede docs.js,
+         which reads the sidebar links and starts Gumshoe as it loads. -->
+    <script src="assets/js/sidebar.js"></script>
     <script src="assets/js/docs.js"></script>
     <script>
       document.querySelectorAll('.json-controls .expand-all').forEach(function(btn) {
