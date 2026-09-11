@@ -107,6 +107,40 @@
                     <h2 class="mb-5">Papers</h2>
                     <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
                         <div class="flex-grow-1">
+                            <h3 class="mb-0">Z++: Temporal, Non-Uniform, and 3D Z Sampling</h3>
+                            <div class="authors">Abdalla G. M. Ahmed, Matt Pharr, and Hui Huang</div>
+                            <div>ACM Transactions on Graphics (Proceedings of SIGGRAPH Asia)</div>
+                            <div class="mb-3">
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/z++.pdf">[Paper]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/z++-supplemental.pdf">[Supplemental]</a>
+                                <a href="https://pub-3d16d67d2c68402fa2fb05197bac91f9.r2.dev/z++.mp4">[Video]</a>
+                                <a href="https://doi.org/10.1145/3842533">[DOI]</a>
+                            </div>
+                            <span class="d-lg-none">
+                                <div class="text-center"><img class="img-fluid img-paper" src="assets/img/z++.png" alt="" width="344" height="222" loading="lazy" /></div>
+                            </span>
+                            <div class="abstract mb-2">
+                                <b>Abstract:</b>
+                                Z sampling redistributes Monte Carlo error in screen space by assigning consecutive low-discrepancy sub-sequences to Z-ordered pixels, using differently shuffled 1D or 2D sequences for the individual constituent domains of a light-transport path. We first analyze the reasons that Z sampling is effective and distill a set of practical design guidelines for Z sampling algorithms. We then propose extensions to Z sampling in two complementary directions: temporally across frames, and spatially to non-uniform and higher-dimensional constituent domains. Our approach thus improves temporal frame accumulation by assigning negatively correlated samples to consecutive frames, without additional memory or runtime cost, while preserving individual-frame quality. It further allows applying Z sampling to non-uniform, importance-sampled distributions, via a tabulated hierarchical equal-mass subdivision of the importance map. For 3D constituent integration domains, we
+                                also introduce a novel low-discrepancy sequence that simultaneously maintains high uniformity in the full 3D domain, along each coordinate axis, and across each pairwise 2D projection. The proposed sequence is quaternary (base-4) structured, hence optimal stratification is attained only for power-of-four sample counts. We empirically demonstrate the advantage of our approach over the common practice of splitting a 3D constituent domain into a 1D--2D pair, and evaluate it against existing 3D sampling alternatives.
+                            </div>
+                            <div class="comments mb-2">
+                                <b>Comments:</b>
+                                None.
+                            </div>
+                            <div class="citation mb-2">
+                                <b>Citation:</b>
+                                Abdalla G. M. Ahmed, Matt Pharr, and Hui Huang. 2026. Z++: Temporal, Non-Uniform, and 3D Z Sampling. ACM Transactions on Graphics (Proceedings of SIGGRAPH Asia), 45(6). 210:1--210:14. DOI: 10.1145/3842533.
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="d-none d-lg-block">
+                                <div><img class="img-fluid img-paper" src="assets/img/z++.png" alt="" width="344" height="222" loading="lazy" /></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row justify-content-between mb-5">
+                        <div class="flex-grow-1">
                             <h3 class="mb-0">NILE: Nested Interleaving of Low-Dimensional Elements</h3>
                             <div class="authors">Abdalla G. M. Ahmed, Matt Pharr, Victor Ostromoukhov, and Hui Huang</div>
                             <div>ACM Transactions on Graphics (Proceedings of SIGGRAPH)</div>
