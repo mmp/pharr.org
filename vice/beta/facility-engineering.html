@@ -213,10 +213,117 @@
 
                 <p>When developing scenarios, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations,
                   or you or might specify completely new scenario and video map files if you're working on support for a new TRACON.
-                  One way to try out your work is to open the "Settings" menu (shown by clicking the <i class="fas fa-cog"></i> icon in the menu bar)
+                  As part of this you may also need to modify the configuration file for the facility.
+                  As you work, you can use <a href="#fe-backshop">backshop</a> to check your work; it's a stand-alone tool for scenario development in <i>vice</i>.
+                  Alternatively, you can have <i>vice</i> load your updated files when it launches and run the scenarios as a user would there; 
+                </p>
+
+            <section class="docs-section" id="fe-backshop">
+              <h2 class="section-heading" data-nav-title="Backshop">Backshop</h2>
+                <p>
+                  <i>backshop</i> is a stand-alone application for facility engineering: you can provide it with updated scenario / config files (or use it to explore the built-in ones) and it provides comprehensive information about the structure of scenarios, their routes, maps, etc.
+                  Everything it shows
+                  can be copied to the clipboard, since it is all destined for hand-written JSON.
+                </p>
+                <p>
+                  Work-in-progress scenario, video map, brief, and facility configuration files can be specified
+                  under "Additional files" in the Scenario tab.
+                </p>
+                <p>
+                  Most importantly, it reloads edited scenario JSON in place: pressing <code>[Control-R]</code>
+                  (<code>[Command R]</code> on macOS) re-reads the scenario and facility configuration files from disk,
+                  along with the aviation database and the pronunciation files behind it, and restarts the sim on them,
+                  so there is no need to quit and relaunch after every edit (as is the case when checking scenarios with <i>vice</i>
+                  If the edited files don't
+                  validate, the errors are listed in the Scenario tab and the previously loaded scenario keeps
+                  running.
+                </p>
+                <div class="text-center">
+<img src="backshop.png" srcset="backshop-2x.png 2x" width="1512" height="944" class="img-fluid">
+                </div><br>
+                <p><i>backshop</i> displays two windows: a map window and an inspector. The map supports:</p>
+                <ul>
+                  <li>Dragging to pan and the scroll wheel to zoom.</li>
+                  <li>Control-shift-click to copy a position to the clipboard, as in <i>vice</i>. The position under the
+                    cursor is also always shown in the menu bar and can be copied by clicking it.</li>
+                  <li>A route-drawing mode equivalent to <code>.DRAWROUTE</code>, switched on from the buttons in the
+                    menu bar: click a series of points and they are kept on the clipboard as a space-separated list.
+                    <code>[Backspace]</code> removes the last point and <code>[Escape]</code> leaves the mode.</li>
+                  <li>A measuring mode, alongside it: click two points for the distance and magnetic bearing between
+                    them.</li>
+                </ul>
+                <p>The inspector window alongside it has a tab for each general category of information that can be examined:</p>
+                <table class="table">
+                  <thead>
+                    <tr><th style="width: 20%;">Tab</th><th>Contents</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Scenario</td><td>Which facility, scenario group, and scenario to open; reloading; the errors
+                      from the last load; and a summary of the scenario.</td></tr>
+                    <tr><td>Airports</td><td>The scenario's airports, each of which expands to how it is set
+                      up: its settings and traffic rates, the runways the scenario is working, the approaches to the
+                      ones it is landing on, the exits departures leave by, the arrivals that bring traffic in, and the
+                      SIDs and STARs the FAA CIFP charts there. The routes are all shown in the encoded form that goes
+                      into a scenario's JSON, with a copy button and a checkbox that draws each one.</td></tr>
+                    <tr><td>Maps</td><td>Every video map in the facility's library along with the ones <i>vice</i>
+                      generates from the facility configuration&mdash;the filter regions, minimum vectoring altitudes,
+                      nearby class B and C airspace, radar coverage, and ATPA volumes&mdash;each with a checkbox to draw
+                      it. An ARTCC's library is a set of map groups of which the display loads one at a time, so each
+                      gets a collapsible section of its own, the scenario's group first and open.</td></tr>
+                    <tr><td>Procedures</td><td>Draw the geometry of the scenario's arrivals, approaches, departures,
+                      overflights, controller airspace, and charted holds, each in a color of your choosing. Departures
+                      can be listed a SID at a time or an exit at a time, since a SID serving twenty exits is unreadable
+                      drawn all at once.</td></tr>
+                    <tr><td>Routes</td><td>The ways a city pair is really flown&mdash;from the scenario's own
+                      <code>traffic_routes</code>, the recently filed routes, and the FAA route databases&mdash;and what
+                      this scenario would do with each of them: which exit or arrival it would fly, or why it can't fly
+                      the route at all.</td></tr>
+                    <tr><td>Traffic</td><td>The real-world traffic the scenario's airports see, from a timetable or from
+                      recorded flights, and what the scenario would do with each flight. It is a report, not a
+                      simulation: nothing here changes the running sim. It is how to find the exits and arrivals a
+                      scenario is missing.</td></tr>
+                    <tr><td>Filters</td><td>Every adapted filter region with its shape and altitudes, plus TFRs, ATPA
+                      volumes, and radar coverage. Each has a checkbox that draws its extent on the map.</td></tr>
+                    <tr><td>Database</td><td>Airports, navaids, fixes, airways, aircraft types, airlines, and
+                      facilities from <i>vice</i>'s aviation database. Airports, navaids, fixes, and facilities can be
+                      drawn on the map individually or all at once, labelled.</td></tr>
+                    <tr><td>CIFP</td><td>The SIDs, STARs, and approaches the FAA CIFP codes for an airport, in the
+                      encoded form that goes into a scenario's JSON&mdash;the same thing <code>vice -routes</code>
+                      prints, with a copy button on each row.</td></tr>
+                    <tr><td>TTS</td><td>How <i>vice</i> says the names at the scenario's airports. Every SID, STAR,
+                      and approach is listed with the fixes it is flown over, each named once however many of its
+                      transitions go by it; a play button reads a procedure and its fixes in turn, lighting up each
+                      name as it is spoken, and clicking any one of them says just it. A SID, STAR, or fix name can
+                      also be typed in to hear it. It is how to check an entry in <i>resources/sayfix.json</i> and the
+                      other pronunciation files, which a reload picks up.</td></tr>
+                    <tr><td>Brief</td><td>A live preview of the facility's scenario brief, annotated video maps
+                      included.</td></tr>
+                    <tr><td>Launch</td><td>Fly one aircraft at a time down a chosen procedure and watch it. Automatic
+                      traffic starts switched off so the scope is empty; launching an aircraft flies it from the runway
+                      or the gate to wherever the sim lets it go, all at once, and plays the flight back with a scrubber
+                      that goes both ways. An ICAO type can be given to fly the procedure with a particular aircraft's
+                      performance rather than whatever the scenario sampled.</td></tr>
+                    <tr><td>Video maps</td><td>Converts a CRC installation's video maps to <i>.mappack</i> files, one
+                      per STARS facility of each selected ARTCC plus one for the ARTCC's ERAM maps, and lists what a
+                      map library holds so that one can be inspected without a scenario that refers to it.</td></tr>
+                  </tbody>
+                </table>
+                <p>
+                  On Windows, <i>backshop</i> is an option in the installer; tick "Facility engineering tool" when
+                  installing <i>vice</i>. On macOS it is a separate <code>Backshop.app</code>, which can be downloaded below;
+                  after opening the <i>zip</i> file, drag <i>Backshop.app</i> to your <i>Applications</i> folder to
+                  install it.
+                </p>
+                <a href="https://github.com/mmp/vice/releases/download/v0.15.0/Backshop-v0.15.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.0 for Mac</a>
+            </section>
+
+            <section class="docs-section" id="fe-testing-in-vice">
+              <h2 class="section-heading" data-nav-title="Testing in Vice">Testing in Vice</h2>
+              <p>
+                Another way way to try out your work is to open the "Settings" menu in <i>vice</i> (shown by clicking the <i class="fas fa-cog"></i> icon in the menu bar)
                   and selecting "Facility Engineering". There, you can specify the locations of additional scenario, video map, and/or facility configuration files to load when <i>vice</i> is launched.</p>
                 <div class="text-center">
-                  <img src="fe-scenario-videomap-ui.png" srcset="fe-scenario-videomap-ui-2x.png 2x" width="550" height="128">
+                  <img src="fe-scenario-videomap-ui.png" srcset="fe-scenario-videomap-ui-2x.png 2x" width="539" height="227">
                 </div>
                 <br>
                 <p>
@@ -237,165 +344,6 @@
                   or via the UI.
                 </p>
 
-            <section class="docs-section" id="fe-backshop">
-              <h2 class="section-heading" data-nav-title="backshop">backshop</h2>
-                <p>
-                  <i>backshop</i> is a separate application for facility engineering. It opens a scenario, draws its
-                  geometry on a plain map with no STARS or ERAM interface in the way, and gives access to everything
-                  <i>vice</i> knows about the scenario and about the aviation database behind it. Everything it shows
-                  can be copied to the clipboard, since it is all destined for hand-written JSON.
-                </p>
-                <p>
-                  <i>backshop</i> takes no command-line arguments; everything is set in the window and remembered
-                  between runs. Work-in-progress scenario, video map, and brief files are chosen under "Additional
-                  files" in the Scenario tab, which is where <i>vice</i>'s <code>-scenario</code>,
-                  <code>-videomap</code>, and <code>-scenariobrief</code> arguments would otherwise be used.
-                </p>
-                <p>
-                  Most importantly, it reloads edited scenario JSON in place: pressing <code>[Control][R]</code> re-reads
-                  the scenario and facility configuration files from disk and restarts the sim on them, taking well
-                  under a second, so there is no need to quit and relaunch after every edit. Picking a different
-                  additional file reloads too, so that takes no restart either. If the edited files don't validate, the
-                  errors are listed in the Scenario tab and the previously loaded scenario keeps running.
-                </p>
-                <p>The map itself supports:</p>
-                <ul>
-                  <li>Dragging to pan and the scroll wheel to zoom.</li>
-                  <li>Control-shift-click to copy a position to the clipboard, as in <i>vice</i>. The position under the
-                    cursor is also always shown in the menu bar and can be copied by clicking it.</li>
-                  <li>A route-drawing mode equivalent to <code>.DRAWROUTE</code>: click a series of points and they are
-                    kept on the clipboard as a space-separated list. <code>[Backspace]</code> removes the last point and
-                    <code>[Escape]</code> leaves the mode.</li>
-                  <li>A measuring mode: click two points for the distance and magnetic bearing between them.</li>
-                </ul>
-                <p>The inspector window alongside it has a tab for each kind of thing worth looking at:</p>
-                <table class="table">
-                  <thead>
-                    <tr><th style="width: 20%;">Tab</th><th>Contents</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>Scenario</td><td>Which facility, scenario group, and scenario to open; reloading; the errors
-                      from the last load; and a summary of the scenario.</td></tr>
-                    <tr><td>Maps</td><td>Every video map in the facility's library along with the ones <i>vice</i>
-                      generates from the facility configuration&mdash;the filter regions, minimum vectoring altitudes,
-                      nearby class B and C airspace, radar coverage, and ATPA volumes&mdash;each with a checkbox to draw
-                      it.</td></tr>
-                    <tr><td>Routes</td><td>Draw the geometry of arrivals, approaches, departures, overflights,
-                      controller airspace, and charted holds, each in a color of your choosing. Departures can be listed
-                      a SID at a time or an exit at a time, since a SID serving twenty exits is unreadable drawn all at
-                      once.</td></tr>
-                    <tr><td>Filters</td><td>Every adapted filter region with its shape and altitudes, plus TFRs, ATPA
-                      volumes, and radar coverage. Each has a checkbox that draws its extent on the map.</td></tr>
-                    <tr><td>Database</td><td>Airports, navaids, fixes, airways, aircraft types, airlines, and
-                      facilities from <i>vice</i>'s aviation database. Airports, navaids, fixes, and facilities can be
-                      drawn on the map individually or all at once, labelled.</td></tr>
-                    <tr><td>CIFP</td><td>The SIDs, STARs, and approaches the FAA CIFP codes for an airport, in the
-                      encoded form that goes into a scenario's JSON&mdash;the same thing <code>vice -routes</code>
-                      prints, with a copy button on each row.</td></tr>
-                    <tr><td>Brief</td><td>A live preview of the facility's scenario brief, annotated video maps
-                      included.</td></tr>
-                    <tr><td>Traffic</td><td>Launch aircraft and control the clock: pause, a playback rate, and
-                      buttons to jump forward. Automatic traffic starts switched off so the scope is empty; an aircraft
-                      type can be given to fly a procedure with a particular aircraft's performance rather than whatever
-                      the scenario sampled. There is no rewind&mdash;the sim only runs forward&mdash;so to see something
-                      again, launch the aircraft again.</td></tr>
-                    <tr><td>Tools</td><td>The map drawing modes, and a listing of any video map library's contents.</td></tr>
-                  </tbody>
-                </table>
-                <p>
-                  On Windows, <i>backshop</i> is an option in the installer; tick "Facility engineering tool" when
-                  installing <i>vice</i>. On macOS it is a separate <code>Backshop.app</code>, downloaded below;
-                  after opening the <i>zip</i> file, drag <i>Backshop.app</i> to your <i>Applications</i> folder to
-                  install it. It reads the resource files <i>vice</i> installs, so <i>vice</i> must have been
-                  run at least once before it will start.
-                </p>
-                <a href="https://github.com/mmp/vice/releases/download/v0.15.0/Backshop-v0.15.0-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.0 for Mac</a>
-            </section>
-
-            <section class="docs-section" id="fe-faq">
-              <h2 class="section-heading" data-nav-title="FAQ">Facility Engineering FAQ</h2>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width: 30%;">Question</th>
-                    <th>Answer</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>How do I get started?</td>
-                    <td>To get started creating a facility configuration file for <i>vice</i>, first read through the
-                      documentation provided below. (For starters, at least skim it to get the lay of the land.)
-                      Next you might look at a few existing scenarios: pick a scenario that you're familiar with as a user
-                      and look its scenario and facility code, cross referencing it with the documentation.
-                      As a first step, you could try making smaller changes to an existing scenario before you try
-                      developing a new scenario from scratch.
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>What's the difference between a scenario and a facility configuration?</td>
-                    <td>
-                      A scenario is a specific configuration of airports, active runways, and departure and arrival flows
-                      in a given facility (TRACON or ARTCC).
-                      Each scenario file may define one or more scenarios in a single facility and there may be multiple
-                      scenario files for a facility. (Especially for big and complex facilities, it is often useful to
-                      break all of their airports into multiple scenario files.)
-                      A facility configuration specifies information that applies to all airports in a facility and
-                      doesn't vary across scenarios (for example, the control positions, the assignments of controllers
-                      to departure and arrivals flows, etc.)
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>How do I see the installed scenarios and facility configuration files?</td>
-                    <td>First:
-                      <ul>
-                        <li>On Windows, open a file explorer and enter <code>%APPDATA%</code> for the folder to open.
-                          Then select <code>Vice</code> and then <code>resources</code>.</li>
-                        <li>On Mac, go to the Finder and select "Go To Folder..." in the "Go" menu.
-                          Enter <code>~/Library/Application Support/Vice/resources</code>.</li>
-                        <li>On Linux, navigate to <code>$HOME/.config/Vice</code>.</li>
-                      </ul>
-                      Then, scenarios are found under <code>scenarios</code> and facility configurations under <code>configurations</code>.
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>Why am I getting an error like "The entry "departure_routes" is not an expected JSON object"?
-                      I see "departure_routes" in the documentation!
-                    </td>
-                    <td>
-                      Most likely, you have an error in the nesting of the <code>{</code> / <code>}</code> braces in your JSON file&mdash;in
-                      other words, you're missing a closing brace or have an extra closing brace somewhere such that the entry it's complaining
-                      about is inside a different object than it's supposed to be.
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>How can I submit one of my scenarios?</td>
-                    <td>
-                      The easiest way is to post it in the <i>scenario-updates</i> channel in the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> Discord</a>.
-                      If you're comfortable with GitHub, you're welcome to fork the <a href="https://github.com/mmp/vice"><i>vice</i> repository</a>
-                      and make a pull request.
-                      Don't forget to include any updates to facility configuration files or video maps!
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>How can I get the lat/long coordinates of a point on a map?</td>
-                    <td><i>backshop</i> shows the position under the cursor in its menu bar; clicking it copies it.
-                      In <i>vice</i>, pressing <code>[Control][Shift]</code> and clicking a point on the map will copy
-                      the coordinates of where you clicked into the clipboard. Alternatively, you can enter
-                      <code>.DRAWROUTE[Enter]</code> in STARS and click a series of points. All of the
-                      points in the route will be copied to the clipboard. If you make a mistake, pressing
-                      <code>[Backspace]</code> will delete the last point in the route. Press <code>[Escape]</code>
-                      to exit this mode.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
 
             <section class="docs-section" id="fe-locations">
               <h2 class="section-heading">Specifying Locations</h2>
@@ -1218,6 +1166,7 @@
     ]
 }</code></pre>
             </section><!--//section-->
+
             <section class="docs-section" id="fe-speech">
               <h2 class="section-heading">Speech</h2>
               <p><i>vice</i> includes JSON files that map aviation terms to spoken pronunciations.
@@ -1269,7 +1218,93 @@
               <p>Files with array values (airports, aircraft types) allow random selection among variants
                 for more natural-sounding speech. Files with single string values have one canonical pronunciation.</p>
             </section><!--//section-->
+
+            <section class="docs-section" id="fe-faq">
+              <h2 class="section-heading" data-nav-title="FAQ">Facility Engineering FAQ</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 30%;">Question</th>
+                    <th>Answer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>How do I get started?</td>
+                    <td>To get started creating a facility configuration file for <i>vice</i>, first read through the
+                      documentation provided below. (For starters, at least skim it to get the lay of the land.)
+                      Next you might look at a few existing scenarios: pick a scenario that you're familiar with as a user
+                      and look its scenario and facility code, cross referencing it with the documentation.
+                      As a first step, you could try making smaller changes to an existing scenario before you try
+                      developing a new scenario from scratch.
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>What's the difference between a scenario and a facility configuration?</td>
+                    <td>
+                      A scenario is a specific configuration of airports, active runways, and departure and arrival flows
+                      in a given facility (TRACON or ARTCC).
+                      Each scenario file may define one or more scenarios in a single facility and there may be multiple
+                      scenario files for a facility. (Especially for big and complex facilities, it is often useful to
+                      break all of their airports into multiple scenario files.)
+                      A facility configuration specifies information that applies to all airports in a facility and
+                      doesn't vary across scenarios (for example, the control positions, the assignments of controllers
+                      to departure and arrivals flows, etc.)
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>How do I see the installed scenarios and facility configuration files?</td>
+                    <td>First:
+                      <ul>
+                        <li>On Windows, open a file explorer and enter <code>%APPDATA%</code> for the folder to open.
+                          Then select <code>Vice</code> and then <code>resources</code>.</li>
+                        <li>On Mac, go to the Finder and select "Go To Folder..." in the "Go" menu.
+                          Enter <code>~/Library/Application Support/Vice/resources</code>.</li>
+                        <li>On Linux, navigate to <code>$HOME/.config/Vice</code>.</li>
+                      </ul>
+                      Then, scenarios are found under <code>scenarios</code> and facility configurations under <code>configurations</code>.
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>Why am I getting an error like "The entry "departure_routes" is not an expected JSON object"?
+                      I see "departure_routes" in the documentation!
+                    </td>
+                    <td>
+                      Most likely, you have an error in the nesting of the <code>{</code> / <code>}</code> braces in your JSON file&mdash;in
+                      other words, you're missing a closing brace or have an extra closing brace somewhere such that the entry it's complaining
+                      about is inside a different object than it's supposed to be.
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>How can I submit one of my scenarios?</td>
+                    <td>
+                      The easiest way is to post it in the <i>scenario-updates</i> channel in the <a href="https://discord.gg/y993vgQxhY"><i>vice</i> Discord</a>.
+                      If you're comfortable with GitHub, you're welcome to fork the <a href="https://github.com/mmp/vice"><i>vice</i> repository</a>
+                      and make a pull request.
+                      Don't forget to include any updates to facility configuration files or video maps!
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>How can I get the lat/long coordinates of a point on a map?</td>
+                    <td><i>backshop</i> shows the position under the cursor in its menu bar; clicking it copies it.
+                      In <i>vice</i>, pressing <code>[Control][Shift]</code> and clicking a point on the map will copy
+                      the coordinates of where you clicked into the clipboard. Alternatively, you can enter
+                      <code>.DRAWROUTE[Enter]</code> in STARS and click a series of points. All of the
+                      points in the route will be copied to the clipboard. If you make a mistake, pressing
+                      <code>[Backspace]</code> will delete the last point in the route. Press <code>[Escape]</code>
+                      to exit this mode.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
           </article>
+
           <article class="docs-article" id="section-facility-config" data-nav-icon="fas fa-wrench">
             <header class="docs-header">
               <h1 class="docs-heading">Facility Configuration</h1>
@@ -3825,7 +3860,7 @@
                   </li>
                   <li>Pass <code>-out &lt;dir&gt;</code> to write to a different output directory.</li>
                   <li>Copy the resulting <code>.mappack</code> file(s) to the <code>resources/videomaps</code> folder
-                    in your <code>%AppData%\Local\Vice</code> directory, or pass the path to a file via the
+                    in your <code>%APPDATA%\Vice</code> directory, or pass the path to a file via the
                     <code>-videomap</code> command-line option to <i>vice</i>.</li>
                 </ul>
                 <h3 id="fe-video-maps-dat2vice">dat2vice</h3>
