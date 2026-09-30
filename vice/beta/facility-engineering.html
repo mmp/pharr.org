@@ -395,6 +395,12 @@
               </table>
               <p>(In all of the examples above, the location specified is the same—the JFK VOR.)
               </p>
+              <p>A location can also be given as a fix-radial-distance (FRD): the name of a fix followed by three digits
+                giving a magnetic radial from it and three giving a distance from it in nautical miles. For example,
+                <code>"JFK090020"</code> is 20nm from the JFK VOR along its 090 radial. As in the real world, a VOR's radials
+                are referenced to its station declination; radials from any other fix are referenced to the magnetic
+                variation where it is.
+              </p>
               <p>
                 In <i>vice</i>, if you hold down the control and shift keys and click on a point on the video map, the corresponding
                 latitude-longitude position is copied to the clipboard—this can be very useful when developing new scenarios!
@@ -1690,6 +1696,16 @@
                                   that handles them. This determines where handoffs of inbound aircraft go.</td>
                               </tr>
                               <tr>
+                                <td>"listed_positions"</td>
+                                <td>Map of strings to strings</td>
+                                <td>(<i>Optional</i>) The control positions listed in the scenario information window
+                                  for scenarios that use this configuration, mapped to descriptions of their roles.
+                                  The format is the same as the facility-level
+                                  <a href="#fe-config-common">"listed_positions"</a>, which this replaces rather than
+                                  adds to. A scenario may in turn replace it with its own
+                                  <a href="#fe-scenarios">"listed_positions"</a>.</td>
+                              </tr>
+                              <tr>
                                 <td>"scratchpad_leader_line_directions"</td>
                                 <td>Map of strings to strings</td>
                                 <td>(<i>Optional</i>) Maps
@@ -1812,6 +1828,21 @@
                           </table>
                         </details>
                     </td></tr>
+                    <tr>
+                      <td>"listed_positions"</td>
+                      <td>Map of strings to strings</td>
+                      <td>(<i>Optional</i>) The control positions listed in the "Controllers" section of the
+                        scenario information window. Each key is a position and its value is a description of the
+                        position's role, which may be empty: for example,
+                        <code>{"5E": "Liberty departure: East and North gate departures", "4J": ""}</code>.
+                        Positions at neighboring facilities are written as they are for handoffs.
+                        Positions covered by humans are always listed; an entry for one just adds its description.
+                        This is used only for scenarios that don't specify their own
+                        <a href="#fe-scenarios">"listed_positions"</a> and whose
+                        <a href="#fe-config-common">"configurations"</a> entry doesn't either; only one of the three
+                        is used and they are not merged. If none of them is given, all of the facility's and its
+                        neighbors' positions are listed.</td>
+                    </tr>
                     <tr>
                       <td>"max_distance"</td>
                       <td>Number</td>
@@ -4058,6 +4089,17 @@
                     <td>Defines the extent of controllers' airspace; see <a href="#fe-airspace">airspace</a> for details.</td>
                   </tr>
                   <tr>
+                    <td>"historical_scenario"</td>
+                    <td>Boolean</td>
+                    <td>(<i>Optional</i>) Allows manually authored historical arrivals without comparing
+                      flow names, STAR names, or route legs against current FAA STARs. Provide explicit
+                      waypoints and destination airports for retired procedures. Waypoint, altitude,
+                      speed, and route instruction validation remains active. This does not load a
+                      historical navigation database or change the traffic date. Published traffic still matches
+                      routes against current procedure data, and <code>"star_feeds"</code>, departures,
+                      and approaches retain their existing validation. Default is false.</td>
+                  </tr>
+                  <tr>
                     <td>"allow_fix_redefinitions"</td>
                     <td>Boolean</td>
                     <td>(<i>Optional</i>) When set to <code>true</code>, disables the validation checks that
@@ -4096,8 +4138,11 @@
                         previously-specified fixes (or standard fixes from the
                         FAA database) using the syntax <i>FIX@HDG/DIST</i>,
                         where <i>FIX</i> is the name of a fix, <i>HDG</i> is a
-                        heading leaving it, and <i>DIST</i> is a distance along
-                        that heading given in nautical miles.
+                        three-digit <em>true</em> heading leaving it, and
+                        <i>DIST</i> is a distance along that heading given in
+                        nautical miles. They may also be given as
+                        <a href="#fe-locations">FRDs</a>, whose radials are
+                        magnetic.
                       </p>
                     </td>
                   </tr>
@@ -4714,8 +4759,9 @@
                   <tr>
                     <td>"full_name"</td>
                     <td>String</td>
-                    <td>(<i>Optional</i>) A string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
-                      If not specified and the approach is not a visual approach, the approach's name is generated automatically using "runway" and "type".</td>
+                    <td>A string giving the full name of the approach (e.g., "RNAV Z Runway 13L"); it must include "Runway" or "runway".
+                      It is required for "ChartedVisual" approaches. For other types it is optional; if it is not specified,
+                      the approach's name is generated automatically using "runway" and "type".</td>
                   </tr>
                   <tr>
                     <td>"runway"</td>
@@ -4731,13 +4777,47 @@
                   <tr>
                     <td>"waypoints"</td>
                     <td>Array of strings</td>
-                    <td>Each given string specifies an approach route. Multiple strings can be provided for "waypoints" for approaches
-                      with multiple IAFs (e.g. an RNAV "T" configuration).
+                    <td>Each given string specifies a complete route to the runway. Multiple strings can be provided for "waypoints"
+                      for approaches with multiple IAFs (e.g. an RNAV "T" configuration) or, for a "ChartedVisual" approach,
+                      multiple feeder legs; each string then gives one of them followed by the segment they share.
                       <i>vice</i> automatically adds a final waypoint at the arrival runway threshold; aircraft are deleted from
                       the simulation when they reach that point.</td>
                   </tr>
+                  <tr>
+                    <td>"reporting_points"</td>
+                    <td>Object</td>
+                    <td>Optional, and only for "ChartedVisual" approaches: the landmarks on the chart that pilots may report
+                      in sight. Controllers can call them for aircraft that have been told to expect the approach ("the
+                      Dumbarton bridge is at your 3 o'clock, 3 miles, report in sight"), and pilots sometimes report them
+                      in sight on their own when they are 3&ndash;10 miles ahead. A pilot must have one of them, the field, or
+                      preceding traffic landing the same runway in sight to accept a clearance for the approach; without
+                      reporting points, the controller has to call the field or the traffic before clearing it.
+                      The member names are identifiers for the landmarks: controllers name a landmark by its identifier
+                      in the <code>RP</code> command, and the scope labels the landmark with it when the approach is drawn.
+                      An identifier must be a single word without "/", and two can't differ only in case.
+                      Each member's value is an object with the following members:
+                      <ul>
+                        <li>"names": the names pilots and controllers use for the landmark (e.g., "Dumbarton bridge",
+                          "bridge"). They are what speech recognition listens for, and a pilot reports the landmark in
+                          sight with any of them. The first is its full name, which pilots use when they report it
+                          without being asked. Two landmarks on an approach can't share a name.</li>
+                        <li>"location": where the landmark is: a fix name or a lat-long coordinate, as described in
+                          <a href="#fe-locations">Specifying Locations</a>.</li>
+                      </ul>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
+              <p>For example:</p>
+              <pre>
+"reporting_points": {
+  "BRIDGE": {
+    "names": ["Dumbarton bridge", "bridge", "Dumbarton"],
+    "location": "N037.30.25.200,W122.06.54.000"
+  }
+}
+              </pre>
+
             </section>
             <section class="docs-section" id="fe-departures">
               <h2 class="section-heading">Departures</h2>
@@ -6241,6 +6321,15 @@
                       It can be useful to specify a rate of zero—in this case, the inbound flow
                       will still be included in the UI shown to the user, which allows the user to enable it.
                     </td>
+                  </tr>
+                  <tr>
+                    <td>"listed_positions"</td>
+                    <td>Map of strings to strings</td>
+                    <td>(<i>Optional</i>) The control positions listed in the scenario information window, mapped
+                      to descriptions of their roles, in the same format as
+                      <a href="#fe-config-common">"listed_positions"</a> in "facility_adaptations".
+                      When given, it replaces the "listed_positions" of the scenario's
+                      <a href="#fe-scenarios">"configuration"</a> and of the facility; they are not merged.</td>
                   </tr>
                   <tr>
                     <td>"ldb_altitude_limits"</td>
