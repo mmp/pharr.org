@@ -275,7 +275,8 @@
                       can be listed a SID at a time or an exit at a time, since a SID serving twenty exits is unreadable
                       drawn all at once.</td></tr>
                     <tr><td>Routes</td><td>The ways a city pair is really flown&mdash;from the scenario's own
-                      <code>traffic_routes</code>, the recently filed routes, and the FAA route databases&mdash;and what
+                      <code>traffic_routes</code> and the recently filed routes, or the FAA route databases for a pair
+                      with no filings&mdash;and what
                       this scenario would do with each of them: which exit or arrival it would fly, or why it can't fly
                       the route at all.</td></tr>
                     <tr><td>Traffic</td><td>The real-world traffic the scenario's airports see, from a timetable or from
@@ -314,7 +315,7 @@
                   after opening the <i>zip</i> file, drag <i>Backshop.app</i> to your <i>Applications</i> folder to
                   install it.
                 </p>
-                <a href="https://github.com/mmp/vice/releases/download/v0.15.1/Backshop-v0.15.1-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.1 for Mac</a>
+                <a href="https://github.com/mmp/vice/releases/download/v0.15.2/Backshop-v0.15.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.2 for Mac</a>
             </section>
 
             <section class="docs-section" id="fe-testing-in-vice">
@@ -394,6 +395,12 @@
                 </tbody>
               </table>
               <p>(In all of the examples above, the location specified is the same—the JFK VOR.)
+              </p>
+              <p>A location can also be given as a fix-radial-distance (FRD): the name of a fix followed by three digits
+                giving a magnetic radial from it and three giving a distance from it in nautical miles. For example,
+                <code>"JFK090020"</code> is 20nm from the JFK VOR along its 090 radial. As in the real world, a VOR's radials
+                are referenced to its station declination; radials from any other fix are referenced to the magnetic
+                variation where it is.
               </p>
               <p>
                 In <i>vice</i>, if you hold down the control and shift keys and click on a point on the video map, the corresponding
@@ -664,8 +671,38 @@
                     <td>The aircraft is issued an instruction to climb to the specified altitude, given in feet (a multiple of 100, between 100 and 60,000).</td>
                   </tr>
                   <tr>
+                    <td><code>/clearapp</code></td>
+                    <td>Clears the aircraft for the approach that has been assigned to it (e.g. via "expect_approach" in a STAR.)
+                      Aircraft must either be on a heading that intersects the approach or direct to a fix on the approach.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>/cpsp</code></td>
+                    <td>Clears the aircraft's primary scratchpad.</td>
+                  </tr>
+                  <tr>
+                    <td><code>/cssp</code></td>
+                    <td>Clears the aircraft's secondary scratchpad.</td>
+                  </tr>
+                  <tr>
+                    <td><code>/cv<var>altitude</var></code></td>
+                    <td>The aircraft is instructed to climb via the SID, except maintain the specified altitude, given in feet.</td>
+                  </tr>
+                  <tr>
+                    <td><code>/cvs</code></td>
+                    <td>The aircraft is instructed to climb via the SID.</td>
+                  </tr>
+                  <tr>
                     <td><code>/d<var>altitude</var></code></td>
                     <td>The aircraft is issued an instruction to descend to the specified altitude, given in feet (a multiple of 100, between 100 and 60,000).</td>
+                  </tr>
+                  <tr>
+                    <td><code>/dv<var>altitude</var></code></td>
+                    <td>The aircraft is instructed to descend via the STAR, except maintain the specified altitude, given in feet.</td>
+                  </tr>
+                  <tr>
+                    <td><code>/dvs</code></td>
+                    <td>The aircraft is instructed to descend via the STAR.</td>
                   </tr>
                   <tr>
                     <td><code>/ho</code></td>
@@ -677,13 +714,8 @@
                       controller. The handoff will be automatically accepted a little while after it has been initiated.</td>
                   </tr>
                   <tr>
-                    <td><code>/tc</code></td>
-                    <td>"Transfer comms": the aircraft is told to switch to the frequency of the controller that accepted
-                      its handoff. This can be used to flash a handoff early from a virtual controller, but for them
-                      to continue to control the aircraft for a while before sending it to a human. If not specified in a route,
-                      a handed-off aircraft will change frequency a little while after its handoff was accepted.
-                      For departures, this determines when the aircraft contacts the departure controller.
-                    </td>
+                    <td><code>/intercept</code></td>
+                    <td>Instructs the aircraft to intercept the assigned approach.</td>
                   </tr>
                   <tr>
                     <td><code>/po<var>position</var></code></td>
@@ -698,22 +730,13 @@
                     <td>Sets the aircraft's secondary scratchpad to the given value.</td>
                   </tr>
                   <tr>
-                    <td><code>/cpsp</code></td>
-                    <td>Clears the aircraft's primary scratchpad.</td>
-                  </tr>
-                  <tr>
-                    <td><code>/cssp</code></td>
-                    <td>Clears the aircraft's secondary scratchpad.</td>
-                  </tr>
-                  <tr>
-                    <td><code>/clearapp</code></td>
-                    <td>Clears the aircraft for the approach that has been assigned to it (e.g. via "expect_approach" in a STAR.)
-                      Aircraft must either be on a heading that intersects the approach or direct to a fix on the approach.
+                    <td><code>/tc</code></td>
+                    <td>"Transfer comms": the aircraft is told to switch to the frequency of the controller that accepted
+                      its handoff. This can be used to flash a handoff early from a virtual controller, but for them
+                      to continue to control the aircraft for a while before sending it to a human. If not specified in a route,
+                      a handed-off aircraft will change frequency a little while after its handoff was accepted.
+                      For departures, this determines when the aircraft contacts the departure controller.
                     </td>
-                  </tr>
-                  <tr>
-                    <td><code>/intercept</code></td>
-                    <td>Instructs the aircraft to intercept the assigned approach.</td>
                   </tr>
                 </tbody>
               </table>
@@ -743,6 +766,15 @@
                   </tr>
                 </tbody>
               </table>
+
+              <p>
+                At an ERAM facility, the altitudes these actions assign are entered in the data
+                block as well, as the virtual controller issuing them would have entered them:
+                <code>/d</code> and <code>/dv</code> amend the assigned altitude, as do
+                <code>/c</code> and <code>/cv</code> to an altitude at or above it, while a climb
+                that stops short of the assigned altitude becomes an interim altitude. See
+                <a href="#fe-eram-entries">ERAM Data Block Entries</a>.
+              </p>
 
               <h3 class="section-heading" id="fe-route-properties">Properties</h3>
 
@@ -1539,9 +1571,9 @@
                               <tr>
                                 <td>"center"</td>
                                 <td><a href="#fe-locations">Location</a></td>
-                                <td>The initial center of the STARS scope for controllers in this area.
-                                  This is overridden by any center specified in "controllers" and overrides
-                                  the top-level "center" in the facility configuration.</td>
+                                <td>The initial center of the scope for controllers in this area.
+                                  The order of precedence is "controllers", then the scenario's "center",
+                                  then this, then the top-level "center" in the facility configuration.</td>
                               </tr>
                               <tr>
                                 <td>"default_airport"</td>
@@ -1561,8 +1593,8 @@
                                   center to scope edge); for ERAM facilities this is the vertical
                                   extent of the scope (top edge to bottom edge), matching the
                                   value shown on the ERAM RANGE toolbar button.
-                                  This is overridden by any range specified in "controllers" and overrides
-                                  the top-level "range" in the facility configuration.</td>
+                                  The order of precedence is "controllers", then the scenario's "range",
+                                  then this, then the top-level "range" in the facility configuration.</td>
                               </tr>
                               <tr>
                                 <td>"scratchpads"</td>
@@ -1665,6 +1697,16 @@
                                   that handles them. This determines where handoffs of inbound aircraft go.</td>
                               </tr>
                               <tr>
+                                <td>"listed_positions"</td>
+                                <td>Map of strings to strings</td>
+                                <td>(<i>Optional</i>) The control positions listed in the scenario information window
+                                  for scenarios that use this configuration, mapped to descriptions of their roles.
+                                  The format is the same as the facility-level
+                                  <a href="#fe-config-common">"listed_positions"</a>, which this replaces rather than
+                                  adds to. A scenario may in turn replace it with its own
+                                  <a href="#fe-scenarios">"listed_positions"</a>.</td>
+                              </tr>
+                              <tr>
                                 <td>"scratchpad_leader_line_directions"</td>
                                 <td>Map of strings to strings</td>
                                 <td>(<i>Optional</i>) Maps
@@ -1707,6 +1749,18 @@
                                   and the automatic default.</td>
                               </tr>
                               <tr>
+                                <td>"altitude_limits"</td>
+                                <td>Array of two numbers</td>
+                                <td><i>(ERAM only)</i> (<i>Optional</i>) The initial altitude limits filters for this
+                                  controller, given as [low, high] in hundreds of feet&mdash;the same range the ALT LIM
+                                  toolbar button shows and the <code>QD</code> command sets. This sets the target filter
+                                  and the limited datablock filter both, and may not be given along with
+                                  <code>"target_altitude_limits"</code> or <code>"ldb_altitude_limits"</code>.
+                                  A controller that specifies any of the three takes both of its filters from its own
+                                  settings, ignoring the ones in <a href="#fe-scenarios">"scenarios"</a>; a filter that
+                                  is not specified lets everything through.</td>
+                              </tr>
+                              <tr>
                                 <td>"beacon_code_blocks"</td>
                                 <td>String</td>
                                 <td>A comma-separated list of beacon code banks
@@ -1715,8 +1769,9 @@
                               <tr>
                                 <td>"center"</td>
                                 <td><a href="#fe-locations">Location</a></td>
-                                <td>The initial center of the controller's STARS scope.
-                                  This takes highest priority, overriding "areas" center and the top-level center.</td>
+                                <td>The initial center of the controller's scope.
+                                  This takes highest priority, overriding the scenario's "center",
+                                  the "areas" center, and the top-level center.</td>
                               </tr>
                               <tr>
                                 <td>"default_maps"</td>
@@ -1732,6 +1787,12 @@
                                   region will call the controller for flight following.</td>
                               </tr>
                               <tr>
+                                <td>"ldb_altitude_limits"</td>
+                                <td>Array of two numbers</td>
+                                <td><i>(ERAM only)</i> (<i>Optional</i>) As <code>"altitude_limits"</code>, but sets only
+                                  the filter applied to limited datablocks.</td>
+                              </tr>
+                              <tr>
                                 <td>"range"</td>
                                 <td>Number</td>
                                 <td>The initial range for the controller's scope in nautical miles.
@@ -1739,7 +1800,14 @@
                                   center to scope edge); for ERAM facilities this is the vertical
                                   extent of the scope (top edge to bottom edge), matching the
                                   value shown on the ERAM RANGE toolbar button.
-                                  This takes highest priority, overriding "areas" range and the top-level range.</td>
+                                  This takes highest priority, overriding the scenario's "range",
+                                  the "areas" range, and the top-level range.</td>
+                              </tr>
+                              <tr>
+                                <td>"target_altitude_limits"</td>
+                                <td>Array of two numbers</td>
+                                <td><i>(ERAM only)</i> (<i>Optional</i>) As <code>"altitude_limits"</code>, but sets only
+                                  the filter applied to target symbols and their history trails.</td>
                               </tr>
                               <tr>
                                 <td>"video_map_file"</td>
@@ -1761,6 +1829,21 @@
                           </table>
                         </details>
                     </td></tr>
+                    <tr>
+                      <td>"listed_positions"</td>
+                      <td>Map of strings to strings</td>
+                      <td>(<i>Optional</i>) The control positions listed in the "Controllers" section of the
+                        scenario information window. Each key is a position and its value is a description of the
+                        position's role, which may be empty: for example,
+                        <code>{"5E": "Liberty departure: East and North gate departures", "4J": ""}</code>.
+                        Positions at neighboring facilities are written as they are for handoffs.
+                        Positions covered by humans are always listed; an entry for one just adds its description.
+                        This is used only for scenarios that don't specify their own
+                        <a href="#fe-scenarios">"listed_positions"</a> and whose
+                        <a href="#fe-config-common">"configurations"</a> entry doesn't either; only one of the three
+                        is used and they are not merged. If none of them is given, all of the facility's and its
+                        neighbors' positions are listed.</td>
+                    </tr>
                     <tr>
                       <td>"max_distance"</td>
                       <td>Number</td>
@@ -1786,7 +1869,10 @@
               </section><!--//section-->
               <section class="docs-section" id="fe-config-eram">
                 <h2 class="section-heading">ERAM</h2>
-                <p>The following settings in the "facility_adaptations" object are specific to the ERAM radar scope:</p><div class="json-controls"><button class="expand-all">Expand All</button> <button class="collapse-all">Collapse All</button></div>
+                <p>The following settings in the "facility_adaptations" object are specific to the ERAM radar scope.
+                  The initial altitude limits filters are also ERAM-only, but are adapted per control position in
+                  <a href="#fe-config-common">"controllers"</a> and per scenario in
+                  <a href="#fe-scenarios">"scenarios"</a>.</p><div class="json-controls"><button class="expand-all">Expand All</button> <button class="collapse-all">Collapse All</button></div>
                 <table class="table">
                   <thead>
                     <tr>
@@ -4004,13 +4090,32 @@
                     <td>Defines the extent of controllers' airspace; see <a href="#fe-airspace">airspace</a> for details.</td>
                   </tr>
                   <tr>
+                    <td>"historical_scenario"</td>
+                    <td>Boolean</td>
+                    <td>(<i>Optional</i>) Allows manually authored historical arrivals without comparing
+                      flow names, STAR names, or route legs against current FAA STARs. Provide explicit
+                      waypoints and destination airports for retired procedures. Waypoint, altitude,
+                      speed, and route instruction validation remains active. This does not load a
+                      historical navigation database or change the traffic date. Published arrivals from an
+                      origin listed in the airport's <code>"traffic_routes"</code> follow those routes. A
+                      route's final STAR is matched against the STARs the scenario's own arrivals fly,
+                      ignoring revision numbers, and the fix filed ahead of the STAR chooses among arrivals
+                      that share it. Arrivals from other origins use a suitable active arrival gate within 60
+                      degrees of the origin direction, nearest the origin-to-destination great-circle
+                      segment. Modern route databases are not consulted, so this approximates historical
+                      routing rather than reconstructing it. Departures keep their existing route matching.
+                      <code>"star_feeds"</code>, departures, and approaches retain their existing
+                      validation. Default is false.</td>
+                  </tr>
+                  <tr>
                     <td>"allow_fix_redefinitions"</td>
                     <td>Boolean</td>
                     <td>(<i>Optional</i>) When set to <code>true</code>, disables the validation checks that
                       reject a fix in <code>"fixes"</code> that shadows a navaid, fix, or airport in the FAA
                       database or that duplicates a built-in runway threshold. This is useful for fictional
                       scenarios where fixes are intentionally placed at different locations than their
-                      real-world counterparts. Default is <code>false</code>.</td>
+                      real-world counterparts, and for historical scenarios whose retired fixes have names
+                      that have since been reassigned elsewhere. Default is <code>false</code>.</td>
                   </tr>
                   <tr>
                     <td>"area"</td>
@@ -4042,8 +4147,11 @@
                         previously-specified fixes (or standard fixes from the
                         FAA database) using the syntax <i>FIX@HDG/DIST</i>,
                         where <i>FIX</i> is the name of a fix, <i>HDG</i> is a
-                        heading leaving it, and <i>DIST</i> is a distance along
-                        that heading given in nautical miles.
+                        three-digit <em>true</em> heading leaving it, and
+                        <i>DIST</i> is a distance along that heading given in
+                        nautical miles. They may also be given as
+                        <a href="#fe-locations">FRDs</a>, whose radials are
+                        magnetic.
                       </p>
                     </td>
                   </tr>
@@ -4069,6 +4177,13 @@
                     <td>"scenarios"</td>
                     <td>Object</td>
                     <td>This defines all of the ATC scenarios that are available in the scenario group. See the <a href="#fe-scenarios">scenarios section</a> for details.</td>
+                  </tr>
+                  <tr>
+                    <td>"timetables"</td>
+                    <td>Object</td>
+                    <td>(<i>Optional</i>) Names the timetables the group's scenarios are offered, as a map
+                      from an airport to its timetable names. See <a href="#fe-timetables">timetables</a>
+                      for details.</td>
                   </tr>
                   <tr>
                     <td>"tracon"</td>
@@ -4660,8 +4775,9 @@
                   <tr>
                     <td>"full_name"</td>
                     <td>String</td>
-                    <td>(<i>Optional</i>) A string giving the full name of the approach (e.g., "RNAV Z Runway 13L").
-                      If not specified and the approach is not a visual approach, the approach's name is generated automatically using "runway" and "type".</td>
+                    <td>A string giving the full name of the approach (e.g., "RNAV Z Runway 13L"); it must include "Runway" or "runway".
+                      It is required for "ChartedVisual" approaches. For other types it is optional; if it is not specified,
+                      the approach's name is generated automatically using "runway" and "type".</td>
                   </tr>
                   <tr>
                     <td>"runway"</td>
@@ -4677,13 +4793,47 @@
                   <tr>
                     <td>"waypoints"</td>
                     <td>Array of strings</td>
-                    <td>Each given string specifies an approach route. Multiple strings can be provided for "waypoints" for approaches
-                      with multiple IAFs (e.g. an RNAV "T" configuration).
+                    <td>Each given string specifies a complete route to the runway. Multiple strings can be provided for "waypoints"
+                      for approaches with multiple IAFs (e.g. an RNAV "T" configuration) or, for a "ChartedVisual" approach,
+                      multiple feeder legs; each string then gives one of them followed by the segment they share.
                       <i>vice</i> automatically adds a final waypoint at the arrival runway threshold; aircraft are deleted from
                       the simulation when they reach that point.</td>
                   </tr>
+                  <tr>
+                    <td>"reporting_points"</td>
+                    <td>Object</td>
+                    <td>Optional, and only for "ChartedVisual" approaches: the landmarks on the chart that pilots may report
+                      in sight. Controllers can call them for aircraft that have been told to expect the approach ("the
+                      Dumbarton bridge is at your 3 o'clock, 3 miles, report in sight"), and pilots sometimes report them
+                      in sight on their own when they are 3&ndash;10 miles ahead. A pilot must have one of them, the field, or
+                      preceding traffic landing the same runway in sight to accept a clearance for the approach; without
+                      reporting points, the controller has to call the field or the traffic before clearing it.
+                      The member names are identifiers for the landmarks: controllers name a landmark by its identifier
+                      in the <code>RP</code> command, and the scope labels the landmark with it when the approach is drawn.
+                      An identifier must be a single word without "/", and two can't differ only in case.
+                      Each member's value is an object with the following members:
+                      <ul>
+                        <li>"names": the names pilots and controllers use for the landmark (e.g., "Dumbarton bridge",
+                          "bridge"). They are what speech recognition listens for, and a pilot reports the landmark in
+                          sight with any of them. The first is its full name, which pilots use when they report it
+                          without being asked. Two landmarks on an approach can't share a name.</li>
+                        <li>"location": where the landmark is: a fix name or a lat-long coordinate, as described in
+                          <a href="#fe-locations">Specifying Locations</a>.</li>
+                      </ul>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
+              <p>For example:</p>
+              <pre>
+"reporting_points": {
+  "BRIDGE": {
+    "names": ["Dumbarton bridge", "bridge", "Dumbarton"],
+    "location": "N037.30.25.200,W122.06.54.000"
+  }
+}
+              </pre>
+
             </section>
             <section class="docs-section" id="fe-departures">
               <h2 class="section-heading">Departures</h2>
@@ -4807,6 +4957,12 @@
                     <td>String</td>
                     <td>(<i>Optional</i>) A description that is shown in the UI for <a href="index.html#draw-routes">choosing routes to draw
                         on the radar scope</a>.</td>
+                  </tr>
+                  <tr>
+                    <td>"eram"</td>
+                    <td>Object</td>
+                    <td>(<i>Optional</i>) <a href="#fe-eram-entries">ERAM data block entries</a> the
+                      aircraft spawns with; ERAM facilities only.</td>
                   </tr>
                   <tr>
                     <td>"handoff_controller"</td>
@@ -5163,9 +5319,9 @@
                     <td>"cleared_altitude"</td>
                     <td>Number</td>
                     <td>(<i>Optional</i>) If specified, the aircraft will descend to the given altitude while still
-                      respecting any altitude restrictions on its waypoints. Use this instead of "assigned_altitude"
-                      when the route has altitude restrictions that must be honored (e.g., "cross REELI at or above
-                      11000") but the aircraft should continue descending after passing them.</td>
+                      respecting any altitude restrictions on its waypoints: it is a "descend via the STAR, except
+                      maintain" issued before the aircraft appears. Use this instead of "assigned_altitude" when the
+                      route has altitude restrictions that should still be honored.</td>
                   </tr>
                   <tr>
                     <td>"coordination_fix"</td>
@@ -5187,6 +5343,12 @@
                       the UI for <a href="index.html#draw-routes">drawing approaches on
                         the radar scope</a> to give further information about what
                       the route is used for.</td>
+                  </tr>
+                  <tr>
+                    <td>"eram"</td>
+                    <td>Object</td>
+                    <td>(<i>Optional</i>) <a href="#fe-eram-entries">ERAM data block entries</a> the
+                      aircraft spawns with; ERAM facilities only.</td>
                   </tr>
                   <tr>
                     <td>"expect_approach"</td>
@@ -5458,6 +5620,12 @@
                     <td>(<i>Optional</i>) A description of the overflight for use in <i>vice</i>'s user interface.</td>
                   </tr>
                   <tr>
+                    <td>"eram"</td>
+                    <td>Object</td>
+                    <td>(<i>Optional</i>) <a href="#fe-eram-entries">ERAM data block entries</a> the
+                      aircraft spawns with; ERAM facilities only.</td>
+                  </tr>
+                  <tr>
                     <td>"flight_type"</td>
                     <td>String</td>
                     <td>(<i>Optional</i>) How STARS should classify aircraft spawned from this overflight. Valid values are
@@ -5547,6 +5715,89 @@
               </table>
             </section>
 
+            <section class="docs-section" id="fe-eram-entries">
+              <h2 class="section-heading" data-nav-title="ERAM Data Block Entries">ERAM Data Block Entries</h2>
+
+              <p>
+                For aircraft that have been already worked by a controller before it is
+                handed off to a human controller, it is possible to specify ERAM data
+                block entries for values that would have been entered by a human controller:
+                assigned altitude, interim altitude, assigned heading, etc. The "eram"
+                object allows specifying these for arrivals, overflights, and
+                departures.
+                The entries are only used at ERAM facilities, and
+                it is an error to give them in a TRACON scenario group.
+              </p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Element</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>"assigned_altitude"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) The assigned altitude, in feet, as entered with QZ. For
+                      arrivals and overflights, this can only be used if no value for the
+                      aircraft's "assigned_altitude" has been given.</td>
+                  </tr>
+                  <tr>
+                    <td>"free_text"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) Up to 8 characters of free text for data block line 4, as
+                      entered with QS. It takes the place of "heading", as it does in ERAM.</td>
+                  </tr>
+                  <tr>
+                    <td>"heading"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) The assigned heading shown on data block line 4, as
+                      entered with QS.</td>
+                  </tr>
+                  <tr>
+                    <td>"interim_altitude"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) The interim altitude, in feet, as entered with QQ. It is
+                      shown in place of the assigned altitude, followed by the character for its
+                      "interim_type".</td>
+                  </tr>
+                  <tr>
+                    <td>"interim_type"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) Which sort of interim altitude "interim_altitude" is:
+                      "temp" (the default, shown as T), "procedure" (P), or "local" (L).</td>
+                  </tr>
+                  <tr>
+                    <td>"mach"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) The assigned mach shown on data block line 4, in
+                      hundredths: 78 is M.78. It cannot be given with "speed".</td>
+                  </tr>
+                  <tr>
+                    <td>"speed"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) The assigned speed in knots shown on data block line 4,
+                      as entered with QS.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                Line 4 holds one heading or free text and one speed, which is where the flight
+                plan's scratchpads are shown; "heading" and "free_text" therefore cannot be given
+                along with an arrival's or overflight's "scratchpad", nor "speed" and "mach" with
+                its "secondary_scratchpad". A departure route's entries take precedence over the
+                scratchpads of the departures that fly it.
+              </p>
+              <p>
+                Altitudes a virtual controller assigns along a route update the data block the same
+                way, as if that controller had made the entry: a
+                <a href="#fe-route-actions">/d or /dv action</a> amends the assigned altitude and a
+                /c or /cv action that stops short of it is an interim altitude.
+              </p>
+            </section>
+
             <section class="docs-section" id="fe-timetables">
               <h2 class="section-heading">Timetables and Historical Traffic</h2>
 
@@ -5567,6 +5818,15 @@
                 timetable for scenarios at that airport. The airport is inferred from the
                 directory name and the timetable's name from the file name.
               </p>
+              <p>
+                A scenario group can instead name the timetables its scenarios are offered with
+                <code>"timetables"</code>, which maps an airport to the names of its timetable
+                files without the <code>.csv</code> extension. A group that names timetables is
+                offered only those. A timetable that any group names is not offered to other
+                groups, which keeps a historical timetable out of the airport's modern scenarios.
+                For example, the M98 2005 scenarios use:
+              </p>
+              <pre><code class="language-json">"timetables": { "KMSP": ["MSP Circa Summer 2005"] }</code></pre>
               <p>The entries in each line of a timetable CSV file are:
                 callsign, origin airport ICAO, destination airport ICAO, aircraft type,
                 departure/arrival time (in local time at the airport), and a true/false
@@ -5584,8 +5844,10 @@
                   airport's "traffic_routes" defined in the scenario.</li>
                 <li>A recently-filed route for the exact city pair from <i>vice</i>'s
                   database of recent flights, stored in <code>resources/scraped-routes.json</code>.</li>
-                <li>real-world route for the exact city pair from the FAA's preferred
-                  route and coded departure route databases.</li>
+                <li>For a city pair with no recently-filed routes, a real-world route from the
+                  FAA's preferred route and coded departure route databases. A pair's recently-filed
+                  routes replace its FAA routes rather than just taking priority over them, since
+                  the FAA's preferred routes often aren't what is actually filed.</li>
               </ul>
               <p>Neither of the two route databases has good coverage of small airports,
                 so if a route is not found with an exact airport match, the route to/from a
@@ -5891,6 +6153,17 @@
                     </td>
                   </tr>
                   <tr>
+                    <td>"altitude_limits"</td>
+                    <td>Array of two numbers</td>
+                    <td><i>(ERAM only)</i> (<i>Optional</i>) The initial altitude limits filters for this scenario,
+                      given as [low, high] in hundreds of feet&mdash;the same range the ALT LIM toolbar button shows and
+                      the <code>QD</code> command sets. This sets the target filter and the limited datablock filter
+                      both, and may not be given along with <code>"target_altitude_limits"</code> or
+                      <code>"ldb_altitude_limits"</code>. A filter that is not specified lets everything through.
+                      These are overridden entirely by any of the three specified for the controller in
+                      <a href="#fe-config-common">"controllers"</a>.</td>
+                  </tr>
+                  <tr>
                     <td>"arrival_runways"</td>
                     <td>Array of objects</td>
                     <td><p>Each object specifies an airport, one of its runways, and an optional go-around procedure.
@@ -5961,6 +6234,8 @@
                     <td>"center"</td>
                     <td><a href="#fe-locations">Location</a></td>
                     <td>(<i>Optional</i>) If specified, this gives the initial radar scope center (as a <a href="#fe-locations">latitude-longitude position</a>.)
+                      This overrides the "areas" center and the top-level center in the facility configuration, but is
+                      itself overridden by any center specified in <a href="#fe-config-common">"controllers"</a>.
                     </td>
                   </tr>
                   <tr>
@@ -6058,6 +6333,11 @@
                     </td>
                   </tr>
                   <tr>
+                    <td>"flight_following_request_rate"</td>
+                    <td>Number</td>
+                    <td>(<i>Optional</i>) Default rate at which VFR aircraft in a controller's flight-following airspace request flight following, in requests per hour. Applied when the scenario is loaded; the value can be adjusted at any time via the launch-config UI. If unspecified, defaults to 10.</td>
+                  </tr>
+                  <tr>
                     <td>"inbound_rates"</td>
                     <td>Object</td>
                     <td>Each member specifies an inbound flow group and is an object that is a map
@@ -6070,19 +6350,40 @@
                     </td>
                   </tr>
                   <tr>
+                    <td>"listed_positions"</td>
+                    <td>Map of strings to strings</td>
+                    <td>(<i>Optional</i>) The control positions listed in the scenario information window, mapped
+                      to descriptions of their roles, in the same format as
+                      <a href="#fe-config-common">"listed_positions"</a> in "facility_adaptations".
+                      When given, it replaces the "listed_positions" of the scenario's
+                      <a href="#fe-scenarios">"configuration"</a> and of the facility; they are not merged.</td>
+                  </tr>
+                  <tr>
+                    <td>"ldb_altitude_limits"</td>
+                    <td>Array of two numbers</td>
+                    <td><i>(ERAM only)</i> (<i>Optional</i>) As <code>"altitude_limits"</code>, but sets only the filter
+                      applied to limited datablocks.</td>
+                  </tr>
+                  <tr>
                     <td>"range"</td>
                     <td>Number</td>
-                    <td>(<i>Optional</i>) If specified, gives the initial radar scope center range in nautical miles. This overrides the range given in the scenario group.</td>
+                    <td>(<i>Optional</i>) If specified, gives the initial radar scope range in nautical miles.
+                      For STARS facilities this is the scope radius (distance from center to scope edge); for ERAM
+                      facilities this is the vertical extent of the scope (top edge to bottom edge), matching the value
+                      shown on the ERAM RANGE toolbar button.
+                      This overrides the "areas" range and the top-level range in the facility configuration, but is
+                      itself overridden by any range specified in <a href="#fe-config-common">"controllers"</a>.</td>
+                  </tr>
+                  <tr>
+                    <td>"target_altitude_limits"</td>
+                    <td>Array of two numbers</td>
+                    <td><i>(ERAM only)</i> (<i>Optional</i>) As <code>"altitude_limits"</code>, but sets only the filter
+                      applied to target symbols and their history trails.</td>
                   </tr>
                   <tr>
                     <td>"vfr_rate_scale"</td>
                     <td>Number</td>
                     <td>Scale factor to adjust the rate of distractor VFR launches in the scenario. Set to 0 for none.</td>
-                  </tr>
-                  <tr>
-                    <td>"flight_following_request_rate"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) Default rate at which VFR aircraft in a controller's flight-following airspace request flight following, in requests per hour. Applied when the scenario is loaded; the value can be adjusted at any time via the launch-config UI. If unspecified, defaults to 10.</td>
                   </tr>
                   <tr>
                     <td>"wind"</td>
