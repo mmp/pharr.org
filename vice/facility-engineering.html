@@ -212,11 +212,48 @@
             </header>
 
                 <p>When developing scenarios, you might make a copy of an existing scenario's JSON file and modify it in order to add more configurations,
-                  or you or might specify completely new scenario and video map files if you're working on support for a new TRACON.
+                  or you might write completely new scenario and video map files if you're working on support for a new TRACON.
                   As part of this you may also need to modify the configuration file for the facility.
+                  You keep these files in an <a href="#fe-overlay-directory">overlay directory</a>.
                   As you work, you can use <a href="#fe-backshop">backshop</a> to check your work; it's a stand-alone tool for scenario development in <i>vice</i>.
-                  Alternatively, you can have <i>vice</i> load your updated files when it launches and run the scenarios as a user would there; 
+                  Alternatively, you can have <i>vice</i> load your updated files when it launches and run the scenarios as a user would there.
                 </p>
+
+            <section class="docs-section" id="fe-overlay-directory">
+              <h2 class="section-heading" data-nav-title="Overlay Directory">The Overlay Directory</h2>
+                <p>
+                  The overlay directory is a directory of your choosing that holds the files you're working on. It is
+                  organized like <i>vice</i>'s resources directory, and <i>vice</i> and <i>backshop</i> load its files
+                  along with the built-in ones:
+                </p>
+                <ul>
+                  <li>A file in the overlay directory is used in place of the built-in file at the same path. For example,
+                    <code>scenarios/n90.json</code> in the overlay directory replaces <i>vice</i>'s N90 scenarios and
+                    <code>configurations/ZNY/N90.json</code> replaces its N90 facility configuration. To modify a built-in
+                    file, copy it from the <a href="https://github.com/mmp/vice/tree/master/resources"><code>resources/</code> directory</a>
+                    in the <i>vice</i> source code to the same path in the overlay directory.</li>
+                  <li>Files at paths that <i>vice</i> doesn't have are loaded along with the built-in ones. A new TRACON's
+                    scenarios, facility configuration, and video maps go in the overlay directory's <code>scenarios/</code>,
+                    <code>configurations/<i>ARTCC</i>/</code>, and <code>videomaps/</code> directories.</li>
+                  <li>Paths are compared without regard to upper- and lower-case on all operating systems, so
+                    <code>scenarios/N90.json</code> in the overlay directory also replaces the built-in
+                    <code>scenarios/n90.json</code>.</li>
+                </ul>
+                <p>
+                  Each time <i>vice</i> or <i>backshop</i> launches, and when an overlay directory is first selected, it creates
+                  the directories that <i>vice</i>'s resources directory has in the overlay directory: <code>scenarios/</code>,
+                  <code>configurations/ZNY/</code>, <code>briefs/ZNY/</code>, <code>videomaps/</code>, and so forth.
+                  (If the overlay directory itself has been removed, it is disabled with a warning instead.)
+                  Once it has loaded the scenarios, it lists any files in the overlay directory that it didn't read, since
+                  a misspelled file or directory name means that a file isn't loaded. (<i>backshop</i> lists them in its
+                  Scenario tab and <code>vice -lint</code> prints them.)
+                </p>
+                <p>
+                  If the files in the overlay directory have errors, <i>vice</i> lists them when it starts and offers to
+                  disable the overlay directory before it exits, so that it can be relaunched without it. The files
+                  themselves are left as they are.
+                </p>
+            </section>
 
             <section class="docs-section" id="fe-backshop">
               <h2 class="section-heading" data-nav-title="Backshop">Backshop</h2>
@@ -226,8 +263,7 @@
                   can be copied to the clipboard, since it is all destined for hand-written JSON.
                 </p>
                 <p>
-                  Work-in-progress scenario, video map, brief, and facility configuration files can be specified
-                  under "Additional files" in the Scenario tab.
+                  The <a href="#fe-overlay-directory">overlay directory</a> is selected in the Scenario tab.
                 </p>
                 <p>
                   Most importantly, it reloads edited scenario JSON in place: pressing <code>[Control-R]</code>
@@ -315,34 +351,24 @@
                   after opening the <i>zip</i> file, drag <i>Backshop.app</i> to your <i>Applications</i> folder to
                   install it.
                 </p>
-                <a href="https://github.com/mmp/vice/releases/download/v0.15.2/Backshop-v0.15.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.2 for Mac</a>
+                <a href="https://github.com/mmp/vice/releases/download/v0.15.3/Backshop-v0.15.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Backshop v0.15.3 for Mac</a>
             </section>
 
             <section class="docs-section" id="fe-testing-in-vice">
               <h2 class="section-heading" data-nav-title="Testing in Vice">Testing in Vice</h2>
               <p>
-                Another way way to try out your work is to open the "Settings" menu in <i>vice</i> (shown by clicking the <i class="fas fa-cog"></i> icon in the menu bar)
-                  and selecting "Facility Engineering". There, you can specify the locations of additional scenario, video map, and/or facility configuration files to load when <i>vice</i> is launched.</p>
-                <div class="text-center">
-                  <img src="fe-scenario-videomap-ui.png" srcset="fe-scenario-videomap-ui-2x.png 2x" width="539" height="227">
-                </div>
-                <br>
+                Another way to try out your work is to have <i>vice</i> load your <a href="#fe-overlay-directory">overlay directory</a>.
+                  Open the "Settings" menu in <i>vice</i> (shown by clicking the <i class="fas fa-cog"></i> icon in the menu bar),
+                  select "Facility Engineering", and click "Select" next to "Overlay directory". <i>vice</i> loads the overlay
+                  directory's files when it launches, so it must be restarted after they are changed.</p>
                 <p>
-                  Alternatively, if you're comfortable with the command line, you can specify additional files with command-line arguments.
+                  Alternatively, if you're comfortable with the command line, you can give the overlay directory with the
+                  <code>-overlay</code> command-line option, which takes precedence over the one selected in the settings.
                   On Windows, open up a command prompt and set the directory to the folder with the <i>vice</i> executable (generally,
-                  <code>C:\Program Files (x86)\Vice</code>. Then, run
-                  <code>vice.exe -scenario path_to_scenario_file -videomap path_to_videomap_file</code>. On MacOs,
+                  <code>C:\Program Files (x86)\Vice</code>). Then, run
+                  <code>vice.exe -overlay path_to_overlay_directory</code>. On MacOs,
                   it's very similar: change the directory in the terminal to where Vice.app is located (often, <code>/Applications/Vice.app</code>,
-                  depending on where you installed it. Then, run <code>./Vice.app/Contents/MacOs/vice -scenario path_to_scenario_file -videomap path_to_videomap_file</code>.
-                </p>
-                <p>
-                  If you're editing an existing scenario, you may want to make a copy of it to a folder outside of <code>resources/scenarios</code>
-                  to edit it there. In that case, if the scenario given via the UI or command line has the same <code>"name"</code>
-                  value as an existing scenario, it will be used in place of the existing one.
-                </p>
-                <p>When you're working on a new scenario, you may omit the "video_map_file" specifier in its JSON file.
-                  In this case, <i>vice</i> will automatically use the video map file you specified via <code>-videomap</code>
-                  or via the UI.
+                  depending on where you installed it). Then, run <code>./Vice.app/Contents/MacOs/vice -overlay path_to_overlay_directory</code>.
                 </p>
 
 
@@ -419,6 +445,9 @@
                 <ul>
                   <li><code>viceserver</code> (with no arguments) launches a
                     <i>vice</i> server on your local system.</li>
+                  <li><code>-overlay</code> (passed to <code>viceserver</code>)
+                    gives an <a href="#fe-overlay-directory">overlay directory</a>
+                    whose files the server loads along with the built-in ones.</li>
                   <li><code>-server</code> (passed to the <i>vice</i>
                     client) specifies the IP address and (optionally), the
                     port of a <i>vice</i> server to connect to. Specifying
@@ -438,7 +467,7 @@
                   <li><strong>Navigate to the vice directory:</strong> Enter <code>cd "c:\Program Files (x86)\Vice"</code><br>
                     <em>Note: The quotes are essential if the path contains spaces.</em>
                   </li>
-                  <li><strong>Start the multi-controller server:</strong> Enter <code>viceserver.exe</code><br/>
+                  <li><strong>Start the multi-controller server:</strong> Enter <code>viceserver.exe -overlay path_to_overlay_directory</code><br/>
                     If there are errors in your scenario configuration, they will be displayed here. Otherwise, the server launches and will be
                     running in the background.
                   </li>
@@ -772,7 +801,9 @@
                 block as well, as the virtual controller issuing them would have entered them:
                 <code>/d</code> and <code>/dv</code> amend the assigned altitude, as do
                 <code>/c</code> and <code>/cv</code> to an altitude at or above it, while a climb
-                that stops short of the assigned altitude becomes an interim altitude. See
+                that stops short of the assigned altitude becomes an interim altitude. Only ERAM
+                controllers make these entries. The altitudes a virtual TRACON controller assigns
+                leave the data block as it is. See
                 <a href="#fe-eram-entries">ERAM Data Block Entries</a>.
               </p>
 
@@ -1349,15 +1380,9 @@
                 When a scenario is loaded, <i>vice</i> automatically loads the corresponding facility configuration
                 based on the scenario's "tracon" field for a TRACON scenario or its "artcc" field for an enroute (ERAM) scenario.
               </p>
-              <p>When you're working on a facility's configuration, you can load your own copy of it with the
-                <code>-facilityconfig</code> command-line option or by selecting it from the "Facility Engineering" entry
-                in the settings menu. It replaces the configuration file with the same filename&mdash;a file named
-                <code>N90.json</code> takes the place of <code>resources/configurations/ZNY/N90.json</code>&mdash;so
-                the filename must match one of the built-in configurations. If the file has any errors, they are reported
-                in a dialog box when <i>vice</i> starts and the built-in configuration is used instead.
-                Two configuration files may be overridden at once&mdash;for example, both a TRACON's and its
-                ARTCC's&mdash;by selecting a second file in the settings menu or by giving the
-                <code>-facilityconfig</code> option twice.
+              <p>When you're working on a facility's configuration, put your copy of it at the same path in your
+                <a href="#fe-overlay-directory">overlay directory</a>: <code>configurations/ZNY/N90.json</code> there takes
+                the place of <i>vice</i>'s <code>resources/configurations/ZNY/N90.json</code>.
               </p>
               <p>Each facility configuration file may contain the following top-level elements:</p>
               <table class="table">
@@ -1522,6 +1547,17 @@
                   <tbody>
 
                     <tr>
+                      <td>"altitude_range"</td>
+                      <td>Array of two numbers</td>
+                      <td>(<i>Optional</i>) The altitude range of the facility's airspace, given as [low, high] in feet.
+                        It is currently used only by ERAM, which displays an active special use airspace only if one of
+                        its volumes overlaps the range; the DISPLAY button in the SAA FILTER view overrides this for
+                        an individual area. A controller who covers several positions gets the union of their
+                        ranges. If unspecified, the default is [10000, 60000].
+                        The order of precedence is "controllers", then the scenario's "altitude_range",
+                        then "areas", then this.</td>
+                    </tr>
+                    <tr>
                       <td>"areas"</td>
                       <td>Object</td>
                       <td><p>Defines per-area configuration for TRACON areas.
@@ -1554,6 +1590,14 @@
                                   for controllers in this area. Overridden by per-controller
                                   <code>"altimeters"</code> and overrides the facility-level
                                   <code>"facility_adaptations"."lists"."ssa"."altimeters"</code> setting.</td>
+                              </tr>
+                              <tr>
+                                <td>"altitude_range"</td>
+                                <td>Array of two numbers</td>
+                                <td>The altitude range of the airspace of controllers in this area, given as [low, high]
+                                  in feet; see the top-level <a href="#fe-config-common">"altitude_range"</a>.
+                                  The order of precedence is "controllers", then the scenario's "altitude_range",
+                                  then this, then the top-level "altitude_range" in the facility configuration.</td>
                               </tr>
                               <tr>
                                 <td>"system_altimeter"</td>
@@ -1629,6 +1673,20 @@
                         </details>
                     </td></tr>
                     <tr>
+                      <td>"atis_airports"</td>
+                      <td>Array of strings</td>
+                      <td>(<i>Optional</i>) The airports shown, in this order, in the "ATIS / METAR" section of the
+                        scenario information window: for example, <code>["KJFK", "KLGA"]</code>. Without it, the
+                        section shows every airport in the scenario's <a href="#fe-scenarios">"departure_runways"</a>
+                        and <a href="#fe-scenarios">"inbound_rates"</a>. A scenario shows only the listed airports
+                        that are among those, and each listed airport must be among them for at least one scenario
+                        that uses the list.
+                        This is used only for scenarios that don't specify their own
+                        <a href="#fe-scenarios">"atis_airports"</a> and whose
+                        <a href="#fe-config-common">"configurations"</a> entry doesn't either; only one of the three
+                        is used and they are not merged.</td>
+                    </tr>
+                    <tr>
                       <td>"center"</td>
                       <td><a href="#fe-locations">Location</a></td>
                       <td>Default radar scope center (as a <a href="#fe-locations">latitude-longitude position</a>.)</td>
@@ -1656,6 +1714,15 @@
                             </thead>
                             <tbody>
 
+                              <tr>
+                                <td>"atis_airports"</td>
+                                <td>Array of strings</td>
+                                <td>(<i>Optional</i>) The airports shown in the "ATIS / METAR" section of the scenario
+                                  information window for scenarios that use this configuration. The format is the same
+                                  as the facility-level <a href="#fe-config-common">"atis_airports"</a>, which this
+                                  replaces rather than adds to. A scenario may in turn replace it with its own
+                                  <a href="#fe-scenarios">"atis_airports"</a>.</td>
+                              </tr>
                               <tr>
                                 <td>"default_consolidation"</td>
                                 <td>Map of strings to arrays of strings</td>
@@ -1717,6 +1784,14 @@
                                   direction is used for the leader line. This takes effect after per-aircraft
                                   and FDAM direction overrides but before controller default directions.</td>
                               </tr>
+                              <tr>
+                                <td>"stars_macros"</td>
+                                <td>Array of objects</td>
+                                <td>(<i>Optional</i>) The STARS keyboard macros for scenarios that use this
+                                  configuration. The format is the same as the facility-level
+                                  <a href="#fe-stars-macros">"stars_macros"</a>, which this replaces rather than
+                                  adds to.</td>
+                              </tr>
                             </tbody>
                           </table>
                         </details>
@@ -1759,6 +1834,14 @@
                                   A controller that specifies any of the three takes both of its filters from its own
                                   settings, ignoring the ones in <a href="#fe-scenarios">"scenarios"</a>; a filter that
                                   is not specified lets everything through.</td>
+                              </tr>
+                              <tr>
+                                <td>"altitude_range"</td>
+                                <td>Array of two numbers</td>
+                                <td>The altitude range of the controller's airspace, given as [low, high] in feet; see
+                                  the top-level <a href="#fe-config-common">"altitude_range"</a>.
+                                  This takes highest priority, overriding the scenario's "altitude_range",
+                                  the "areas" altitude range, and the top-level altitude range.</td>
                               </tr>
                               <tr>
                                 <td>"beacon_code_blocks"</td>
@@ -2114,6 +2197,14 @@
                           </table>
                         </details>
                     </td></tr>
+                    <tr>
+                      <td>"conflict_alert_floor"</td>
+                      <td>Number</td>
+                      <td>(<i>Optional</i>) The conflict alert floor, in feet. An unpaired Mode C target at or above
+                        it is a possible Mode C intruder and is drawn with the MCI correlated track symbol (an
+                        I-beam); one below it is drawn as an uncorrelated beacon target, or with a V if it squawks 1200.
+                        If unspecified, the default is 6000.</td>
+                    </tr>
                     <tr>
                       <td>"restrictions"</td>
                       <td>Array of objects</td>
@@ -3788,7 +3879,9 @@
                     <tr>
                       <td>"stars_macros"</td>
                       <td>Array of objects</td>
-                      <td>Defines keyboard macros that chain multiple STARS commands together.</td>
+                      <td>Defines keyboard macros that chain multiple STARS commands together.
+                        A configuration in <a href="#fe-config-common">"configurations"</a> may replace
+                        them with its own "stars_macros".</td>
                     </tr>
                     <tr><td colspan="3">
                         <details class="json-fields" id="fe-stars-macros"><summary>"stars_macros" members</summary>
@@ -3945,9 +4038,8 @@
                     </ul>
                   </li>
                   <li>Pass <code>-out &lt;dir&gt;</code> to write to a different output directory.</li>
-                  <li>Copy the resulting <code>.mappack</code> file(s) to the <code>resources/videomaps</code> folder
-                    in your <code>%APPDATA%\Vice</code> directory, or pass the path to a file via the
-                    <code>-videomap</code> command-line option to <i>vice</i>.</li>
+                  <li>Copy the resulting <code>.mappack</code> file(s) to the <code>videomaps</code> folder
+                    in your <a href="#fe-overlay-directory">overlay directory</a>.</li>
                 </ul>
                 <h3 id="fe-video-maps-dat2vice">dat2vice</h3>
                 <p><code>dat2vice</code>  extracts video maps from the FAA DAT video map file format and converts them to <i>vice</i>'s internal format.</p>
@@ -4246,16 +4338,22 @@
                         See <a href="#fe-approaches">below for documentation about how approaches are specified</a>.</p></td>
                   </tr>
                   <tr>
-                    <td>"atpa_volumes"</td>
+                    <td>"atpa"</td>
                     <td>Object</td>
-                    <td><p>Each member is a string with a runway name and an associated object that specifies the region of space where
-                        the STARS automated terminal proximity alert (ATPA) feature is active for the runway. (If not specified, a default
-                        volume is generated along the runway's extended centerline.)</p>
-
+                    <td><p>Each member is a string with a runway name and an associated object that configures the STARS
+                        automated terminal proximity alert (ATPA) for the runway: how in-trail separation is monitored for the
+                        aircraft landing on it and the volumes of space where ATPA is active.</p>
+                      <p>ATPA volumes are generated from the runway's approaches: one for each distinct final approach course,
+                        following the course from the runway threshold out to the volume's length, so that an offset localizer or an
+                        RNAV final that turns onto the runway is covered. Approaches that share a course share a volume. The volume
+                        along the runway's own centerline is named after the runway; any other is named after the approach that
+                        defines it, as it is listed in "approaches". The volume dimensions given here apply to all of the runway's
+                        volumes. A runway that isn't listed gets volumes with default settings: 15nm long, 2000 feet either side of the
+                        course, from 100 feet to 5000 feet above the airport.</p>
                     </td>
                   </tr>
                   <tr><td colspan="3">
-                      <details class="json-fields"><summary>"atpa_volumes" members</summary>
+                      <details class="json-fields"><summary>"atpa" members</summary>
                         <table class="table">
                           <thead>
                             <tr><th>Element</th><th>Type</th><th>Description</th></tr>
@@ -4263,19 +4361,9 @@
                           <tbody>
 
                             <tr>
-                              <td>"2.5nm_distance"</td>
-                              <td>Number</td>
-                              <td>Distance from runway threshold at which 2.5nm separation is allowed, if "enable_2.5nm" is true.</td>
-                            </tr>
-                            <tr>
                               <td>"ceiling"</td>
                               <td>Number</td>
                               <td>Top altitude of the volume, in feet.</td>
-                            </tr>
-                            <tr>
-                              <td>"enable_2.5nm"</td>
-                              <td>Boolean</td>
-                              <td>Indicates whether reduced 2.5nm separation is allowed on final approach.</td>
                             </tr>
                             <tr>
                               <td>"excluded_scratchpads"</td>
@@ -4297,41 +4385,33 @@
                               <td>Bottom altitude of the volume, in feet.</td>
                             </tr>
                             <tr>
-                              <td>"heading"</td>
-                              <td>Number</td>
-                              <td>Runway heading or orientation of the volume.</td>
-                            </tr>
-                            <tr>
-                              <td>"id"</td>
-                              <td>String</td>
-                              <td>(<i>Optional</i>) Name of the volume. If not specified, the runway is used.</td>
-                            </tr>
-                            <tr>
                               <td>"left_width"</td>
                               <td>Number</td>
-                              <td>Width the volume extends to the left of the extended centerline, where "left" is with respect to an
-                                aircraft flying the approach.</td>
+                              <td>Width in feet that the volume extends to the left of the final approach course, where "left" is with
+                                respect to an aircraft flying the approach.</td>
                             </tr>
                             <tr>
                               <td>"length"</td>
                               <td>Number</td>
-                              <td>Length of the volume, from "runway_threshold" in direction "heading", given in nautical miles.</td>
+                              <td>Length of the volume along the final approach course from the runway threshold, given in nautical
+                                miles.</td>
                             </tr>
                             <tr>
                               <td>"max_heading_deviation"</td>
                               <td>Number</td>
-                              <td>Maximum deviation between an aircraft's heading and the ATPA volume heading allowed for an
-                                aircraft to be included in ATPA.</td>
+                              <td>Maximum deviation between an aircraft's heading and the final approach course where the aircraft is
+                                allowed for an aircraft to be included in ATPA.</td>
+                            </tr>
+                            <tr>
+                              <td>"reduced_separation"</td>
+                              <td>Boolean</td>
+                              <td>Authorizes 2.5nm in-trail separation for aircraft established on the final approach course within
+                                10nm of the runway (7110.65 5-5-4.j).</td>
                             </tr>
                             <tr>
                               <td>"right_width"</td>
                               <td>Number</td>
-                              <td>Width the volume extends to the right of the extended centerline.</td>
-                            </tr>
-                            <tr>
-                              <td>"runway_threshold"</td>
-                              <td><a href="#fe-locations">Location</a></td>
-                              <td>Position of the runway threshold or point to use for the start of the volume.</td>
+                              <td>Width in feet that the volume extends to the right of the final approach course.</td>
                             </tr>
                           </tbody>
                         </table>
@@ -4788,7 +4868,8 @@
                   <tr>
                     <td>"type"</td>
                     <td>String</td>
-                    <td>The type of the approach; it must be "ILS", "Localizer", "RNAV", "ChartedVisual", "Visual", or "VOR".</td>
+                    <td>The type of the approach; it must be "ILS", "Localizer", "LDA", "RNAV", "VOR", "NDB", "ChartedVisual", or "Visual".
+                      "ILS" and "Localizer" approaches must be aligned with their runway; an offset localizer is an "LDA".</td>
                   </tr>
                   <tr>
                     <td>"waypoints"</td>
@@ -5029,7 +5110,7 @@
                 When "waypoints" isn't given, the route comes from the CIFP's coding of the SID: the SID's transition for
                 the departure runway, followed by the enroute transition that leads to the exit fix, ending at the exit.
                 If no enroute transition includes the exit, the route follows the SID's common route to its end
-                and the aircraft then proceeds along the departure's "route" from there. It is an error to omit
+                and the aircraft then proceeds along the departure's "waypoints" from there. It is an error to omit
                 "waypoints" if the SID isn't in the CIFP for the airport or if the CIFP gives no runway transition
                 for the departure runway (unless "initial_heading" or a "climbout_actions" heading is given;
                 see below).
@@ -5131,8 +5212,8 @@
   ],
   "destination": "LPFG",
   "exit": "HAPIE",
-  "route": "HAPIE YAHOO WHALE N251A JOOPY NATZ MALOT NATZ GISTI LESLU M142 LND N160 NAKID M25 ANNET UM25 UVSUV UM25 INGOR UM25 LUKIP LUKIP9E",
   "scratchpad": "HAP",
+  "waypoints": "HAPIE YAHOO WHALE N251A JOOPY NATZ MALOT NATZ GISTI LESLU M142 LND N160 NAKID M25 ANNET UM25 UVSUV UM25 INGOR UM25 LUKIP LUKIP9E",
   },
   ...
               </pre>
@@ -5170,16 +5251,6 @@
                       route leaving the airport using "departure_routes".</td>
                   </tr>
                   <tr>
-                    <td>"route"</td>
-                    <td>String</td>
-                    <td>The aircraft's route to the destination. This is mostly used so that flight strips have plausible routes, though
-                      <i>vice</i> does its best to have the aircraft follow the given route after it reaches the exit fix.
-                      It is an error for the route to spell out the exit's SID fixes between the exit and where the route
-                      leaves the SID: real-world filings name such fixes with the SID and a transition rather than spelling
-                      them out, so they would be lost for real-traffic flights. The exit belongs at the last of the SID's
-                      fixes the route follows, with "sid" flying the aircraft there as the CIFP charts it.</td>
-                  </tr>
-                  <tr>
                     <td>"scratchpad"</td>
                     <td>String</td>
                     <td>(<i>Optional</i>) If specified, this gives the aircraft's initial scratchpad. Otherwise, the scratchpad
@@ -5190,6 +5261,16 @@
                     <td>"secondary_scratchpad"</td>
                     <td>String</td>
                     <td>(<i>Optional</i>) If specified, this gives the aircraft's initial secondary scratchpad.</td>
+                  </tr>
+                  <tr>
+                    <td>"waypoints"</td>
+                    <td>String</td>
+                    <td>The aircraft's route from the exit fix to the destination. The aircraft flies it after reaching
+                      the exit fix, and it is the route shown on the flight strip.
+                      It is an error for it to spell out the exit's SID fixes between the exit and where the route
+                      leaves the SID: real-world filings name such fixes with the SID and a transition rather than spelling
+                      them out, so they would be lost for real-traffic flights. The exit belongs at the last of the SID's
+                      fixes the route follows, with "sid" flying the aircraft there as the CIFP charts it.</td>
                   </tr>
                 </tbody>
               </table>
@@ -5362,6 +5443,14 @@
                     </td>
                   </tr>
                   <tr>
+                    <td>"flight_strip_route"</td>
+                    <td>String</td>
+                    <td>(<i>Optional</i>) The aircraft's remaining route as shown on its flight strip and in its
+                      flight plan. <b>It does not affect navigation, which follows "waypoints" or the "star".</b>
+                      Without it the flight plan shows the "star",
+                      and an arrival that gives neither shows no route at all.</td>
+                  </tr>
+                  <tr>
                     <td>"initial_altitude"</td>
                     <td>Number or array of numbers</td>
                     <td>The altitude aircraft will have when first spawned.
@@ -5385,14 +5474,6 @@
                     <td>"is_rnav"</td>
                     <td>Boolean</td>
                     <td>(<i>Optional</i>) If true, aircraft on this arrival will have the RNAV flag set in their flight plan.</td>
-                  </tr>
-                  <tr>
-                    <td>"route"</td>
-                    <td>String</td>
-                    <td>(<i>Optional</i>) The aircraft's remaining route. <b>This is only used for displaying the
-                        aircraft's flight plan, e.g. in flight strips; it does not affect navigation.</b>
-                      Without it the flight plan shows the "star",
-                      and an arrival that gives neither shows no route at all.</td>
                   </tr>
                   <tr>
                     <td>"scratchpad"</td>
@@ -5603,9 +5684,9 @@
                   </tr>
                   <tr>
                     <td>"assigned_speed"</td>
-                    <td>Number</td>
+                    <td>Number or String</td>
                     <td>(<i>Optional</i>) If specified, gives a controller-assigned speed for the aircraft, in knots
-                      between 50 and 350.</td>
+                      between 50 and 350, or as a Mach number such as "M78" for an overflight at FL240 or above.</td>
                   </tr>
                   <tr>
                     <td>"cruise_altitude"</td>
@@ -5770,31 +5851,28 @@
                       "temp" (the default, shown as T), "procedure" (P), or "local" (L).</td>
                   </tr>
                   <tr>
-                    <td>"mach"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) The assigned mach shown on data block line 4, in
-                      hundredths: 78 is M.78. It cannot be given with "speed".</td>
-                  </tr>
-                  <tr>
                     <td>"speed"</td>
-                    <td>Number</td>
-                    <td>(<i>Optional</i>) The assigned speed in knots shown on data block line 4,
-                      as entered with QS.</td>
+                    <td>Number or String</td>
+                    <td>(<i>Optional</i>) The assigned speed shown on data block line 4, as entered
+                      with QS: knots, or a Mach number such as "M78".</td>
                   </tr>
                 </tbody>
               </table>
               <p>
                 Line 4 holds one heading or free text and one speed, which is where the flight
                 plan's scratchpads are shown; "heading" and "free_text" therefore cannot be given
-                along with an arrival's or overflight's "scratchpad", nor "speed" and "mach" with
-                its "secondary_scratchpad". A departure route's entries take precedence over the
+                along with an arrival's or overflight's "scratchpad", nor "speed" with its
+                "secondary_scratchpad". A departure route's entries take precedence over the
                 scratchpads of the departures that fly it.
               </p>
               <p>
-                Altitudes a virtual controller assigns along a route update the data block the same
-                way, as if that controller had made the entry: a
+                Altitudes a virtual ERAM controller assigns along a route update the data block the
+                same way, as if that controller had made the entry: a
                 <a href="#fe-route-actions">/d or /dv action</a> amends the assigned altitude and a
-                /c or /cv action that stops short of it is an interim altitude.
+                /c or /cv action that stops short of it is an interim altitude. TRACON controllers
+                can't make data block entries, so a departure reaches the first ERAM controller
+                showing its filed altitude unless its departure route's "eram" entries give it
+                others.
               </p>
             </section>
 
@@ -6009,6 +6087,8 @@
                 It keeps doing this until it finds a valid route, but eventually it will give up if it's not being successful.
                 Thus, feel free to define routes that are close to the boundaries of such airspace, but give <i>vice</i>
                 some space to work with via <code>/radius</code> and altitude ranges so that it has a chance of finding a valid route.
+                Random routes are also kept clear of the terrain; routes given in "routes" are not, so their altitudes
+                must clear it themselves.
               </p>
               <p>Two other useful tools when working on VFR: in the STARS scope, if you type <code>.VFR</code> and
                 press enter, <i>vice</i> will show all of the VFR departure airports by drawing a circle around their location
@@ -6164,6 +6244,14 @@
                       <a href="#fe-config-common">"controllers"</a>.</td>
                   </tr>
                   <tr>
+                    <td>"altitude_range"</td>
+                    <td>Array of two numbers</td>
+                    <td>(<i>Optional</i>) The altitude range of the controllers' airspace in this scenario, given as
+                      [low, high] in feet; see the top-level <a href="#fe-config-common">"altitude_range"</a> in the
+                      facility configuration. This overrides the "areas" altitude range and the top-level one, but is
+                      itself overridden by any altitude range specified in <a href="#fe-config-common">"controllers"</a>.</td>
+                  </tr>
+                  <tr>
                     <td>"arrival_runways"</td>
                     <td>Array of objects</td>
                     <td><p>Each object specifies an airport, one of its runways, and an optional go-around procedure.
@@ -6230,6 +6318,15 @@
                         </table>
                       </details>
                   </td></tr>
+                  <tr>
+                    <td>"atis_airports"</td>
+                    <td>Array of strings</td>
+                    <td>(<i>Optional</i>) The airports shown in the "ATIS / METAR" section of the scenario information
+                      window, in the same format as <a href="#fe-config-common">"atis_airports"</a> in
+                      "facility_adaptations". Each must be an airport in this scenario's "departure_runways" or
+                      "inbound_rates". When given, it replaces the "atis_airports" of the scenario's
+                      <a href="#fe-scenarios">"configuration"</a> and of the facility; they are not merged.</td>
+                  </tr>
                   <tr>
                     <td>"center"</td>
                     <td><a href="#fe-locations">Location</a></td>
@@ -6450,12 +6547,11 @@
                 brief would live at <code>resources/briefs/ZNY/ZNY.md</code>.
               </p>
               
-              <p>An additional brief file can be loaded with the
-                <code>-scenariobrief</code> command-line option or selected from
-                the "Facility Engineering" entry in the settings menu; if its
-                filename matches a facility that already has a built-in
-                brief, it replaces the built-in one&mdash;this is handy for iterating on a
-                brief without modifying the installed resources.</p>
+              <p>A brief at the same path in your
+                <a href="#fe-overlay-directory">overlay directory</a>, such as
+                <code>briefs/ZNY/N90.md</code>, replaces the built-in
+                one&mdash;this is handy for iterating on a brief without
+                modifying the installed resources.</p>
 
               <p>While the brief is visible, pressing <code>Ctrl+R</code> (or <code>Command-R</code> on Macs)
                 reloads it from disk, so iteration on a brief is fast: edit the Markdown,
