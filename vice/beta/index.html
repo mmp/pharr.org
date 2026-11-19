@@ -129,7 +129,7 @@
 
 	    <section class="docs-intro">
               <p>
-                <i>vice</i> is an air traffic control simulator, focused on TRACON and enroute scenarios; it provides an accurate simulation of the STARS system for TRACON and the ERAM system for enroute.
+                <i>vice</i> is an air traffic control simulator; it provides an accurate simulation of the STARS system for TRACON scenarios and the ERAM system for enroute.
                 Simulations have simulated traffic and virtual controllers covering other positions.
                 Instructions may be given to aircraft verbally or via the keyboard; pilot responses are generated using speech synthesis.
                 <i>vice</i> also supports multiple-user scenarios, where each person controls a different position at a facility.
@@ -137,13 +137,13 @@
               </p>
               <p><i>vice</i> supports departure and arrival control
                 scenarios in numerous TRACONs and ATCT/TRACONs:
-A11 A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, BTV, BUF, C90, CHS,
-CID, CLE, CLT, COS, CPR, CVG, D01, D10, D21, DAB, F11, GSO, GSP, GTF, HNL, I90, IND, JAX, L30, M98,
-MCI, MDT, MIA, MKE, MYR, N90, NCT, OGG, OKC, P31, P50, P80, PCT, PHL, PIT, PVD, PWM, R90, RDU, S46,
-S56, SAT, SAV, SBA, SBN, SCT, SDF, SGF, SYR, TPA, and
-Y90.
+A11, A80, A90, AAC, ABE, ABQ, AGS, ALB, ASE, AUS, AVL, BGR, BHM, BIL, BNA, BOI, BTV
+BUF, C90, CHS, CID, CLE, CLT, COS, CPR, CVG, D01, D10, D21, DAB, EUG, F11, FAR, FAT
+GSO, GSP, GTF, HNL, HSV, I90, ILM, IND, JAX, L30, LBB, LTS, M03, M98, MCI, MDT, MIA
+MKE, MYR, N90, NCT, OGG, OKC, ORF, P31, P50, P80, PBI, PCT, PHL, PIT, PVD, PWM, R90
+RDU, RSW, S46, S56, SAT, SAV, SBA, SBN, SCT, SDF, SGF, SYR, T75, TPA, TYS, and Y90.
 Enroute scenarios are available for 
-ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
+ZSU, ZBW, ZDC, ZDV, ZFW, ZJX, ZLA, ZLC, ZME, ZNY, and ZTL.
                 New scenarios are regularly added.
               </p>
               <p>
@@ -161,118 +161,258 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
 
 	  <section class="docs-section" id="started">
             <h2 class="section-heading">Getting Started</h2>
-            <p>The radar client interfaces that <i>vice</i> provides are based on STARS and ERAM.
-              For familiarity to VATSIM controllers, <i>vice</i> generally follows the keyboard command scheme implemented
-              in <a href="https://crc.virtualnas.net/docs/#/">CRC's STARS implementation</a>; see
-              the discussion of <a href="#section-stars"><i>vice</i>'s STARS
-              emulation</a> below for more information.
+            <p>The radar client interfaces that <i>vice</i> provides are based on the STARS and ERAM systems used by air traffic controllers in the United States.
             </p>
             <h3 id="launching-a-simulation">Launching A Simulation</h3>
             <p>
-              The first time you launch <i>vice</i>, a window is shown for configuring the simulation.
-              (After the first time, the window can be brought up by clicking the "replay" button in the menubar: <i class="fas fa-redo"></i>.)
-              A number of scenarios are available, some departure-only and
-              some including both departures and arrivals.
+              The first time that you start <i>vice</i>, it shows the "New Simulation" window.
+              After that, click <i class="fas fa-redo"></i> in the menu bar to open it.
+              In this window, you choose a <i>scenario</i>: the airspace, controller positions, and traffic flows of a simulation.
               Here is an example:
             </p>
             <div class="text-center">
-              <img src="config.png" srcset="config-2x.png 2x" width="716" height="731">
+              <img src="config.png" srcset="config-2x.png 2x" width="720" height="736" class="img-fluid" alt="scenario selection page of the New Simulation window">
             </div>
             <br>
-            <p>After selecting an ARTCC, the available TRACONs and ATCT/TRACONs in that ARTCC are shown.
-              Selecting one of those gives a number of scenarios to choose from. Here the ZNY ARTCC has
-              been selected and then the PHL ATCT/TRACON. After choosing a scenario and clicking the "Next"
-              button, a window with further settings is shown:
+            <p>The window has two pages, and on the first page you choose the scenario.
+              The first column lists the ARTCCs.
+              When you select an ARTCC, the second column lists its TRACONs and ATCT/TRACONs, and then the ARTCC itself with its areas.
+              When you select one of those, the third column lists its scenarios.
+            </p>
+            <p>In the example, the selection is the ZTL ARTCC, the CLT TRACON, and the "KCLT Land 18/19L/19R Depart 19L/18" scenario.
+              The "Landing" line under the list gives the arrival runways of the scenario.
+              Some scenarios also show a description under it.
+            </p>
+            <p>To find a scenario quickly, type in the search box above the list.
+              The list then shows only the scenarios that match the text.
+              The search matches scenario names, TRACON and ARTCC identifiers, ARTCC names, and the airports where you work IFR traffic.
+              For example, "KCLT" finds every scenario where you work Charlotte traffic.
+              To show all of the scenarios again, click "Clear".
+            </p>
+            <p>The "Sim options" buttons choose where the simulation runs.
+              "Create a local sim" runs it on your computer.
+              The other two options create or join a simulation on the public <i>vice</i> server, where you can work with other controllers.
+              <a href="#multi-controller">Multiple Controllers</a> describes them.
+              If <i>vice</i> cannot connect to the server, only local simulations are available.
+            </p>
+            <p>After you select a scenario, click "Next".
+              The second page has the settings for the simulation:
             </p>
             <div class="text-center">
-              <img src="config-rates.png" srcset="config-rates-2x.png 2x" width="576" height="612">
+              <img src="config-settings.png" srcset="config-settings-2x.png 2x" width="952" height="1158" class="img-fluid" alt="settings page of the New Simulation window">
             </div>
             <br>
-            <p>
-              In the second configuration window, you can specify your initials, used to identify yourself to other
-              controllers, as well as various additional settings.
-              You can also adjust how heavy the traffic is; here, the departure rate settings are shown.
-              (The PHL scenario only includes the Philadelphia Airport, though many other scenarios include multiple airports.)
-              These rates are specified in terms of aircraft per hour, so an ADR of 30 corresponds to one aircraft departing
-              every two minutes (on average).
-              If you'd like an arrival-only scenario, for example, just set all of the departure rates to zero.
+
+            <h4 id="sim-settings">Controller and Simulation Settings</h4>
+            <p>Type your initials in the "Initials" field.
+              <i>vice</i> uses them to identify you to other controllers.
+              The "Create" button is not available until you type two letters.
             </p>
-            <p>
-              For arrivals, the "Go around probability" slider allows setting the probability that each arrival goes around.
-              You may also select "Include random arrival pushes", which will periodically bump up the rate of
-              arrivals to increase the challenge of vectoring aircraft.
-              "Push frequency" sets how often arrival pushes happen and "Length of push" sets how long they last
-              before traffic returns to regular levels.
+            <p>The simulation settings control how pilots respond:</p>
+            <ul>
+              <li>"Ensure unique callsign suffixes": if you select this check box, no two aircraft have callsigns that end with the same two characters.
+                The callsigns are then easier to tell apart.
+                The check box is not available for timetable or historical traffic, because those flights keep their real callsigns.</li>
+              <li>"Readback error interval": the shortest time between pilot mix-ups.
+                In a mix-up, a pilot does not follow your instruction and replies "sorry, was that for (callsign)?"
+                You must then give the instruction again.
+                At "never", pilots do not mix up instructions.</li>
+              <li>"Pilot delays": how long pilots wait before they start to follow an instruction.
+                "Brief" delays are short, and "Realistic" delays are longer, as with real pilots.
+                "Custom" shows a minimum and a maximum delay in seconds for each type of instruction, for example climbs, turns, and direct-to-fix instructions.
+                To type a value, Ctrl-click its slider.</li>
+            </ul>
+
+            <h4 id="sim-weather">Weather and Time</h4>
+            <p>Each simulation uses real weather that was recorded in the past.
+              When you select a scenario, <i>vice</i> chooses a start time, and the simulation uses the weather of that time.
+              The weather filters limit the times that <i>vice</i> can choose:
             </p>
-            <p>
-              After you have configured the simulation, click "Create" and you will have a STARS scope and flight strip window to work with.
-              Use the usual STARS commands as appropriate (to initiate track, accept handoffs, handoff to other controllers, etc.),
-              and the additional <a href="#atc-commands">ATC commands below</a> to issue control commands to aircraft.
+            <ul>
+              <li>"Flight Rules": "VMC" gives visual conditions and "IMC" gives instrument conditions.</li>
+              <li>"Temperature (C)": a range of surface temperatures, in degrees Celsius.</li>
+              <li>"Surface Wind": ranges of magnetic wind direction and wind speed, and whether the wind gusts.
+                Only TRACON scenarios have this group.</li>
+              <li>"Winds Aloft": the same ranges for the wind at 5,000' in TRACON scenarios, or at FL240 and FL380 in ARTCC scenarios.</li>
+            </ul>
+            <p>Leave a field empty for no limit.
+              By default, the surface wind direction range is the average heading of the scenario's runways, plus or minus 30 degrees.
+              The default wind thus favors the runways of the scenario.
+              When you change a filter, <i>vice</i> chooses a new start time with weather that matches all of the filters.
+              It prefers times from 7 a.m. to 7 p.m. local time.
+              If no recorded weather matches the filters, a warning shows and the start time does not change.
             </p>
-            <p>
-              After the simulation starts, you may click on the <i class="fas fa-question-circle"></i> button in the menubar to show
-              a window with information about the scenario, including the active controllers, the departures, arrivals, approaches and
-              overflight routes, and airspace awareness rules.
-              For this PHL scenario, four arrivals, two approaches, and three departures are active.
-              Other scenarios may be more complex.
+            <p>The "Start time" row gives the date and time when the simulation starts.
+              The "L" after the time means local time for the scenario.
+              To choose another start time that matches the filters, click <i class="fas fa-redo"></i>.
+              To change the time of day, drag the slider.
+              The "METAR" row gives the weather report at the start time for the busiest airport of the scenario.
+              If the scenario has more than one airport, click "Show all airport METAR" to see the report for each airport.
+            </p>
+            <p>To choose a different day, click the start time.
+              A calendar opens:
             </p>
             <div class="text-center">
-              <img src="approaches.png" srcset="approaches-2x.png 2x" width="439" height="435" class="img-fluid" alt="approach list">
+              <img src="config-time.png" srcset="config-time-2x.png 2x" width="820" height="338" class="img-fluid" alt="start time calendar">
             </div>
             <br>
-            <p>
-              The approach codes&mdash;here, "27R" and "35"&mdash; are used in <i>vice</i>'s aircraft control commands like "expect approach"
-              and "cleared approach".
+            <p>You can select only the days that have weather data for the full day.
+              With historical traffic, the days must also have recorded flight data.
+              The other days are dimmed.
+              The color of a day gives its weather: green for VMC all day, red for IMC all day, and yellow for both.
             </p>
-            <p>The Messages and Flight Strips windows can be toggled
-              on and off using the <i class="fas fa-comment"></i> and
-              <i class="fas fa-clipboard-list"></i> buttons in the
-              menubar.  Both windows can be repositioned and resized
-              freely, and their layout is saved across sessions.
+            <p>The slider under the calendar sets the time of day.
+              The right side gives the METAR at the selected time, with its flight rules, visibility, ceiling, and wind.
+            </p>
+
+            <h4 id="sim-traffic-source">Traffic Source</h4>
+            <p>The "IFR traffic source" buttons choose where the IFR traffic comes from.
+              A scenario offers one or more of these sources:
+            </p>
+            <ul>
+              <li>"Scenario": <i>vice</i> generates the traffic from the scenario's definitions, at the rates that you set in "Traffic Rates".</li>
+              <li>"Timetable": <i>vice</i> flies a prepared daily schedule of flights at an airport, from the time of day of the start time.
+                Select the schedule in the "Timetable" list.</li>
+              <li>"Historical": <i>vice</i> flies the real traffic of the scenario's airports on the start date, from recorded flight data.</li>
+            </ul>
+            <p>For timetable and historical traffic, a plot shows the traffic for the two hours after the start time:</p>
+            <div class="text-center">
+              <img src="config-historical.png" srcset="config-historical-2x.png 2x" width="952" height="601" class="img-fluid" alt="historical traffic settings">
+            </div>
+            <br>
+            <p>The counts at the left give the number of departures, arrivals, and overflights in the two hours.
+              The plot stacks their hourly rates: departures in green, arrivals in blue, and overflights in orange.
+              To see the rates at a time, move the mouse over the plot.
+              The text that appears also gives the number of aircraft in the next 15 minutes.
+              To find a busier or a quieter period, change the start time.
+            </p>
+
+            <h4 id="sim-traffic-rates">Traffic Rates</h4>
+            <p>The "Traffic Rates" sections set the amount of traffic.
+              To show or hide a section, click its title.
+              With scenario traffic, the titles also give the total rates.
+            </p>
+            <p>With scenario traffic, the "Departures" section gives an airport departure rate (ADR) for each runway and departure category.
+              Rates are in aircraft per hour, so an ADR of 30 is one departure every two minutes, on average.
+              The "Arrivals" section gives an airport arrival rate (AAR) for each arrival flow.
+              The "Departure rate scale" slider multiplies all of the departure rates.
+              The "Arrival/overflight rate scale" slider multiplies the arrival and overflight rates.
+              To fly only arrivals, for example, set the departure rate scale to zero.
+            </p>
+            <p>The "Arrivals" section also has "Go around probability", the probability that an arrival goes around.
+              Select "Include random arrival pushes" to increase the arrival rate from time to time.
+              "Push frequency" sets how often a push starts, and "Length of push" sets how long it lasts.
+            </p>
+            <p>With timetable or historical traffic, the data sets the time of each flight.
+              The rate scale sliders then compress time: at 2.0, the traffic of two hours flies in one hour.
+              At 0.0, there is no traffic.
+              The "Active" check boxes turn individual departure runways and arrival flows on and off.
+              Arrival pushes are not available, because the data sets when the arrivals come.
+            </p>
+            <p>The traffic source does not change VFR departures or overflights.
+              <i>vice</i> always generates them from the scenario.
+              In "VFR Departures", "VFR departure rate scale" multiplies the VFR departure rates.
+              "Flight following request rate" sets how many VFR aircraft ask for flight following each hour.
+              This setting is available only if the scenario has VFR reporting regions.
+              "Overflights" gives the rate of each overflight flow.
+            </p>
+            <p>"Emergency aircraft rate" sets how many aircraft have an emergency each hour.
+              At "never", there are no emergencies.
+              The departure rates can total at most 150 aircraft per hour, and so can the arrival and overflight rates.
+              If you set more, <i>vice</i> reduces the rate scales and shows a warning.
+            </p>
+
+            <h4 id="sim-running">After the Simulation Starts</h4>
+            <p>When the settings are complete, click "Create".
+              For a TRACON scenario, <i>vice</i> shows a <a href="#section-stars">STARS</a> scope.
+              For an ARTCC scenario, it shows an <a href="#section-eram">ERAM</a> scope.
+              Use the STARS or ERAM commands to initiate tracks, accept handoffs, hand off aircraft, and so on.
+              Use the <a href="#atc-commands">ATC commands below</a> to give instructions to aircraft.
+            </p>
+            <p>When the simulation starts, <i>vice</i> also opens the scenario information window.
+              To open it later, click <i class="fas fa-question-circle"></i> in the menu bar.
+              You can keep the window closed at the start.
+              In the settings window, select "Do not show scenario briefs at the start of scenarios".
+              To open or close a section of the window, click its title:
+            </p>
+            <div class="text-center">
+              <img src="scenario-info.png" srcset="scenario-info-2x.png 2x" width="385" height="671" class="img-fluid" alt="scenario information window">
+            </div>
+            <br>
+            <ul>
+              <li>"Controllers" lists the controller positions, with their frequencies and roles, and shows which positions human controllers work.</li>
+              <li>"ATIS / METAR" gives the ATIS letter and the METAR for each airport.
+                When the ATIS changes, its letter flashes until you click it.</li>
+              <li>"TFRs" lists the temporary flight restrictions, if there are any.</li>
+              <li>"Arrivals", "Approaches", "Departures", and "Overflights" list the active procedures and traffic flows.
+                To draw one on the scope, select its "Draw" check box (see <a href="#draw-routes">Drawing Routes</a>).
+                "Color" sets the color of the drawing.
+                <a href="#launches">Launching Aircraft</a> describes the "Hold" column of the arrivals table.</li>
+              <li>"Airspace" lists the airspace volumes of each controller position, which you can draw on the scope.</li>
+              <li>"Tower/Coordination Lists" lists the tower and coordination lists and their airports.</li>
+              <li>"Airspace Awareness" gives the rules that choose the receiving controller, by fix, altitude, and aircraft type.</li>
+              <li>"Holds" lists the charted holds near the scenario, which you can draw on the scope.</li>
+            </ul>
+            <p>The "Code" column of the approaches table gives the code of each approach: here, "I18", "I9L", and "I9R".
+              The "expect approach" and "cleared approach" commands use these codes, for example <code>EI9L</code> and <code>CI9L</code>.
+            </p>
+            <p>The <i class="fas fa-comment"></i> and <i class="fas fa-clipboard-list"></i> buttons in the menu bar show and hide the Messages and Flight Strips windows.
+              You can move and resize these windows, and <i>vice</i> saves their layout between sessions.
+              You can also move them outside the main <i>vice</i> window.
+              When the thumbtack of a window is white, the window stays in front of other windows while <i>vice</i> is the active application.
+              To change this, click the thumbtack.
             </p>
             <p>
-              A number of buttons are available in the menu bar at the top of the window:
+              The menu bar at the top of the window has these buttons:
             </p>
               <ul>
                 <li> <i class="fas fa-pause-circle"></i> / <i class="fas fa-play-circle"></i>: pause or resume the simulation.</li>
-                <li> <i class="fas fa-redo"></i>: opens the window to select a new scenario and set its parameters.</li>
-                <li> <i class="fas fa-cog"></i>: open a window that allows changing various settings. The most useful one is the simulation rate: you can speed up time during slow times or to increase the challenge.</li>
-                <li> <i class="fas fa-question-circle"></i>: show the
-                window that lists the currently active departures,
-                  arrivals, and approaches.</li>
-                <li> <i class="fas fa-keyboard"></i>: opens a window that
-                shows a summary
+                <li> <i class="fas fa-forward-fast"></i>: advance the simulation by 15 seconds. This button is not available while the simulation is paused.</li>
+                <li> <i class="fas fa-redo"></i>: open the "New Simulation" window to start a new simulation.</li>
+                <li> <i class="fas fa-cog"></i>: open the settings window. The most useful setting is the simulation rate. A faster rate helps when traffic is light, and it also makes the simulation harder.</li>
+                <li> <i class="fas fa-question-circle"></i>: show the scenario information window.</li>
+                <li> <i class="fas fa-keyboard"></i>: open a summary
                 of <i>vice</i>'s <a href="#atc-commands">ATC commands</a>
                 and frequently-used STARS commands.</li>
-                <li> <i class="fas fa-plane-departure"></i>: open a window with controls for launching aircraft, either automatically or manually.</li>
-                <li> <i class="fas fa-comment"></i>: toggle the Messages window, which displays system messages and alerts.</li>
-                <li> <i class="fas fa-clipboard-list"></i>: toggle the Flight Strips window.</li>
-                <li> <i class="fas fa-book"></i>: open this webpage to review <i>vice</i>'s documentation.</li>
-                <li> <i class="fas fa-info-circle"></i>: display information about the version of <i>vice</i> you have installed.</li>
-                <li> <i class="fab fa-discord"></i>: join the <i>vice</i> Discord.</li>
-                <li> <i class="fas fa-expand-alt"></i>: Toggle full-screen mode.</li>
+                <li> <i class="fas fa-plane-departure"></i>: open the launch control window, which launches aircraft automatically or manually and grants departure releases. The icon flashes green when departures wait for a release.</li>
+                <li> <i class="fas fa-comment"></i>: show or hide the Messages window, which shows system messages and alerts.</li>
+                <li> <i class="fas fa-clipboard-list"></i>: show or hide the Flight Strips window.</li>
+                <li> <i class="fas fa-book"></i>: open this web page.</li>
+                <li> <i class="fas fa-info-circle"></i>: show the version of <i>vice</i> that you have installed.</li>
+                <li> <i class="fab fa-discord"></i>: open links to the <i>vice</i> Discord server and to the Vice ATC Hub Discord server, where controllers organize multi-controller sessions.</li>
+                <li> <i class="fas fa-expand-alt"></i>: enter or exit full-screen mode.</li>
               </ul>
-            <p>
-              When you exit <i>vice</i>, it remembers everything going on&mdash;all of the aircraft in flight, the instructions they have been given, etc.
-              The next time you launch <i>vice</i>, it loads all of that back in and you can continue where you left off.
-              If you'd like to start something new, just click <i class="fas fa-redo"></i> and configure a new simulation.
+            <p>While you hold the push-to-talk key, a <i class="fas fa-microphone"></i> icon shows at the right of the menu bar.
+              It is red while <i>vice</i> records your transmission.
+              If you press the key while a pilot talks, the icon is yellow.
+              Then your transmission blocks the pilot's transmission, as on a real radio, and <i>vice</i> does not record it.
             </p>
             <p>
-              When <i>vice</i> is paused, you can hover the mouse above a radar track to see information about the instructions the aircraft has been given so far&mdash;for example, altitude and speed assignments, whether it has been sent direct to a fix, the approach it has been assigned, etc.  An example is shown below.  This information is especially useful when resuming a <i>vice</i> session after you have been away from it for a while.
-              </p>
+              When you exit <i>vice</i>, it saves the simulation: the aircraft in flight, the instructions that you gave them, and so on.
+              The next time that you start <i>vice</i>, it loads the simulation, and you can continue where you stopped.
+              To start a new simulation, click <i class="fas fa-redo"></i>.
+            </p>
+            <p>
+              When the simulation is paused, move the mouse over a track to see a summary of the aircraft's flight.
+              The summary helps when you resume a simulation after a break.
+              Here is an example:
+            </p>
             <div class="text-center">
-              <img src="hover-info.png" srcset="hover-info-2x.png 2x" width="335" height="124">
+              <img src="hover-info.png" srcset="hover-info-2x.png 2x" width="688" height="196" class="img-fluid" alt="summary of a paused aircraft">
             </div>
             <br>
-            <p>If you are signed in to Discord, <i>vice</i> can
-            automatically update your activity status there with
-            information about your current <i>vice</i> session (the number
-            of arrivals and departures, the position you're controlling,
-            etc.) When you first launch <i>vice</i> you are given the
-              option to disable this feature if you would like.  The
-              settings window, available by clicking <i class="fas
-            fa-cog"></i> in the menubar, can also be used to enable or
-            disable this feature.
+            <p>The summary gives the origin and destination of the flight, the altitude and assignments of the aircraft, and what the pilot does next.
+              It also gives the wind, the speeds of the aircraft, and its route.
+              Under "Instructions", it lists the instructions that controllers gave the aircraft, one transmission for each line.
+              For a spoken transmission, the transcript of what the controller said is at the right.
+              Here, you told RPA8638 to fly heading 160, climb to 11,000', and reduce speed to 230 knots.
+              "Will shortly start flying heading 160" shows that the pilot is about to start the turn.
+            </p>
+            <p>If you are signed in to Discord, <i>vice</i> can update your Discord activity status with information about your session.
+              For example, it shows the position that you control and the number of arrivals and departures.
+              The first time that you start <i>vice</i>, you can turn off this feature.
+              You can also turn it on or off in the settings window: click <i class="fas fa-cog"></i> in the menu bar.
+            </p>
           </section>
 
 	  <section class="docs-section" id="draw-routes">
@@ -320,52 +460,75 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
             <div class="text-center">
               <img src="manual-launch.png" srcset="manual-launch-2x.png 2x" width="621" height="399">
             </div><br>
+            <p>You can also ask the center controller to hold arrivals.
+              A hold is a racetrack pattern that an aircraft flies at a fix while it waits.
+              In the scenario information window, the "Hold" column of the arrivals table gives the fix
+              where center can hold each arrival.
+              That fix is the first fix after the arrival enters the simulation.
+              Center cannot hold an arrival if a human controller already works it at that point.
+            </p>
+            <p>If you select the check box in the "Hold" column, center holds the arrivals that enter after that.
+              They hold at that fix, 1,000' apart.
+              Each new arrival enters the hold at the top, and the others descend to make room for it.
+              The arrivals fly the charted hold at the fix, or a standard hold if the fix has none.
+              When five arrivals hold, <i>vice</i> launches no more of those arrivals.
+              Arrivals whose routes pass the same fix share one holding stack, so center holds them together.
+            </p>
+            <p>If you clear the check box, center releases the arrivals from the bottom up.
+              Each one continues along its route at its holding altitude.
+            </p>
             <br>
           </section>
 
 	  <section class="docs-section" id="multi-controller">
             <h3 class="section-heading">Multiple Controllers</h3>
 
-            <p>With <i>vice</i> you can also have multiple controllers working aircraft together.
-              Select "Create a sim on the public vice server" in the "New Simulation" window and
-              you can select an ARTCC, ATCT/TRACON, and scenario in the same way
-              that you do with a single controller.
-              For multi-controller scenarios, there are some additional settings, shown beneath
-              the list of scenarios:
+            <p>With <i>vice</i>, several controllers can work traffic together in one simulation on the public <i>vice</i> server.
+              To start one, select "Create a sim on the public vice server" in the "New Simulation" window.
+              Then choose the scenario and click "Next", as for a local simulation.
+              The second page has two more groups of settings at the top:
             </p>
             <div class="text-center">
-              <img src="create-multi.png" srcset="create-multi-2x.png 2x" width="626" height="178">
+              <img src="create-multi.png" srcset="create-multi-2x.png 2x" width="626" height="186" class="img-fluid" alt="settings for a simulation on the public server">
             </div>
             <br>
-            <p>
-              If you sign in with instructor/RPO (remote pilot operator) privileges, then
-              you are able to issue control instructions to all aircraft.
-              Each multi-controller simulation also has a name associated with it;
-              <i>vice</i> chooses a random one (above, it's "plenty-manufacturer").
-              These names can be used so that you can tell other people which
-              simulation to choose in order to join you.
-              You may also enable "Require password" and enter a password for the
-              simulation so that only people you allow can join it.
+            <p>If you select "Sign in with instructor/RPO privileges", you can give instructions to every aircraft, whoever controls it.
+              An RPO (remote pilot operator) plays the pilots in training.
+              <i>vice</i> gives each simulation on the server a random name, here "creative-action".
+              Give this name to the controllers who join you, so that they can find the simulation.
+              To let only the people that you choose join, select "Require Password" and type a password.
+              The "Create" button is not available until you type the password.
             </p>
-            <p>
-              Selecting "Join a sim on the public vice server" shows a list of the simulations
-              that are currently available, including how many controllers
-              are signed into each one.
-              Note that the simulation names are shown in the first column.
-              After selecting one, the currently unoccupied radar workstations (TCWs)
-              are shown, though if you select "Join as relief", you may connect to
-              a TCW that is already in use; this allows relieving another controller,
-              who may then disconnect after briefing you.
-              After selecting a TCW, you can select one or more terminal control positions (TCPs)
-              that you will be responsible for; your TCPs determine the airspace and which
-              handoff flows are your responsibility.
-              <i>vice</i> also allows you to join a simulation as an observer,
-              in which case you have no control capabilities; to do so, select a free TCW
-              and then do not select any TCPs.
+            <p>To join a simulation that another controller started, select "Join a sim on the public vice server":
             </p>
             <div class="text-center">
-              <img src="join-multi.png" srcset="join-multi-2x.png 2x" width="716" height="389">
+              <img src="join-multi.png" srcset="join-multi-2x.png 2x" width="720" height="422" class="img-fluid" alt="joining a simulation on the public server">
             </div>
+            <br>
+            <p>The "Available simulations" table lists the simulations on the server, with their names and scenarios.
+              A lock shows that a simulation requires a password.
+              A <i>TCW</i> (terminal controller workstation) is the radar display of one controller.
+              The "Controllers" column gives the number of TCWs in use and the total number of TCWs.
+              To see which TCWs are in use, move the mouse over the count.
+            </p>
+            <p>After you select a simulation, select a free TCW under "Select TCW".
+              Then select your positions under "Select positions".
+              A <i>TCP</i> (terminal control position) is a position, such as 1E, that owns airspace.
+              Your positions decide your airspace and the handoffs that come to you.
+              <i>vice</i> first selects the position with the name of your TCW.
+              The list also gives the positions that other controllers cover in addition to their own, so that you can take them over.
+            </p>
+            <p>Select "Instructor" to give instructions to every aircraft, as with instructor/RPO privileges.
+              If you select a TCW but no positions, you join as an observer: you see the traffic but cannot control it.
+              If the simulation requires a password, type it in the "Password" field.
+              The "Join" button is not available until you select a TCW and type your initials.
+            </p>
+            <p>To relieve a controller, select "Join as relief (show occupied positions)".
+              This check box shows only when at least one controller is signed in.
+              The TCW list then gives the TCWs in use.
+              To see the positions and the initials of the controller at a TCW, move the mouse over it.
+              When you join as relief, you share the TCW with that controller, who can disconnect after they brief you.
+            </p>
             <br>
 
           </section>
@@ -373,7 +536,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
 	  <section class="docs-section" id="scenario-briefs">
             <h3 class="section-heading">Scenario Briefs</h3>
 
-            <p><i>vice</i> has a newly-added feature that allows scenario developers to write <i>scenario briefs</i>,
+            <p><i>vice</i> allows scenario developers to write <i>scenario briefs</i>,
               documents that give information about the flows, airspace, and other expectations for a scenario.
               (Currently, only the JFK and LGA-area N90 scenarios are documented.)
               These are shown in the scenario info window, which is displayed by clicking the
@@ -390,20 +553,21 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
 	  <section class="docs-section" id="atc-commands">
             <h2 class="section-heading">ATC Instructions (Keyboard)</h2>
 
-            <p>A variety of instructions can be issued to aircraft by an aircraft controller.
+            <p>A variety of instructions can be issued to aircraft by a controller.
               To issue an instruction, first press the <code>[TAB]</code> key.
-              This will place the STARS radar into "target generation" mode and the characters "TG"
-              will appear above the text input area (which is by default on the left side of the STARS
-              window, towards the top.  STARS reverts to normal command entry mode after a valid ATC
-              instruction is entered, though target generation can be locked by pressing <code>[SHIFT][TAB]</code>.
+              This will place the STARS/ERAM radar scope into "target generation" mode.
+              With STARS, the characters "TG" appear above the text input area (which is by default on the left side of the STARS
+              window, towards the top), and with ERAM, the characters "TG" appear at the start of the command entry area.
+              Both revert to normal command entry mode after a valid ATC
+              instruction is entered, though in STARS, target generation mode can be locked by pressing <code>[SHIFT][TAB]</code>.
             </p>
-            <p>The commands below can then be entered to issue control commands to aircraft.
-              As you enter commands, they will be shown in the STARS input area.
+            <p>The following commands can then be entered to issue control commands to aircraft.
+              As you enter commands, they will be shown in the input area.
               You can correct errors with the backspace key or press the <code>[ESCAPE]</code> key
               to exit target generation mode.</p>
             <p>To indicate which aircraft should be given a command, you
               can either enter a command and click on an aircraft's radar
-              track in the STARS window or you can enter the aircraft's callsign followed by a space
+              track in the radar window or you can enter the aircraft's callsign followed by a space
               before the command, and then press the "enter" key. You can also give just the callsign suffix,
               if that is enough to unambiguously identify a single aircraft.
               The callsign of the last aircraft you issued to a command to is shown after "TG" when
@@ -411,7 +575,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
               If you'd like to give another instruction to that aircraft, you can skip entering its callsign.
               Entering another aircraft's callsign causes the command to be issued to that aircraft instead.</p>
             <p>After you issue a command, the virtual pilot's readback is
-              shown in the readback window below the STARS window.
+              shown in the messages window.
               After receiving an instruction, the aircraft will start
               following that instruction, to the best of its abilities.
               Unlike VATSIM, the pilots will always do exactly what you
@@ -1183,15 +1347,17 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <tr><td>Expedite Altitude</td>
                   <td>
                     <i>Expedite descent</i> /  <i>Expedite climb</i> /
+                    <i>Expedite (descent/climb) to (altitude)</i> /
                     <i>Expedite descent through (altitude)</i> /  <i>Expedite climb through (altitude)</i> /
                     <i>Best rate descent</i> / <i>Best rate climb</i> /
+                    <i>Best rate descent/climb to (altitude)</i> /
                     <i>Best rate descent through (altitude)</i> / <i>Best rate climb through (altitude)</i>
                   </td>
                 </tr>
                 <tr><td>Good Rate</td>
                   <td>
                     <i>Good rate (of) descent</i> / <i>Good rate (of) climb</i> /
-                    <i>Good rate through/to (altitude)</i>
+                    <i>Good rate (of descent/climb) to (altitude)</i> / <i>Good rate through (altitude)</i>
                   </td>
                 </tr>
                 <tr><td>Say Altitude</td>
@@ -1717,7 +1883,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
                 <p>Your browser may warn about the installer being from an unknown publisher and when you run the installer, Windows will put up a window informing you that it has protected your PC and prevented the installer from running. Click "More Info" and then "Run anyway" to proceed with installation.</p>
               </div><!--//callout-block-->
             </div><!--//content-->
-            <a href="https://github.com/mmp/vice/releases/download/v0.15.2/Vice-v0.15.2-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.15.2 for Windows</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.15.3/Vice-v0.15.3-installer.msi" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.15.3 for Windows</a>
           </section><!--//section-->
           
           <section class="docs-section" id="install-mac">
@@ -1726,7 +1892,7 @@ ZBW, ZDV, ZJX, ZLA, ZLC, and ZNY.
             <p>On a Mac, download the <i>zip</i> file below; it contains a universal binary that runs
               on both Intel and Apple CPUs. Note that MacOS Ventura or a more recent version of OSX is required.
               After opening the <i>zip</i> file, drag <i>Vice.app</i> to your <i>Applications</i> folder to install it.</p>
-            <a href="https://github.com/mmp/vice/releases/download/v0.15.2/Vice-v0.15.2-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.15.2 for Mac</a>
+            <a href="https://github.com/mmp/vice/releases/download/v0.15.3/Vice-v0.15.3-osx.zip" class="btn btn-primary"><i class="fas fa-download me-2"></i> Download Vice v0.15.3 for Mac</a>
           </section><!--//section-->
 
           <section class="docs-section" id="install-linux">
@@ -1754,6 +1920,79 @@ how it simulates aircraft or the STARS interface.
 
           <section class="docs-section" id="releases">
             <h2 class="section-heading">Release History</h2>
+
+            <h3 id="release-0.15.3" data-nav-title="0.15.3">0.15.3 (3 Nov 2026)</h3>
+            <ul>
+              <li>New scenario: ZFW Dallas/Bonham (Seth)</li>
+              <li>Scenario updates: HNL (Mike Fries), CLT (anguse), S56 (Elliott B), P50 (Ketan K), ZLC (Ryan C)</li>
+              <li>Fixed multiple bugs with flight strip ownership</li>
+              <li>Release requests that are not in a STARS coordination list now appear in Messages and atop Launch Control</li>
+              <li>Flight Model / Control
+                <ul>
+                  <li>Pilot response delays can be set to &quot;Brief&quot;, &quot;Realistic&quot; (longer), or custom values when creating a sim</li>
+                  <li>Improved support for LDA approaches (don't just fly the extended centerline)</li>
+                  <li>An aircraft intercepting the approach from a heading can be cleared for the approach at a fix on the approach course</li>
+                  <li>Aircraft ignore frequency change instructions if earlier instructions were &quot;unable&quot; or &quot;say again&quot;</li>
+                  <li>Fixed a number of bugs related to handling Mach speeds in instructions</li>
+                  <li>VFR aircraft routes now avoid special use airspace</li>
+                  <li>Improved VFR aircraft terrain avoidance to use more accurate terrain data than MVAs</li>
+                  <li>VFR airwork now includes stalls, steep turns, chandelles, S-turns, and other training maneuvers</li>
+                </ul>
+              </li>
+              <li>STARS
+                <ul>
+                  <li>Default ATPA volumes now follow each final approach course rather than the runway's extended centerline.</li>
+                </ul>
+              </li>
+              <li>ERAM
+                <ul>
+                  <li>Documentation is much more complete: https://pharr.org/vice/#section-eram</li>
+                  <li>Virtual TRACON controllers no longer enter altitudes in ERAM data blocks</li>
+                  <li>Local interim altitudes are kept separately from interim and procedure altitudes; <code>QQ L</code> clears them</li>
+                  <li>Unpaired LDBs show the beacon code; BCAST FLID switches them to the callsign</li>
+                  <li>Unpaired Mode C targets at or above the conflict alert floor are drawn with the MCI I-beam</li>
+                  <li>Point outs are acknowledged one sector at a time in the point out pop-up</li>
+                  <li>Point outs may be made to other facilities</li>
+                  <li>Fixed a number of differences between the toolbars and the manual</li>
+                  <li>Added support for dwell emphasis</li>
+                  <li>Added the CFR, Conflict Alert, DEPT LIST, FLIGHT EVENT, SAA FILTER, Range, STATUS, and OUTAGE views</li>
+                  <li>Added the DRAW menu for rectangle, circle, line, and text annotations</li>
+                  <li>Preference sets are saved, invoked, and deleted from the PREFSET menu rather than the settings window</li>
+                  <li>Added the horizontal, left, and right support toolbars</li>
+                  <li>Data block menus open with the cursor on the current value (when appropriate)</li>
+                  <li><code>LC</code> shows the change in ground speed needed to cross the fix at the given time</li>
+                  <li><code>LD</code> reads out when an aircraft reaches each fix on its route through a given fix; <code>LE</code> reads out the speed change to cross a fix at a given time</li>
+                  <li><code>LF</code> with a picked point creates a CRR group there</li>
+                  <li><code>QF</code> shows routes in the NAS form, as in <code>KATL./.ROA205050..ROA..HAR..KPIT</code></li>
+                  <li><code>QN</code> and <code>QZ</code> prefixes are accepted on handoffs, data block offsets, and <code>//</code></li>
+                  <li><code>QP &lt;FLID&gt;</code> switches another sector's track between an FDB and an LDB</li>
+                  <li><code>QP A</code> acknowledges a single point out, or those from the sectors given, as in <code>QP A 2B 3C AAL123</code></li>
+                  <li><code>QS</code> takes a heading and speed together, as in <code>QS 330/81</code>, and Mach speeds such as <code>M.75</code></li>
+                  <li><code>QZ</code> assigns VFR and VFR-on-top altitudes</li>
+                  <li><code>SG</code> creates and edits conflict alert suppression groups, which the GROUP SUP view lists</li>
+                  <li><code>WR</code> takes up to three stations</li>
+                  <li>Suppressing a view closes its menu; a view's pick areas are outlined under the cursor, and picks on them no longer reach the MCA</li>
+                  <li>Torn-off SAA labels are moved by their bars and picked for deletion like the other tear-offs</li>
+                  <li>Fixed bug where list entries could be invisible</li>
+                </ul>
+              </li>
+              <li>Facility Engineering
+                <ul>
+                  <li>Added support for using a user-supplied resources directory to override shipped scenarios/configs/etc.</li>
+                  <li>Overflights' <code>&quot;assigned_speed&quot;</code> and the <code>&quot;eram&quot;</code> <code>&quot;speed&quot;</code> may be given as a Mach number (<code>&quot;M78&quot;</code>); <code>&quot;eram&quot;</code> <code>&quot;mach&quot;</code> has been removed.</li>
+                  <li><code>&quot;atpa_volumes&quot;</code> is now <code>&quot;atpa&quot;</code>; its <code>&quot;runway_threshold&quot;</code>, <code>&quot;heading&quot;</code>, and <code>&quot;id&quot;</code> fields have been removed</li>
+                  <li><code>&quot;reduced_separation&quot;</code> in <code>&quot;atpa&quot;</code> replaces <code>&quot;enable_2.5nm&quot;</code> and <code>&quot;2.5nm_distance&quot;</code></li>
+                  <li><code>&quot;altitude_range&quot;</code> gives the altitudes of a controller's airspace (default 10,000-60,000'); ERAM displays only the active special use airspace that overlaps it</li>
+                  <li><code>&quot;conflict_alert_floor&quot;</code> sets the ERAM conflict alert floor (default 6,000')</li>
+                  <li>VFR <code>&quot;routes&quot;</code> are flown as written; they are no longer checked against the terrain</li>
+                  <li>Departures' <code>&quot;route&quot;</code> is now <code>&quot;waypoints&quot;</code>, since it is what the aircraft flies after the exit fix</li>
+                  <li>Arrivals' <code>&quot;route&quot;</code> is now <code>&quot;flight_strip_route&quot;</code>, since it is shown on flight strips and does not affect navigation</li>
+                  <li><code>&quot;stars_macros&quot;</code> may now also be given per configuration</li>
+                  <li><code>&quot;atis_airports&quot;</code> chooses the airports shown in the scenario information window's ATIS / METAR section</li>
+                </ul>
+              </li>
+            </ul>
+
 
             <h3 id="release-0.15.2" data-nav-title="0.15.2">0.15.2 (5 Oct 2026)</h3>
             <ul>
@@ -8015,14 +8254,17 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
               <tbody>
                 <tr><td class="text-center"><img src="eram-sym-paired-primary.png" srcset="eram-sym-paired-primary-2x.png 2x" width="28" height="24" alt=""></td><td>Correlated primary target</td></tr>
                 <tr><td class="text-center"><img src="eram-sym-reduced.png" srcset="eram-sym-reduced-2x.png 2x" width="28" height="24" alt=""></td><td>Correlated beacon target at or below FL230, where reduced separation applies</td></tr>
-                <tr><td class="text-center"><img src="eram-sym-beacon.png" srcset="eram-sym-beacon-2x.png 2x" width="28" height="24" alt=""></td><td>Other uncorrelated beacon target</td></tr>
+                <tr><td class="text-center"><img src="eram-sym-beacon.png" srcset="eram-sym-beacon-2x.png 2x" width="28" height="24" alt=""></td><td>Other uncorrelated beacon target below the conflict alert floor</td></tr>
+                <tr><td class="text-center"><img src="eram-sym-mci.png" srcset="eram-sym-mci-2x.png 2x" width="28" height="24" alt=""></td><td>Uncorrelated Mode C target at or above the conflict alert floor, a possible Mode C intruder</td></tr>
                 <tr><td class="text-center"><img src="eram-sym-paired.png" srcset="eram-sym-paired-2x.png 2x" width="28" height="24" alt=""></td><td>Correlated beacon target above FL230</td></tr>
                 <tr><td class="text-center"><img src="eram-sym-primary.png" srcset="eram-sym-primary-2x.png 2x" width="28" height="24" alt=""></td><td>Uncorrelated primary target</td></tr>
                 <tr><td class="text-center"><img src="eram-sym-ident.png" srcset="eram-sym-ident-2x.png 2x" width="28" height="24" alt=""></td><td>Identing beacon target</td></tr>
-                <tr><td class="text-center"><img src="eram-sym-1200.png" srcset="eram-sym-1200-2x.png 2x" width="28" height="24" alt=""></td><td>Uncorrelated beacon target squawking 1200</td></tr>
+                <tr><td class="text-center"><img src="eram-sym-1200.png" srcset="eram-sym-1200-2x.png 2x" width="28" height="24" alt=""></td><td>Uncorrelated beacon target squawking 1200 below the conflict alert floor</td></tr>
                 <tr><td class="text-center"><img src="eram-sym-track.png" srcset="eram-sym-track-2x.png 2x" width="28" height="24" alt=""></td><td>Track position symbol</td></tr>
               </tbody>
             </table>
+            <p>The conflict alert floor is 6,000' unless the facility adapts another one. <i>vice</i> doesn't issue
+              Mode C intruder alerts.</p>
             <p>Tracks with FDBs also have a track position symbol, a leader line, and a velocity vector line. The
               <b>PR TGT</b> and <b>UNP TGT</b> buttons in the <b>BRIGHT</b> menu set the brightness of paired and unpaired targets.</p>
             <p>A velocity vector shows where its track will be in 0 (no vector), 1, 2, 4, or 8 minutes. The
@@ -8128,9 +8370,9 @@ SBA, SNA, SCTLA, DCA, Del Rey, SAN, PCT SHD (Ketan K), TPA (Nelson T), AAC, BOS 
             </div><br>
 
             <h3 id="eram-saa">Special Activity Airspace</h3>
-            <p>Special activity airspace in the ARTCC is drawn with dashed lines, labeled with its name and its
-              altitudes. Airspace that is active continuously is orange, and other airspace is white. What is
-              drawn for each airspace is set in the <a href="#eram-view-saa">SAA FILTER</a> view.</p>
+            <p>Special activity airspace in the area of the loaded geomap is drawn with dashed lines, labeled with
+              its name and its altitudes. Airspace that is active continuously is orange, and other airspace is
+              white. What is drawn for each airspace is set in the <a href="#eram-view-saa">SAA FILTER</a> view.</p>
             <div class="text-center">
               <img src="eram-saa.png" srcset="eram-saa-2x.png 2x" width="600" height="500" style="max-width: 100%; height:auto;" alt="">
             </div><br>
